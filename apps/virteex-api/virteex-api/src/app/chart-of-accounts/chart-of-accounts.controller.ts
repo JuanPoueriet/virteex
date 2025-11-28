@@ -18,9 +18,9 @@ import {
 import { ChartOfAccountsService } from './chart-of-accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import { BatchDeactivateAccountsDto } from './dto/batch-operations.dto';
 import { MergeAccountsDto } from './dto/merge-accounts.dto';
 

@@ -2,12 +2,12 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, LessThanOrEqual } from 'typeorm';
-import { Account, AccountType, AccountCategory } from 'src/chart-of-accounts/entities/account.entity';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
-import { MonthlyAccountBalance } from 'src/reporting/entities/monthly-account-balance.entity';
+import { Account, AccountType, AccountCategory } from '../chart-of-accounts/entities/account.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { MonthlyAccountBalance } from '../reporting/entities/monthly-account-balance.entity';
 import { subDays } from 'date-fns';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 
 export type DimensionFilters = Record<string, string>;
 

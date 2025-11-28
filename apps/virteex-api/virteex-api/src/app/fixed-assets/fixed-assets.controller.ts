@@ -12,9 +12,9 @@ import {
 import { FixedAssetsService } from './fixed-assets.service';
 import { CreateFixedAssetDto } from './dto/create-fixed-asset.dto';
 import { UpdateFixedAssetDto } from './dto/update-fixed-asset.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import { DisposeAssetDto } from './dto/dispose-asset.dto';
 
 @Controller('fixed-assets')

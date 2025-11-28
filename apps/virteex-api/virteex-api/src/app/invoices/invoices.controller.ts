@@ -12,13 +12,13 @@ import {
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import type { Response } from 'express';
-import { PeriodLockGuard } from 'src/accounting/guards/period-lock.guard';
-import { HasPermission } from 'src/auth/decorators/permissions.decorator';
-import { PERMISSIONS } from 'src/shared/permissions';
+import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
+import { PERMISSIONS } from '../shared/permissions';
 
 @Controller('invoices')
 @UseGuards(JwtAuthGuard)

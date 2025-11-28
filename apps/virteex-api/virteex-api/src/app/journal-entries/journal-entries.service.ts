@@ -27,28 +27,28 @@ import {
   CreateJournalEntryDto,
   CreateJournalEntryLineDto,
 } from './dto/create-journal-entry.dto';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
 import {
   UpdateJournalEntryDto,
   ReverseJournalEntryDto,
 } from './dto/journal-entry-actions.dto';
-import { StorageService } from 'src/storage/storage.service';
+import { StorageService } from '../storage/storage.service';
 import { JournalEntryAttachment } from './entities/journal-entry-attachment.entity';
-import { BalanceUpdateService } from 'src/chart-of-accounts/balance-update.service';
+import { BalanceUpdateService } from '../chart-of-accounts/balance-update.service';
 import {
   AccountingPeriod,
   PeriodStatus,
-} from 'src/accounting/entities/accounting-period.entity';
+} from '../accounting/entities/accounting-period.entity';
 import { Journal } from './entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
-import { WorkflowsService } from 'src/workflows/workflows.service';
-import { DocumentTypeForApproval } from 'src/workflows/entities/approval-policy.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { DocumentTypeForApproval } from '../workflows/entities/approval-policy.entity';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Readable } from 'stream';
-import { DimensionRule } from 'src/dimensions/entities/dimension-rule.entity';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
+import { DimensionRule } from '../dimensions/entities/dimension-rule.entity';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
 import { JournalEntryLineValuation } from './entities/journal-entry-line-valuation.entity';
-import { LedgerMappingRule } from 'src/accounting/entities/ledger-mapping-rule.entity';
+import { LedgerMappingRule } from '../accounting/entities/ledger-mapping-rule.entity';
 
 @Injectable()
 export class JournalEntriesService {

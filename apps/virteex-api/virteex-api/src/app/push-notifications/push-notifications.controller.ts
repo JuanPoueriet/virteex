@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { PushSubscription } from './entities/push-subscription.entity';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
+import { User } from '../users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 
 
 @Controller('push')

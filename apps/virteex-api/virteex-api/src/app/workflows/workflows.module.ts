@@ -6,7 +6,8 @@ import { ApprovalPolicyStep } from './entities/approval-policy-step.entity';
 import { ApprovalRequest } from './entities/approval-request.entity';
 import { WorkflowsService } from './workflows.service';
 import { WorkflowsController } from './workflows.controller';
-import { AuthModule } from 'src/auth/auth.module';
+// import { AuthModule } from '../auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

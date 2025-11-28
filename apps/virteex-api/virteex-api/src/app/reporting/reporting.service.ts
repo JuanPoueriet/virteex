@@ -4,8 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { MonthlyAccountBalance } from './entities/monthly-account-balance.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
-import { Organization } from 'src/organizations/entities/organization.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { Organization } from '../organizations/entities/organization.entity';
 
 @Injectable()
 export class ReportingService {

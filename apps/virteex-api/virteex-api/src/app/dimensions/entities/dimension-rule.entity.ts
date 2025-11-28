@@ -1,5 +1,5 @@
 
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
 import { Entity, PrimaryColumn, ManyToOne, JoinColumn, Column } from 'typeorm';
 import { Dimension } from './dimension.entity';
 

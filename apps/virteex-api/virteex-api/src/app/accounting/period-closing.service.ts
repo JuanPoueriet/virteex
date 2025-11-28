@@ -17,23 +17,23 @@ import {
 import {
   Account,
   AccountType,
-} from 'src/chart-of-accounts/entities/account.entity';
+} from '../chart-of-accounts/entities/account.entity';
 import {
   JournalEntry,
   JournalEntryStatus,
   JournalEntryType,
-} from 'src/journal-entries/entities/journal-entry.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
+} from '../journal-entries/entities/journal-entry.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from './entities/ledger.entity';
 import { LockAccountInPeriodDto } from './dto/lock-account-period.dto';
 import { AccountPeriodLock } from './entities/account-period-lock.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
-import { AccountBalance } from 'src/chart-of-accounts/entities/account-balance.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
+import { AccountBalance } from '../chart-of-accounts/entities/account-balance.entity';
 import { ReopenPeriodDto } from './dto/reopen-period.dto';
-import { AuditTrailService } from 'src/audit/audit.service';
-import { ActionType } from 'src/audit/entities/audit-log.entity';
+import { AuditTrailService } from '../audit/audit.service';
+import { ActionType } from '../audit/entities/audit-log.entity';
 import { ClosingAutomationService } from './closing-automation.service';
 
 @Injectable()

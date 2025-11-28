@@ -2,14 +2,14 @@
 import { Module } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { DashboardController } from './dashboard.controller';
-import { ChartOfAccountsModule } from 'src/chart-of-accounts/chart-of-accounts.module';
-import { InventoryModule } from 'src/inventory/inventory.module';
-import { AuthModule } from 'src/auth/auth.module';
+import { ChartOfAccountsModule } from '../chart-of-accounts/chart-of-accounts.module';
+import { InventoryModule } from '../inventory/inventory.module';
+import { AuthModule } from '../auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { FinancialReportingModule } from 'src/financial-reporting/financial-reporting.module';
+import { FinancialReportingModule } from '../financial-reporting/financial-reporting.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from 'src/organizations/entities/organization.entity';
+import { Organization } from '../organizations/entities/organization.entity';
 
 @Module({
   imports: [

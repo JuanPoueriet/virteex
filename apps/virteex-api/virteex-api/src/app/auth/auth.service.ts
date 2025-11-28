@@ -20,12 +20,12 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
-import { User, UserStatus } from 'src/users/entities/user.entity/user.entity';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { Role } from 'src/roles/entities/role.entity';
+import { User, UserStatus } from '../users/entities/user.entity/user.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { Role } from '../roles/entities/role.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { MailService } from 'src/mail/mail.service';
-import { LocalizationService } from 'src/localization/services/localization.service';
+import { MailService } from '../mail/mail.service';
+import { LocalizationService } from '../localization/services/localization.service';
 
 interface PasswordResetJwtPayload {
   sub: string;

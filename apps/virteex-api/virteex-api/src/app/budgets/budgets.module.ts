@@ -5,10 +5,10 @@ import { BudgetsService } from './budgets.service';
 import { BudgetsController } from './budgets.controller';
 import { Budget } from './entities/budget.entity';
 import { BudgetLine } from './entities/budget-line.entity';
-import { JournalEntriesModule } from 'src/journal-entries/journal-entries.module';
+import { JournalEntriesModule } from '../journal-entries/journal-entries.module';
 import { BudgetControlService } from './budget-control.service';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
-import { AuthModule } from 'src/auth/auth.module';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

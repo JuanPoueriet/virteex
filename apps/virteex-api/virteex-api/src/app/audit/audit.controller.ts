@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { AuditTrailService } from './audit.service';
 
 

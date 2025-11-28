@@ -1,5 +1,5 @@
 
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { Account } from '../hart-of-accounts/entities/account.entity';
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 
 @Entity({ name: 'monthly_account_balances' })

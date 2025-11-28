@@ -1,13 +1,13 @@
 
 import { Controller, Get, UseGuards, Post, Body, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import { GenerateReportDto } from './dto/generate-report.dto';
-import { GeneralLedgerReportDto } from 'src/journal-entries/dto/general-ledger-report.dto';
-import { JournalReportDto } from 'src/journal-entries/dto/journal-report.dto';
+import { GeneralLedgerReportDto } from '../journal-entries/dto/general-ledger-report.dto';
+import { JournalReportDto } from '../journal-entries/dto/journal-report.dto';
 import { AgingReportDto } from './dto/aging-report.dto';
 
 @ApiTags('Reports')

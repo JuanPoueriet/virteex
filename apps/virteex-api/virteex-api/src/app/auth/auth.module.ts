@@ -16,7 +16,7 @@ import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { User } from '../users/entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
-import { LocalizationModule } from 'src/localization/localization.module';
+import { LocalizationModule } from '../localization/localization.module';
 
 @Module({
   imports: [

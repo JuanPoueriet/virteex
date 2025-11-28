@@ -14,8 +14,8 @@ import {
   VersionColumn,
   OneToMany,
 } from 'typeorm';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { User } from '../users/entities/user.entity/user.entity';
 import {
   AccountType,
   AccountCategory,

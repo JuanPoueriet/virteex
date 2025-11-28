@@ -2,9 +2,9 @@
 import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import * as cacheManager_1 from 'cache-manager';
-import { ChartOfAccountsService } from 'src/chart-of-accounts/chart-of-accounts.service';
-import { InventoryService } from 'src/inventory/inventory.service';
-import { AccountType, AccountCategory } from 'src/chart-of-accounts/enums/account-enums';
+import { ChartOfAccountsService } from '../chart-of-accounts/chart-of-accounts.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { AccountType, AccountCategory } from '../chart-of-accounts/enums/account-enums';
 import { QuickRatioDto } from './dto/quick-ratio.dto';
 import { WorkingCapitalDto } from './dto/working-capital.dto';
 import { CurrentRatioDto } from './dto/current-ratio.dto';
@@ -14,11 +14,11 @@ import { LeverageDto } from './dto/leverage.dto';
 import { NetMarginDto } from './dto/net-margin.dto';
 import { EbitdaDto } from './dto/ebitda.dto';
 import { FcfDto } from './dto/fcf.dto';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { FinancialReportingService } from 'src/financial-reporting/financial-reporting.service';
+import { Organization } from '../organizations/entities/organization.entity';
+import { FinancialReportingService } from '../financial-reporting/financial-reporting.service';
 import { CashFlowWaterfallDto } from './dto/cash-flow-waterfall.dto';
 import { startOfYear, endOfDay } from 'date-fns';
 

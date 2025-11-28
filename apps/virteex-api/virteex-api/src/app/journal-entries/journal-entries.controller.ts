@@ -22,20 +22,20 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
-import { PermissionsGuard } from 'src/auth/guards/permissions/permissions.guard';
-import { HasPermission } from 'src/auth/decorators/permissions.decorator';
-import { PERMISSIONS } from 'src/shared/permissions';
-import { PeriodLockGuard } from 'src/accounting/guards/period-lock.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
+import { PermissionsGuard } from '../auth/guards/permissions/permissions.guard';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
+import { PERMISSIONS } from '../shared/permissions';
+import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import {
   UpdateJournalEntryDto,
   ReverseJournalEntryDto,
 } from './dto/journal-entry-actions.dto';
 import { JournalEntryImportService } from './journal-entry-import.service';
 import { ConfirmImportDto, PreviewImportRequestDto } from './dto/journal-entry-import.dto';
-import { TemporalValidityGuard } from 'src/financial-reporting/guards/temporal-validity.guard';
+import { TemporalValidityGuard } from '../financial-reporting/guards/temporal-validity.guard';
 
 @Controller('journal-entries')
 @UseGuards(JwtAuthGuard, PermissionsGuard)

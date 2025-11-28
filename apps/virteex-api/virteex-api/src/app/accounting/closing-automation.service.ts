@@ -1,8 +1,8 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { DepreciationService } from 'src/fixed-assets/depreciation.service';
-import { CurrencyRevaluationService } from 'src/batch-processes/currency-revaluation.service';
+import { DepreciationService } from '../fixed-assets/depreciation.service';
+import { CurrencyRevaluationService } from '../batch-processes/currency-revaluation.service';
 import { AccountingPeriod } from './entities/accounting-period.entity';
 
 @Injectable()

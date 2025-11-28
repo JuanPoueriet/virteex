@@ -15,8 +15,8 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from './entities/user.entity/user.entity';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';

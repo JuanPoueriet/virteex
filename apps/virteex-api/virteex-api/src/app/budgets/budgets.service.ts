@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Budget } from './entities/budget.entity';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
 import { BudgetLine } from './entities/budget-line.entity';
 
 @Injectable()

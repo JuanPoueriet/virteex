@@ -2,7 +2,7 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, SelectQueryBuilder } from 'typeorm';
 import { AnalyticalQueryDto, PaginationOptionsDto } from './dto/analytical-query.dto';
-import { Dimension } from 'src/dimensions/entities/dimension.entity';
+import { Dimension } from '../dimensions/entities/dimension.entity';
 
 @Injectable()
 export class AnalyticalReportingService {

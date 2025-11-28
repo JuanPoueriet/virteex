@@ -5,12 +5,12 @@ import { Repository, DataSource, In } from 'typeorm';
 import { CustomerPayment } from './entities/customer-payment.entity';
 import { CreateCustomerPaymentDto } from './dto/create-customer-payment.dto';
 import { Customer } from './entities/customer.entity';
-import { Invoice, InvoiceStatus } from 'src/invoices/entities/invoice.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
+import { Invoice, InvoiceStatus } from '../invoices/entities/invoice.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
 
 @Injectable()
 export class CustomerPaymentsService {

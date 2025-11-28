@@ -8,13 +8,13 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { PeriodClosingService } from './period-closing.service';
 import { ClosePeriodDto } from './dto/close-period.dto';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
-import { HasPermission } from 'src/auth/decorators/permissions.decorator';
-import { PERMISSIONS } from 'src/shared/permissions';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
+import { PERMISSIONS } from '../shared/permissions';
 import { ModulePeriodDto } from './dto/module-period.dto';
 import { LockAccountInPeriodDto } from './dto/lock-account-period.dto';
 import { ReopenPeriodDto } from './dto/reopen-period.dto';

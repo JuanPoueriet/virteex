@@ -7,8 +7,8 @@ import {
   ReportRowType,
   ReportColumnDefinition,
 } from './dto/report-builder.dto';
-import { FinancialReportingService } from 'src/financial-reporting/financial-reporting.service';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { FinancialReportingService } from '../financial-reporting/financial-reporting.service';
+import { Account } from '../chart-of-accounts/entities/account.entity';
 
 
 interface ReportCell {

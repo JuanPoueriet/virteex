@@ -2,14 +2,14 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Not, Repository, DataSource, In, EntityManager } from 'typeorm';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
-import { AccountBalance } from 'src/chart-of-accounts/entities/account-balance.entity';
-import { ExchangeRate } from 'src/currencies/entities/exchange-rate.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
-import { CreateJournalEntryDto, CreateJournalEntryLineDto } from 'src/journal-entries/dto/create-journal-entry.dto';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
+import { AccountBalance } from '../chart-of-accounts/entities/account-balance.entity';
+import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { CreateJournalEntryDto, CreateJournalEntryLineDto } from '../journal-entries/dto/create-journal-entry.dto';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 
 @Injectable()
 export class CurrencyRevaluationService {

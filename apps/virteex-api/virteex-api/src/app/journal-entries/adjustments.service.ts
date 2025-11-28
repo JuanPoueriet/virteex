@@ -6,7 +6,7 @@ import { CreateReclassificationEntryDto } from './dto/reclassification-entry.dto
 import { JournalEntry, JournalEntryType } from './entities/journal-entry.entity';
 import { CreatePeriodEndAdjustmentDto } from './dto/period-end-adjustment.dto';
 import { CreateAuditAdjustmentDto } from './dto/audit-adjustment.dto';
-import { FiscalYear, FiscalYearStatus } from 'src/accounting/entities/fiscal-year.entity';
+import { FiscalYear, FiscalYearStatus } from '../accounting/entities/fiscal-year.entity';
 
 @Injectable()
 export class AdjustmentsService {

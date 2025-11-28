@@ -2,8 +2,8 @@ import { Controller, Get, Post, Param, Body, UseGuards, ParseUUIDPipe } from '@n
 import { NotificationsService } from './notifications.service';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { User } from '../users/entities/user.entity/user.entity';
 
 
 @Controller('notifications')

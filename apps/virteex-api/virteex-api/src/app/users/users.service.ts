@@ -19,10 +19,10 @@ import { User } from './entities/user.entity/user.entity';
 import { UserStatus } from './entities/user.entity/user.entity';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { MailService } from 'src/mail/mail.service';
-import { RolesService } from 'src/roles/roles.service';
+import { MailService } from '../mail/mail.service';
+import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
-import { EventsGateway } from 'src/websockets/events.gateway';
+import { EventsGateway } from '../websockets/events.gateway';
 
 @Injectable()
 export class UsersService {

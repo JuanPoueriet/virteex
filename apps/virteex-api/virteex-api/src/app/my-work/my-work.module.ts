@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApprovalRequest } from 'src/workflows/entities/approval-request.entity';
+import { ApprovalRequest } from '../workflows/entities/approval-request.entity';
 import { MyWorkController } from './my-work.controller';
 import { MyWorkService } from './my-work.service';
 

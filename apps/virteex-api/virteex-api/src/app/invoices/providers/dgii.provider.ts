@@ -1,7 +1,7 @@
 
 import { EInvoiceProvider, EInvoiceResponse } from './einvoice.provider';
 import { Invoice } from '../entities/invoice.entity';
-import { EInvoiceProviderConfig } from 'src/localization/entities/einvoice-provider-config.entity';
+import { EInvoiceProviderConfig } from '../localization/entities/einvoice-provider-config.entity';
 import * as forge from 'node-forge';
 import * as xmlbuilder from 'xmlbuilder';
 import { SignedXml } from 'xml-crypto';

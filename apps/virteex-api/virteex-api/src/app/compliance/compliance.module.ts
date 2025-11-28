@@ -4,8 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ComplianceService } from './compliance.service';
 import { NcfSequence } from './entities/ncf-sequence.entity';
 
-import { VendorBill } from 'src/accounts-payable/entities/vendor-bill.entity';
-import { Invoice } from 'src/invoices/entities/invoice.entity';
+import { VendorBill } from '../accounts-payable/entities/vendor-bill.entity';
+import { Invoice } from '../invoices/entities/invoice.entity';
 
 
 @Module({

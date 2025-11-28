@@ -2,10 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Forbidden
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import * as jwtPayloadInterface from 'src/auth/interfaces/jwt-payload.interface';
-import { ALL_PERMISSIONS } from 'src/shared/permissions';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import * as jwtPayloadInterface from '../auth/interfaces/jwt-payload.interface';
+import { ALL_PERMISSIONS } from '../shared/permissions';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)

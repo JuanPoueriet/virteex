@@ -39,9 +39,9 @@
 
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
-import { PERMISSIONS_KEY } from 'src/auth/decorators/permissions.decorator';
-import { Permission } from 'src/shared/permissions';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { PERMISSIONS_KEY } from '../auth/decorators/permissions.decorator';
+import { Permission } from '../shared/permissions';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

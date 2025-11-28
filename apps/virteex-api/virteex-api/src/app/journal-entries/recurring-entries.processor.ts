@@ -6,7 +6,7 @@ import { DataSource } from 'typeorm';
 import { RecurringJournalEntry } from './entities/recurring-journal-entry.entity';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 
 interface RecurringJobData {
     recurringEntryId: string;

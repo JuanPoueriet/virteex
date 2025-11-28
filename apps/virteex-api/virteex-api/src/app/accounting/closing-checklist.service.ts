@@ -2,10 +2,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DataSource, In, Between } from 'typeorm';
 import { AccountingPeriod } from './entities/accounting-period.entity';
-import { JournalEntry, JournalEntryStatus } from 'src/journal-entries/entities/journal-entry.entity';
-import { BankTransaction, TransactionStatus } from 'src/reconciliation/entities/bank-transaction.entity';
-import { VendorBill, VendorBillStatus } from 'src/accounts-payable/entities/vendor-bill.entity';
-import { ApprovalRequest, ApprovalStatus } from 'src/workflows/entities/approval-request.entity';
+import { JournalEntry, JournalEntryStatus } from '../journal-entries/entities/journal-entry.entity';
+import { BankTransaction, TransactionStatus } from '../reconciliation/entities/bank-transaction.entity';
+import { VendorBill, VendorBillStatus } from '../accounts-payable/entities/vendor-bill.entity';
+import { ApprovalRequest, ApprovalStatus } from '../workflows/entities/approval-request.entity';
 
 export interface ChecklistItem {
     description: string;

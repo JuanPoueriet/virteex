@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CustomersModule } from 'src/customers/customers.module';
+import { CustomersModule } from '../customers/customers.module';
 import { LeadsController } from './controllers/leads.controller';
 import { OpportunitiesController } from './controllers/opportunities.controller';
 import { Lead } from './entities/lead.entity';
@@ -14,8 +14,8 @@ import { QuoteLine } from './entities/quote-line.entity';
 import { Activity } from './entities/activity.entity';
 import { QuotesController } from './controllers/quotes.controller';
 import { QuotesService } from './services/quotes.service';
-import { SharedModule } from 'src/shared/shared.module';
-import { InvoicesModule } from 'src/invoices/invoices.module';
+import { SharedModule } from '../shared/shared.module';
+import { InvoicesModule } from '../invoices/invoices.module';
 
 @Module({
   imports: [

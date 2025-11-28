@@ -4,9 +4,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CoaImportService } from './coa-import.service';
 
 import { ConfirmCoaImportDto, PreviewCoaImportDto } from './dto/coa-import.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 
 @Controller('chart-of-accounts/import')
 @UseGuards(JwtAuthGuard)

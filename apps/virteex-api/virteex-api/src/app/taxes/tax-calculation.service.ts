@@ -4,8 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tax, TaxType } from './entities/tax.entity';
 import { TaxConfiguration } from './entities/tax-configuration.entity';
-import { Product } from 'src/inventory/entities/product.entity';
-import { Customer } from 'src/customers/entities/customer.entity';
+import { Product } from '../inventory/entities/product.entity';
+import { Customer } from '../customers/entities/customer.entity';
 import { TaxRule } from './entities/tax-rule.entity';
 
 interface TaxableLineItem {

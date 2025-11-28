@@ -1,7 +1,7 @@
 
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { BalanceUpdateService } from 'src/chart-of-accounts/balance-update.service';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { BalanceUpdateService } from '../chart-of-accounts/balance-update.service';
 
 @Controller('health')
 export class HealthController {

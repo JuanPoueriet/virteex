@@ -8,7 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import {
@@ -18,9 +18,9 @@ import {
   PreviewedJournalEntryDto,
 } from './dto/journal-entry-import.dto';
 import { FileParserService } from './parsers/file-parser.service';
-import { EventsGateway } from 'src/websockets/events.gateway';
+import { EventsGateway } from '../websockets/events.gateway';
 import { Journal } from './entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 
 interface ImportBatch {
   id: string;

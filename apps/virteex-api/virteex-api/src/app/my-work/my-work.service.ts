@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ApprovalRequest, ApprovalStatus } from 'src/workflows/entities/approval-request.entity';
+import { ApprovalRequest, ApprovalStatus } from '../workflows/entities/approval-request.entity';
 import { Repository } from 'typeorm';
 import { MyWorkDto, WorkItemDto } from './dto/my-work.dto';
 

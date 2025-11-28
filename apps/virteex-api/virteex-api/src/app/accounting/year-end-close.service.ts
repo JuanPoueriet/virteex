@@ -2,14 +2,14 @@
 import { Injectable, BadRequestException, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { DataSource, Between, In, Not } from 'typeorm';
 import { FiscalYear, FiscalYearStatus } from './entities/fiscal-year.entity';
-import { JournalEntry, JournalEntryStatus, JournalEntryType } from 'src/journal-entries/entities/journal-entry.entity';
-import { Account, AccountType } from 'src/chart-of-accounts/entities/account.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
+import { JournalEntry, JournalEntryStatus, JournalEntryType } from '../journal-entries/entities/journal-entry.entity';
+import { Account, AccountType } from '../chart-of-accounts/entities/account.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { YearEndCloseDto } from './dto/year-end-close.dto';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
+import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from './entities/ledger.entity';
-import { AccountBalance } from 'src/chart-of-accounts/entities/account-balance.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
+import { AccountBalance } from '../chart-of-accounts/entities/account-balance.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
 import { AccountingPeriod, PeriodStatus } from './entities/accounting-period.entity';
 
 @Injectable()

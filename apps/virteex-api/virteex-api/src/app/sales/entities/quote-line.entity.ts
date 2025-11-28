@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Quote } from './quote.entity';
-import { Product } from 'src/inventory/entities/product.entity';
+import { Product } from '../inventory/entities/product.entity';
 
 @Entity({ name: 'quote_lines' })
 export class QuoteLine {

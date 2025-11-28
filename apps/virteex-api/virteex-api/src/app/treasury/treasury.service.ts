@@ -1,12 +1,12 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { BankTransfer } from './entities/bank-transfer.entity';
 import { CreateBankTransferDto } from './dto/create-bank-transfer.dto';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
 
 @Injectable()
 export class TreasuryService {

@@ -1,12 +1,12 @@
 
 import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { FinancialReportingService, DimensionFilters } from './financial-reporting.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { PERMISSIONS } from 'src/shared/permissions';
-import { HasPermission } from 'src/auth/decorators/permissions.decorator';
+import { PERMISSIONS } from '../shared/permissions';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
 
 @ApiTags('Financial Reporting')
 @ApiBearerAuth()

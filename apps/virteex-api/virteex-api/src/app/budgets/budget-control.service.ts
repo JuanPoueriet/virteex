@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Budget } from './entities/budget.entity';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
 import { BudgetLine } from './entities/budget-line.entity';
 import { startOfMonth, endOfMonth } from 'date-fns';
 

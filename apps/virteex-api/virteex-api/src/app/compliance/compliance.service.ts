@@ -4,8 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Between, EntityManager, Repository, Not, IsNull } from 'typeorm';
 import { NcfSequence, NcfType } from './entities/ncf-sequence.entity';
-import { VendorBill } from 'src/accounts-payable/entities/vendor-bill.entity';
-import { Invoice, InvoiceType } from 'src/invoices/entities/invoice.entity';
+import { VendorBill } from '../accounts-payable/entities/vendor-bill.entity';
+import { Invoice, InvoiceType } from '../invoices/entities/invoice.entity';
 
 @Injectable()
 export class ComplianceService {

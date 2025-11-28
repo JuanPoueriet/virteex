@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnalyticalReportingService } from './analytical-reporting.service';
 import { AnalyticalReportingController } from './analytical-reporting.controller';
 import { AnalyticalReportData } from './entities/analytical-report-data.entity';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 import { AnalyticalReportingCron } from './analytical-reporting.cron';
 
 @Module({

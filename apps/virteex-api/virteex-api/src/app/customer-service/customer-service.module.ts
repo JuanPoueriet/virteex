@@ -6,8 +6,8 @@ import { CasesService } from './cases.service';
 import { KnowledgeBaseService } from './knowledge-base.service';
 import { CasesController } from './cases.controller';
 import { CustomerPortalController } from './customer-portal.controller';
-import { InvoicesModule } from 'src/invoices/invoices.module';
-import { AuthModule } from 'src/auth/auth.module';
+import { InvoicesModule } from '../invoices/invoices.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

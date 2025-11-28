@@ -4,7 +4,7 @@ import { Cron } from '@nestjs/schedule';
 import { DataSource, LessThan } from 'typeorm';
 import { JournalEntry } from './entities/journal-entry.entity';
 import { JournalEntriesService } from './journal-entries.service';
-import { AccountingPeriod, PeriodStatus } from 'src/accounting/entities/accounting-period.entity';
+import { AccountingPeriod, PeriodStatus } from '../accounting/entities/accounting-period.entity';
 import { endOfMonth, startOfMonth } from 'date-fns';
 
 @Injectable()

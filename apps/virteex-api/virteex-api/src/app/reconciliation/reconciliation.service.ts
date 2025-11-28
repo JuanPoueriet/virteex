@@ -13,23 +13,23 @@ import {
 import { Repository, Between, DataSource, In } from 'typeorm';
 import { UploadStatementDto } from './dto/upload-statement.dto';
 import { CsvParserService } from './parsers/csv-parser.service';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
 import {
   BankTransaction,
   TransactionStatus,
 } from './entities/bank-transaction.entity';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
 import {
   ReconciliationRule,
   RuleConditionOperator,
   RuleConditionField,
 } from './entities/reconciliation-rule.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { MatchTransactionsDto } from './dto/match-transactions.dto';
 import { addDays, subDays } from 'date-fns';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
 
 @Injectable()
 export class ReconciliationService {

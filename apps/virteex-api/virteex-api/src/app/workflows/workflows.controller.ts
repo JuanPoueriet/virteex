@@ -11,11 +11,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { WorkflowsService } from './workflows.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
-import { HasPermission } from 'src/auth/decorators/permissions.decorator';
-import { PERMISSIONS } from 'src/shared/permissions';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
+import { PERMISSIONS } from '../shared/permissions';
 import { CreateApprovalPolicyDto, UpdateApprovalPolicyDto } from './dto/approval-policy.dto';
 
 @Controller('workflows')

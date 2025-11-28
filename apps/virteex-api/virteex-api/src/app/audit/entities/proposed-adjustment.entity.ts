@@ -1,7 +1,7 @@
 
-import { FiscalYear } from 'src/accounting/entities/fiscal-year.entity';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { FiscalYear } from '../accounting/entities/fiscal-year.entity';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { User } from '../users/entities/user.entity/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,

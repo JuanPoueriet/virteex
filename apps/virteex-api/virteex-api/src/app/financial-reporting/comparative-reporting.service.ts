@@ -1,7 +1,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { FinancialReportingService, DimensionFilters } from './financial-reporting.service';
-import { Account, AccountType } from 'src/chart-of-accounts/entities/account.entity';
+import { Account, AccountType } from '../chart-of-accounts/entities/account.entity';
 
 interface ComparativeBalance {
     [ledgerId: string]: number;

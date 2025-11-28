@@ -1,5 +1,5 @@
 
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { User } from '../users/entities/user.entity/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,7 +11,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
-import { FiscalRegion } from 'src/localization/entities/fiscal-region.entity';
+import { FiscalRegion } from '../localization/entities/fiscal-region.entity';
 
 @Entity({ name: 'organizations' })
 export class Organization {

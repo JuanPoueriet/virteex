@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { User } from '../users/entities/user.entity/user.entity';
 import { MyWorkDto } from './dto/my-work.dto';
 import { MyWorkService } from './my-work.service';
 

@@ -5,7 +5,7 @@ import { DimensionsService } from './dimensions.service';
 import { DimensionsController } from './dimensions.controller';
 import { Dimension } from './entities/dimension.entity';
 import { DimensionValue } from './entities/dimension-value.entity';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 import { DimensionRule } from './entities/dimension-rule.entity';
 
 @Module({

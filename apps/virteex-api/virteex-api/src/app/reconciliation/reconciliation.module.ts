@@ -6,12 +6,12 @@ import { ReconciliationService } from './reconciliation.service';
 import { BankStatement } from './entities/bank-statement.entity';
 import { BankTransaction } from './entities/bank-transaction.entity';
 import { CsvParserService } from './parsers/csv-parser.service';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
+import { AuthModule } from '../auth/auth.module';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
 import { ReconciliationRule } from './entities/reconciliation-rule.entity';
 
-import { JournalEntriesModule } from 'src/journal-entries/journal-entries.module';
+import { JournalEntriesModule } from '../journal-entries/journal-entries.module';
 
 @Module({
   imports: [

@@ -2,15 +2,15 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, Between, DataSource } from 'typeorm';
-import { Invoice, InvoiceStatus } from 'src/invoices/entities/invoice.entity';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
-import { GeneralLedgerReportDto } from 'src/journal-entries/dto/general-ledger-report.dto';
-import { JournalReportDto } from 'src/journal-entries/dto/journal-report.dto';
-import { JournalEntryStatus } from 'src/journal-entries/entities/journal-entry.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
-import { CustomerPaymentLine } from 'src/customers/entities/customer-payment-line.entity';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
+import { Invoice, InvoiceStatus } from '../invoices/entities/invoice.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { Account } from '../chart-of-accounts/entities/account.entity';
+import { GeneralLedgerReportDto } from '../journal-entries/dto/general-ledger-report.dto';
+import { JournalReportDto } from '../journal-entries/dto/journal-report.dto';
+import { JournalEntryStatus } from '../journal-entries/entities/journal-entry.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
+import { CustomerPaymentLine } from '../customers/entities/customer-payment-line.entity';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
 
 @Injectable()
 export class ReportsService {

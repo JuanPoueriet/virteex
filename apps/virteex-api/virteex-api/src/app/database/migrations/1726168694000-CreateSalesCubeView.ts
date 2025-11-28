@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { Dimension } from 'src/dimensions/entities/dimension.entity';
+import { Dimension } from '../dimensions/entities/dimension.entity';
 
 export class RefactorAnalyticalViewForDynamicDimensions1726168695000 implements MigrationInterface {
     name = 'RefactorAnalyticalViewForDynamicDimensions1726168695000'

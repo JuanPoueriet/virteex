@@ -17,18 +17,18 @@ import {
   PaymentBatch,
   PaymentBatchStatus,
 } from './entities/payment-batch.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
 import { VendorPayment } from './entities/vendor-payment.entity';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { InventoryService } from 'src/inventory/inventory.service';
-import { CreateJournalEntryDto, CreateJournalEntryLineDto } from 'src/journal-entries/dto/create-journal-entry.dto';
-import { WorkflowsService } from 'src/workflows/workflows.service';
-import { DocumentTypeForApproval } from 'src/workflows/entities/approval-policy.entity';
-import { BudgetControlService } from 'src/budgets/budget-control.service';
-import { ExchangeRate } from 'src/currencies/entities/exchange-rate.entity';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { Ledger } from 'src/accounting/entities/ledger.entity';
+import { InventoryService } from '../inventory/inventory.service';
+import { CreateJournalEntryDto, CreateJournalEntryLineDto } from '../journal-entries/dto/create-journal-entry.dto';
+import { WorkflowsService } from '../workflows/workflows.service';
+import { DocumentTypeForApproval } from '../workflows/entities/approval-policy.entity';
+import { BudgetControlService } from '../budgets/budget-control.service';
+import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { Ledger } from '../accounting/entities/ledger.entity';
 
 @Injectable()
 export class AccountsPayableService {

@@ -9,14 +9,14 @@ import {
 import { DataSource } from 'typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { CreateIntercompanyTransactionDto } from './dto/create-intercompany-transaction.dto';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
 import { IntercompanyTransaction, IntercompanyTransactionStatus } from './entities/intercompany-transaction.entity';
-import { ExchangeRate } from 'src/currencies/entities/exchange-rate.entity';
-import { CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
+import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
+import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
+import { Journal } from '../journal-entries/entities/journal.entity';
 
 
 export interface DestinationEntryJobData {

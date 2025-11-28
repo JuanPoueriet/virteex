@@ -3,10 +3,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, Between } from 'typeorm';
 import { Ledger } from './entities/ledger.entity';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
-import { JournalEntryLine } from 'src/journal-entries/entities/journal-entry-line.entity';
-import { GeneralLedger } from 'src/core/models/general-ledger.model';
-import { AccountNature } from 'src/chart-of-accounts/enums/account-enums';
+import { Account } from '../chart-of-accounts/entities/account.entity';
+import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { GeneralLedger } from '../core/models/general-ledger.model';
+import { AccountNature } from '../chart-of-accounts/enums/account-enums';
 
 @Injectable()
 export class LedgersService {

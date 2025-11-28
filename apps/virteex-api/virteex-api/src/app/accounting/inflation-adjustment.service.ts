@@ -3,11 +3,11 @@ import { Injectable, NotFoundException, BadRequestException, Logger, InternalSer
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Not, Repository } from 'typeorm';
 import { InflationIndex } from './entities/inflation-index.entity';
-import { Account } from 'src/chart-of-accounts/entities/account.entity';
-import { OrganizationSettings } from 'src/organizations/entities/organization-settings.entity';
-import { JournalEntriesService } from 'src/journal-entries/journal-entries.service';
-import { Journal } from 'src/journal-entries/entities/journal.entity';
-import { CreateJournalEntryLineDto, CreateJournalEntryDto } from 'src/journal-entries/dto/create-journal-entry.dto';
+import { Account } from '../chart-of-accounts/entities/account.entity';
+import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { JournalEntriesService } from '../journal-entries/journal-entries.service';
+import { Journal } from '../journal-entries/entities/journal.entity';
+import { CreateJournalEntryLineDto, CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';
 import { Ledger } from './entities/ledger.entity';
 
 @Injectable()

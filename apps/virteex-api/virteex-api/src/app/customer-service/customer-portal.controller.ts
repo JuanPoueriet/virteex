@@ -1,10 +1,10 @@
 import { Controller, Get, Param, ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt/jwt.guard';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from 'src/users/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 import { CasesService } from './cases.service';
 import { KnowledgeBaseService } from './knowledge-base.service';
-import { InvoicesService } from 'src/invoices/invoices.service';
+import { InvoicesService } from '../invoices/invoices.service';
 
 @Controller('customer-portal')
 @UseGuards(JwtAuthGuard)

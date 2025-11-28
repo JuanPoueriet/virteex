@@ -1,5 +1,5 @@
 
-import { Organization } from 'src/organizations/entities/organization.entity';
+import { Organization } from '../rganizations/entities/organization.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
