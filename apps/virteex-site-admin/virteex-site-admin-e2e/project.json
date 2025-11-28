@@ -1,0 +1,10 @@
+{
+  "name": "virteex-site-admin-e2e",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "virteex-site-admin-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["virteex-site-admin"],
+  "// targets": "to see all targets run: nx show project virteex-site-admin-e2e --web",
+  "targets": {}
+}

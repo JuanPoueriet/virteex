@@ -1,0 +1,66 @@
+{
+  "name": "virteex-desktop",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/virteex-desktop/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "nx-electron:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/virteex-desktop",
+        "main": "apps/virteex-desktop/src/main.ts",
+        "tsConfig": "apps/virteex-desktop/tsconfig.app.json",
+        "assets": ["apps/virteex-desktop/src/assets"]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/virteex-desktop/src/environments/environment.ts",
+              "with": "apps/virteex-desktop/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "nx-electron:execute",
+      "options": {
+        "buildTarget": "virteex-desktop:build"
+      }
+    },
+    "package": {
+      "executor": "nx-electron:package",
+      "options": {
+        "name": "virteex-desktop",
+        "frontendProject": "virteex-web",
+        "sourcePath": "dist/apps",
+        "outputPath": "dist/packages",
+        "prepackageOnly": true
+      }
+    },
+    "make": {
+      "executor": "nx-electron:make",
+      "options": {
+        "name": "virteex-desktop",
+        "frontendProject": "virteex-web",
+        "sourcePath": "dist/apps",
+        "outputPath": "dist/executables"
+      }
+    },
+    "lint": {
+      "command": "eslint apps/virteex-desktop/**/*.ts"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/virteex-desktop/jest.config.ts"
+      }
+    }
+  }
+}

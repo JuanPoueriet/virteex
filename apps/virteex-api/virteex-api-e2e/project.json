@@ -1,0 +1,17 @@
+{
+  "name": "virteex-api-e2e",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "implicitDependencies": ["virteex-api"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
+      "options": {
+        "jestConfig": "virteex-api-e2e/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "dependsOn": ["virteex-api:build", "virteex-api:serve"]
+    }
+  }
+}
