@@ -1,0 +1,21 @@
+// Reutilizamos la base de estilos de la vista de historial de ventas
+@use '../../../../assets/styles/forms' as mixins;
+@use '../../sales/history/history.page.scss';
+
+// Clases específicas para los estados de las facturas
+.status-badge {
+    &.status-paid {
+        background-color: rgba(74, 222, 128, 0.1);
+        color: #4ade80;
+    }
+
+    &.status-pending {
+        background-color: rgba(251, 146, 60, 0.1);
+        color: #fb923c;
+    }
+
+    &.status-overdue {
+        background-color: rgba(248, 113, 113, 0.1);
+        color: #f87171;
+    }
+}

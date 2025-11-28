@@ -1,0 +1,88 @@
+<div class="view-container">
+  <form [formGroup]="priceListForm" (ngSubmit)="savePriceList()">
+    <div class="view-header">
+      <div class="header-content">
+        <h1>@if(isEditMode()){ Edit } @else { New } Price List</h1>
+        <p>Define prices for a specific set of products.</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/app/masters/price-lists" class="secondary-button">Cancel</a>
+        <button type="submit" class="primary-button" [disabled]="isLoading()">
+          <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
+          <span>Save Price List</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-container card">
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="name">Price List Name*</label>
+                <input id="name" formControlName="name">
+            </div>
+             <div class="form-field">
+                <label for="status">Status*</label>
+                <select id="status" formControlName="status">
+                    <option *ngFor="let s of statusOptions" [value]="s">{{s}}</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="currency">Currency*</label>
+                <select id="currency" formControlName="currency">
+                    <option value="USD">USD - United States Dollar</option>
+                    <option value="DOP">DOP - Dominican Peso</option>
+                    <option value="EUR">EUR - Euro</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="validFrom">Valid From*</label>
+                <input id="validFrom" type="date" formControlName="validFrom">
+            </div>
+            <div class="form-field">
+                <label for="validTo">Valid To*</label>
+                <input id="validTo" type="date" formControlName="validTo">
+            </div>
+        </div>
+
+        <div class="line-items-section">
+            <h3 class="section-title">Price List Items</h3>
+            <table class="data-table" formArrayName="items">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Product*</th>
+                        <th class="text-right" style="width: 40%;">Price*</th>
+                        <th class="actions-column"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let line of lines.controls; let i = index" [formGroupName]="i">
+                        <td>
+                            <select formControlName="productId">
+                                <option [ngValue]="null" disabled>Select a product...</option>
+                                <option *ngFor="let product of products()" [value]="product.id">
+                                    {{ product.name }} ({{product.sku}})
+                                </option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" formControlName="price" class="text-right" min="0">
+                        </td>
+                        <td class="actions-column">
+                            <button type="button" class="icon-button" (click)="removeLine(i)" [disabled]="lines.length <= 1">
+                                <lucide-icon [img]="TrashIcon" size="16"></lucide-icon>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="button" class="secondary-button add-line-btn" (click)="addLine()">
+                <lucide-icon [img]="PlusIcon" size="16"></lucide-icon>
+                <span>Add Line</span>
+            </button>
+        </div>
+    </div>
+
+  </form>
+</div>

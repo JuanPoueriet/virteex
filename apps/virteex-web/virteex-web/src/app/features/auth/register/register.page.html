@@ -1,0 +1,80 @@
+<div class="register-layout">
+  <div class="branding-panel">
+    <div class="branding-content">
+      <h1 class="logo">FacturaPRO</h1>
+      <p class="tagline">La plataforma todo-en-uno para la gestión de tu negocio.</p>
+      <ul class="feature-list">
+        <li><lucide-icon [img]="CheckCircleIcon" size="20"></lucide-icon> Facturación profesional e intuitiva.</li>
+        <li><lucide-icon [img]="BarChart2Icon" size="20"></lucide-icon> Reportes financieros en tiempo real.</li>
+        <li><lucide-icon [img]="PackageIcon" size="20"></lucide-icon> Control total de tu inventario.</li>
+      </ul>
+    </div>
+    <div class="branding-footer">
+      <p>© 2025 FacturaPRO. Todos los derechos reservados.</p>
+      <nav><a href="#">Legal</a><a href="#">Privacidad</a><a href="#">Seguridad</a></nav>
+    </div>
+  </div>
+
+  <div class="form-panel">
+    <div class="form-container">
+      <div class="form-header">
+        <p>¿Ya tienes una cuenta? <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']" class="link">Inicia sesión</a></p>
+      </div>
+      <div class="stepper-header">
+        @for (step of [1,2,3,4]; track $index) {
+        <div class="step" [class.active]="currentStep() >= $index + 1" [class.completed]="stepsCompleted()[$index]"
+          (click)="navigateToStep($index + 1)">
+          <div class="step-icon">
+            @if(stepsCompleted()[$index]){<lucide-icon [img]="CheckIcon" size="16" />}
+            @else { {{$index + 1}} }
+          </div>
+          <span class="step-label">
+            @switch ($index + 1) {
+            @case (1) { Cuenta y Acceso }
+            @case (2) { Empresa }
+            @case (3) { Configuración }
+            @case (4) { Plan }
+            }
+          </span>
+        </div>
+        @if ($index < 3) { <div class="step-connector" [class.completed]="stepsCompleted()[$index]">
+      </div>
+      }
+      }
+    </div>
+    <div class="stepper-content" [@stepAnimation]="currentStep()">
+      @switch (currentStep()) {
+      @case (1) { <app-step-account-info [parentForm]="accountInfo" /> }
+      @case (2) { <app-step-business [parentForm]="business" /> }
+      @case (3) { <app-step-configuration [parentForm]="configuration" /> }
+      @case (4) { <app-step-plan [parentForm]="plan" /> }
+      }
+    </div>
+    @if (errorMessage()) {
+    <div class="error-message global-error">{{ errorMessage() }}</div>
+    }
+    <div class="stepper-actions">
+      @if (currentStep() > 1) {
+      <button type="button" class="secondary-button" (click)="prevStep()">
+        <lucide-icon [img]="ArrowLeftIcon" size="16" /><span>Anterior</span>
+      </button>
+      }
+      @if (currentStep() < 4) { <button type="button" class="primary-button" (click)="nextStep()">
+        <span>Siguiente</span><lucide-icon [img]="ArrowRightIcon" size="16" />
+        </button>
+        } @else {
+        <button type="button" class="primary-button" (click)="onSubmit()"
+          [disabled]="isRegistering() || !plan.get('agreeToTerms')?.value">
+          @if (isRegistering()) {
+          <span class="spinner"></span><span>Finalizando...</span>
+          } @else {
+          <span>Comenzar Prueba Gratuita</span><lucide-icon [img]="RocketIcon" size="16" />
+          }
+        </button>
+        }
+    </div>
+    <p class="form-footer-text">Al crear una cuenta, aceptas nuestros <a href="#" class="link">Términos</a> y <a
+        href="#" class="link">Política de Privacidad</a>.</p>
+  </div>
+</div>
+</div>

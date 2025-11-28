@@ -1,0 +1,39 @@
+<div class="view-container">
+    <!-- <div class="view-header">
+        <div class="header-content">
+            <h1>Configuración</h1>
+            <p>Administra los detalles de tu cuenta, empresa y usuarios.</p>
+        </div>
+    </div> -->
+    <div class="settings-layout">
+        <nav class="settings-nav">
+            <a routerLink="my-profile" routerLinkActive="active" class="nav-link">
+                <lucide-icon [img]="ProfileIcon" size="18"></lucide-icon>
+                <span>Mi perfil</span>
+            </a>
+            <a routerLink="profile" routerLinkActive="active" class="nav-link">
+                <lucide-icon [img]="ProfileIcon" size="18"></lucide-icon>
+                <span>Perfil de la Empresa</span>
+            </a>
+            <a routerLink="users" routerLinkActive="active" class="nav-link" *hasPermission="'users:view'">
+                <lucide-icon [img]="UsersIcon" size="18"></lucide-icon>
+                <span>Usuarios y Permisos</span>
+            </a>
+            <a routerLink="branding" routerLinkActive="active" class="nav-link">
+                <lucide-icon [img]="BrandingIcon" size="18"></lucide-icon>
+                <span>Personalización</span>
+            </a>
+            <a routerLink="billing" routerLinkActive="active" class="nav-link">
+                <lucide-icon [img]="BillingIcon" size="18"></lucide-icon>
+                <span>Servidor de Correo (SMTP)</span>
+            </a>
+            <a routerLink="billing" routerLinkActive="active" class="nav-link">
+                <lucide-icon [img]="BillingIcon" size="18"></lucide-icon>
+                <span>Facturación y Plan</span>
+            </a>
+        </nav>
+        <main class="settings-content card">
+            <router-outlet></router-outlet>
+        </main>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Crear Nueva Factura</h1>
+    <div class="page-header-actions">
+      <button class="btn" [routerLink]="['/app/invoices']">Cancelar</button>
+      <button class="btn btn-primary" (click)="onSubmit()">
+        Guardar Factura
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form [formGroup]="invoiceForm">
+        <div class="form-row">
+          <div class="form-col">
+            <label class="form-label">Cliente</label>
+            <select formControlName="customerId" class="form-control">
+              <option value="" disabled>Seleccionar cliente</option>
+              <option *ngFor="let client of customers" [value]="client.id">
+                {{ client.companyName }}
+              </option>
+            </select>
+          </div>
+          <div class="form-col">
+            <label class="form-label">Fecha de Emisión</label>
+            <input
+              type="date"
+              formControlName="issueDate"
+              class="form-control"
+            />
+          </div>
+          <div class="form-col">
+            <label class="form-label">Fecha de Vencimiento</label>
+            <input
+              type="date"
+              formControlName="dueDate"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div formArrayName="lineItems">
+          <div
+            *ngFor="let item of lineItems.controls; let i = index"
+            [formGroupName]="i"
+            class="line-item"
+          >
+            <select
+              formControlName="productId"
+              (change)="onProductSelect(i)"
+              class="form-control"
+            >
+              <option value="" disabled>Seleccionar producto</option>
+              <option *ngFor="let product of products" [value]="product.id">
+                {{ product.name }}
+              </option>
+            </select>
+            <input
+              type="number"
+              formControlName="quantity"
+              class="form-control"
+              placeholder="Cantidad"
+            />
+            <input
+              type="number"
+              formControlName="price"
+              class="form-control"
+              placeholder="Precio"
+            />
+            <button
+              type="button"
+              class="btn-icon"
+              (click)="removeLineItem(i)"
+            >
+              X
+            </button>
+          </div>
+        </div>
+        <button type="button" class="btn" (click)="addLineItem()">
+          + Agregar Línea
+        </button>
+
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea formControlName="notes" class="form-control"></textarea>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
