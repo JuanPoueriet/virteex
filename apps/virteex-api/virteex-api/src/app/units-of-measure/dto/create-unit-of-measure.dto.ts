@@ -4,13 +4,13 @@ import { IsString, IsNotEmpty } from 'class-validator';
 export class CreateUnitOfMeasureDto {
   @IsString()
   @IsNotEmpty()
-  symbol: string;
+  symbol!: string;
 
   @IsString()
   @IsNotEmpty()
-  category: string;
+  category!: string;
 
   @IsString()
   @IsNotEmpty()
-  nameKey: string;
+  nameKey!: string;
 }

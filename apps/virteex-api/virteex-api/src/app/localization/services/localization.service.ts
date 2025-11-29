@@ -8,10 +8,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FiscalRegion } from '../entities/fiscal-region.entity';
-import { Organization } from '../organizations/entities/organization.entity';
-import { ChartOfAccountsService } from '../chart-of-accounts/chart-of-accounts.service';
-import { TaxesService } from '../taxes/taxes.service';
-import { panamaCoaTemplate } from '../templates/pa-coa.template';
+import { Organization } from '../../organizations/entities/organization.entity';
+import { ChartOfAccountsService } from '../../chart-of-accounts/chart-of-accounts.service';
+import { TaxesService } from '../../taxes/taxes.service';
 import { panamaTaxTemplate } from '../templates/pa-taxes.template';
 import { AccountTemplateDto } from '../entities/coa-template.entity';
 import { usGaapCoaTemplate } from '../templates/us-gaap-coa.template';
@@ -131,7 +130,7 @@ export class LocalizationService implements OnModuleInit {
       {
         ...createAccountDto,
         parentId,
-      },
+      } as any,
       organizationId,
     );
 

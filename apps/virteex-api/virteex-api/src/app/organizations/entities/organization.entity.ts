@@ -1,5 +1,5 @@
 
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,18 +11,18 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
-import { FiscalRegion } from '../localization/entities/fiscal-region.entity';
+import { FiscalRegion } from '../../localization/entities/fiscal-region.entity';
 
 @Entity({ name: 'organizations' })
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   name?: string;
 
   @Column({ type: 'varchar', length: 255 })
-  legalName: string;
+  legalName!: string;
 
   @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
   rnc?: string | null;
@@ -37,13 +37,13 @@ export class Organization {
   fontFamily?: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
-  @OneToMany(() => User, (user) => user.organization)
-  users: User[];
+  @OneToMany(() => User, (user: User) => user.organization)
+  users!: User[];
 
 
   @Column({ name: 'fiscal_region_id', nullable: true })
@@ -51,10 +51,10 @@ export class Organization {
 
   @ManyToOne(() => FiscalRegion)
   @JoinColumn({ name: 'fiscal_region_id' })
-  fiscalRegion: FiscalRegion;
+  fiscalRegion!: FiscalRegion;
 
 
-  @OneToMany(() => OrganizationSubsidiary, sub => sub.parent)
-  subsidiaries: OrganizationSubsidiary[];
+  @OneToMany(() => OrganizationSubsidiary, (sub: OrganizationSubsidiary) => sub.parent)
+  subsidiaries!: OrganizationSubsidiary[];
 
 }

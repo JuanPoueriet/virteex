@@ -71,13 +71,13 @@ export class ReportingService {
         }, ['accountId', 'year', 'month', 'organizationId']);
       }
     } catch (error) {
-      this.logger.error(`Fallo al actualizar vistas para la organización ${organizationId}`, error.stack);
+      this.logger.error(`Fallo al actualizar vistas para la organización ${organizationId}`, (error as Error).stack);
     } finally {
       await queryRunner.release();
     }
   }
 
-  private async calculateEndBalance(queryRunner, accountId, year, month): Promise<number> {
+  private async calculateEndBalance(queryRunner: any, accountId: string, year: number, month: number): Promise<number> {
       const lastDayOfMonth = new Date(year, month, 0);
       const result = await queryRunner.manager.getRepository(JournalEntryLine)
           .createQueryBuilder('line')

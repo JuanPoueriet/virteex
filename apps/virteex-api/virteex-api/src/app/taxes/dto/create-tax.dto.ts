@@ -4,11 +4,11 @@ import { TaxType } from '../entities/tax.entity';
 export class CreateTaxDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsNumber()
   @Min(0)
-  rate: number;
+  rate!: number;
 
   @IsEnum(TaxType)
   @IsOptional()

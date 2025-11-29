@@ -12,7 +12,7 @@ export enum FileType {
 @Injectable()
 export class FileParserService {
     
-    async parse(file: Express.Multer.File, options?: CsvParsingOptionsDto): Promise<{ headers: string[], data: any[] }> {
+    async parse(file: any, options?: CsvParsingOptionsDto): Promise<{ headers: string[], data: any[] }> {
         if (file.mimetype === FileType.CSV) {
             return this.parseCsv(file.buffer, options);
         } else if (file.mimetype.includes('spreadsheet') || file.mimetype.includes('excel')) {
@@ -35,7 +35,7 @@ export class FileParserService {
                     }
                     resolve({ headers: results.meta.fields || [], data: results.data });
                 },
-                error: (error) => reject(new BadRequestException('Error al parsear el archivo CSV: ' + error.message)),
+                error: (error: Error) => reject(new BadRequestException('Error al parsear el archivo CSV: ' + error.message)),
             });
         });
     }
@@ -49,7 +49,7 @@ export class FileParserService {
             const headers = data.length > 0 ? Object.keys((data[0] as any)) : [];
             return { headers, data };
         } catch (error) {
-            throw new BadRequestException('Error al parsear el archivo Excel: ' + error.message);
+            throw new BadRequestException('Error al parsear el archivo Excel: ' + (error as Error).message);
         }
     }
 }

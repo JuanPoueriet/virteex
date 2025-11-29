@@ -7,24 +7,24 @@ import { TaxTemplate } from './tax-template.entity';
 @Entity({ name: 'localization_templates' })
 export class LocalizationTemplate {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => FiscalRegion)
   @JoinColumn({ name: 'fiscal_region_id' })
-  fiscalRegion: FiscalRegion;
+  fiscalRegion!: FiscalRegion;
 
   @Column({ name: 'fiscal_region_id' })
-  fiscalRegionId: string;
+  fiscalRegionId!: string;
 
   @Column({ type: 'int', default: 1 })
-  version: number;
+  version!: number;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @OneToMany(() => CoaTemplate, (coa) => coa.template, { cascade: true })
-  coaTemplate: CoaTemplate[];
+  coaTemplate!: CoaTemplate[];
 
   @OneToMany(() => TaxTemplate, (tax) => tax.template, { cascade: true })
-  taxTemplates: TaxTemplate[];
+  taxTemplates!: TaxTemplate[];
 }

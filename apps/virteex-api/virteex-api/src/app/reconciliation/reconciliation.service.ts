@@ -10,7 +10,7 @@ import {
   BankStatement,
   StatementStatus,
 } from './entities/bank-statement.entity';
-import { Repository, Between, DataSource, In } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { UploadStatementDto } from './dto/upload-statement.dto';
 import { CsvParserService } from './parsers/csv-parser.service';
 import { Account } from '../chart-of-accounts/entities/account.entity';
@@ -43,14 +43,13 @@ export class ReconciliationService {
     @InjectRepository(JournalEntryLine)
     private readonly journalEntryLineRepository: Repository<JournalEntryLine>,
     @InjectRepository(ReconciliationRule)
-    private readonly ruleRepository: Repository<ReconciliationRule>,
     private readonly csvParser: CsvParserService,
     private readonly dataSource: DataSource,
     private readonly journalEntriesService: JournalEntriesService,
   ) {}
   
   async processStatementUpload(
-    file: Express.Multer.File,
+    file: any,
     dto: UploadStatementDto,
     organizationId: string,
   ): Promise<BankStatement> {
@@ -95,7 +94,7 @@ export class ReconciliationService {
 
       savedStatement.status = StatementStatus.COMPLETED;
     } catch (error) {
-      this.logger.error('Fallo al procesar el archivo CSV', error.stack);
+      this.logger.error('Fallo al procesar el archivo CSV', (error as Error).stack);
       savedStatement.status = StatementStatus.FAILED;
       await this.statementRepository.save(savedStatement);
       throw new BadRequestException(
@@ -105,7 +104,7 @@ export class ReconciliationService {
 
     const finalStatement = await this.statementRepository.save(savedStatement);
     this.autoReconcileStatement(finalStatement.id, organizationId).catch(err => {
-        this.logger.error(`Error en el proceso de auto-conciliación asíncrono para el estado de cuenta ${finalStatement.id}`, err.stack);
+        this.logger.error(`Error en el proceso de auto-conciliación asíncrono para el estado de cuenta ${finalStatement.id}`, (err as Error).stack);
     });
     return finalStatement;
   }
@@ -243,7 +242,7 @@ export class ReconciliationService {
       await queryRunner.commitTransaction();
     } catch(err) {
         await queryRunner.rollbackTransaction();
-        this.logger.error(`Error en la auto-conciliación para el estado de cuenta ${statementId}`, err.stack);
+        this.logger.error(`Error en la auto-conciliación para el estado de cuenta ${statementId}`, (err as Error).stack);
     } finally {
         await queryRunner.release();
     }

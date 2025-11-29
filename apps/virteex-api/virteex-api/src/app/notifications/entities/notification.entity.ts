@@ -1,27 +1,27 @@
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 
 
 @Entity()
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column()
-  body: string;
+  body!: string;
 
   @Column({ default: false })
-  read: boolean;
+  read!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ManyToOne(() => User)
-  user: User;
+  user!: User;
 
   @Column()
-  userId: string;
+  userId!: string;
 }

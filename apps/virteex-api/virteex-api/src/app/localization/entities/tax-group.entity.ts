@@ -1,17 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Tax } from '../taxes/entities/tax.entity';
+import { Tax } from '../../taxes/entities/tax.entity';
 
 @Entity({ name: 'tax_groups' })
 export class TaxGroup {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
-  @OneToMany(() => Tax, tax => tax.taxGroup)
-  taxes: Tax[];
+  @OneToMany(() => Tax, (tax: Tax) => tax.taxGroup)
+  taxes!: Tax[];
 }

@@ -4,14 +4,14 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 @Entity()
 export class UnitOfMeasure {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ unique: true })
-  symbol: string;
+  symbol!: string;
 
   @Column()
-  category: string;
+  category!: string;
 
   @Column({ unique: true })
-  nameKey: string;
+  nameKey!: string;
 }

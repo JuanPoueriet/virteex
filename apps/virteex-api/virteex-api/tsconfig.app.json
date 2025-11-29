@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "module": "nodenext",
-    "types": ["node"],
+    "types": ["node", "uuid", "web-push", "multer", "express"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "es2021",
