@@ -3,19 +3,19 @@ import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-v
 export class InviteUserDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  firstName: string;
+  firstName!: string;
 
   @IsString()
   @IsNotEmpty()
-  lastName: string;
+  lastName!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  roleId: string;
+  roleId!: string;
 
 
   @IsString()

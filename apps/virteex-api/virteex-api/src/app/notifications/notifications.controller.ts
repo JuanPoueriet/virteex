@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';

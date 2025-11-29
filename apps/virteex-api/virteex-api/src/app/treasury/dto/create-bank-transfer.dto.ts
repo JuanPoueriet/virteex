@@ -3,25 +3,25 @@ import { IsDateString, IsNotEmpty, IsNumber, IsString, IsUUID, Min } from 'class
 export class CreateBankTransferDto {
   @IsDateString()
   @IsNotEmpty()
-  date: string;
+  date!: string;
 
   @IsNumber()
   @Min(0.01)
-  amount: number;
+  amount!: number;
 
   @IsUUID()
   @IsNotEmpty()
-  fromAccountId: string;
+  fromAccountId!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  toAccountId: string;
+  toAccountId!: string;
   
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @IsString()
   @IsNotEmpty()
-  reference: string;
+  reference!: string;
 }

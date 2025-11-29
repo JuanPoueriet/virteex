@@ -5,41 +5,41 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDa
 @Entity({ name: 'bank_transfers' })
 export class BankTransfer {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization!: Organization;
   
   @Column({ type: 'date' })
-  date: Date;
+  date!: Date;
 
   @Column({ type: 'decimal', precision: 18, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @ManyToOne(() => Account)
   @JoinColumn({ name: 'from_account_id' })
-  fromAccount: Account;
+  fromAccount!: Account;
   
   @Column({ name: 'from_account_id' })
-  fromAccountId: string;
+  fromAccountId!: string;
 
   @ManyToOne(() => Account)
   @JoinColumn({ name: 'to_account_id' })
-  toAccount: Account;
+  toAccount!: Account;
   
   @Column({ name: 'to_account_id' })
-  toAccountId: string;
+  toAccountId!: string;
 
   @Column()
-  description: string;
+  description!: string;
 
   @Column({ nullable: true })
   reference?: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 }

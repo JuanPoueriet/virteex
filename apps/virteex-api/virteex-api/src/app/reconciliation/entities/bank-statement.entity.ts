@@ -1,5 +1,5 @@
-import { Account } from '../chart-of-accounts/entities/account.entity';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Account } from '../../chart-of-accounts/entities/account.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import {
   Column,
   CreateDateColumn,
@@ -21,46 +21,46 @@ export enum StatementStatus {
 @Entity({ name: 'bank_statements' })
 export class BankStatement {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization!: Organization;
 
   @Column({ name: 'account_id' })
-  accountId: string;
+  accountId!: string;
 
   @ManyToOne(() => Account)
   @JoinColumn({ name: 'account_id' })
-  account: Account;
+  account!: Account;
 
   @Column({ name: 'file_name' })
-  fileName: string;
+  fileName!: string;
   
   @Column({ type: 'date', name: 'start_date' })
-  startDate: Date;
+  startDate!: Date;
 
   @Column({ type: 'date', name: 'end_date' })
-  endDate: Date;
+  endDate!: Date;
   
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'starting_balance' })
-  startingBalance: number;
+  startingBalance!: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, name: 'ending_balance' })
-  endingBalance: number;
+  endingBalance!: number;
 
   @Column({ type: 'enum', enum: StatementStatus, default: StatementStatus.PROCESSING })
-  status: StatementStatus;
+  status!: StatementStatus;
 
   @OneToMany(() => BankTransaction, (transaction) => transaction.statement, { cascade: true })
-  transactions: BankTransaction[];
+  transactions!: BankTransaction[];
   
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

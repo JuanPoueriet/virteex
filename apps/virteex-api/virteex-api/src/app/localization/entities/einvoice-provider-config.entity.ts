@@ -3,23 +3,23 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 @Entity({ name: 'einvoice_provider_configs' })
 export class EInvoiceProviderConfig {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  providerName: string;
+  providerName!: string;
 
   @Column()
-  isSandbox: boolean;
+  isSandbox!: boolean;
 
   @Column({ type: 'text' })
-  apiUrl: string;
+  apiUrl!: string;
 
   @Column({ type: 'text', comment: 'ID del certificado en un Keystore seguro' })
-  certificateId: string;
+  certificateId!: string;
 
   @Column({ type: 'jsonb' })
-  credentials: Record<string, any>;
+  credentials!: Record<string, any>;
 }

@@ -1,5 +1,5 @@
 
-import { AccountNature, AccountType, AccountCategory } from "../chart-of-accounts/enums/account-enums";
+import { AccountNature, AccountType, AccountCategory } from "../../chart-of-accounts/enums/account-enums";
 import { AccountTemplateDto } from "../entities/coa-template.entity";
 
 

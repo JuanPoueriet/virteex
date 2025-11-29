@@ -65,7 +65,7 @@ export class CsvParserService {
 
           resolve(transactions);
         },
-        error: (error) => {
+        error: (error: Error) => {
           reject(error);
         },
       });

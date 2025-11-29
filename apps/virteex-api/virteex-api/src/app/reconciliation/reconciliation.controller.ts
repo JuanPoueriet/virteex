@@ -1,5 +1,5 @@
 
-import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Body, UseGuards, Get, Param, Query } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Body, UseGuards, Get, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReconciliationService } from './reconciliation.service';
 import { UploadStatementDto } from './dto/upload-statement.dto';
@@ -23,7 +23,7 @@ export class ReconciliationController {
         ],
       }),
     )
-    file: Express.Multer.File,
+    file: any,
     @Body() uploadStatementDto: UploadStatementDto,
     @CurrentUser() user: JwtPayload,
   ) {

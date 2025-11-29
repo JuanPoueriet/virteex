@@ -5,18 +5,18 @@ import { TaxScheme } from './tax-scheme.entity';
 @Entity({ name: 'fiscal_regions' })
 export class FiscalRegion {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index({ unique: true })
   @Column({ length: 2 })
-  countryCode: string;
+  countryCode!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ length: 3 })
-  baseCurrency: string;
+  baseCurrency!: string;
 
-  @OneToMany(() => TaxScheme, scheme => scheme.fiscalRegion)
-  taxSchemes: TaxScheme[];
+  @OneToMany(() => TaxScheme, (scheme: TaxScheme) => scheme.fiscalRegion)
+  taxSchemes!: TaxScheme[];
 }

@@ -4,7 +4,7 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
 export class CreateLeadDto {
   @IsString()
   @IsNotEmpty()
-  topic: string;
+  topic!: string;
 
   @IsString()
   @IsOptional()
@@ -19,7 +19,7 @@ export class CreateLeadDto {
   companyName?: string;
 
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsOptional()

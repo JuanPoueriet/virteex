@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Delete, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PushSubscription } from './entities/push-subscription.entity';

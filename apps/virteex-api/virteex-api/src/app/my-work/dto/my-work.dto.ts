@@ -2,31 +2,31 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class WorkItemDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  title: string;
+  title!: string;
 
   @ApiProperty()
-  description: string;
+  description!: string;
 
   @ApiProperty()
-  dueDate: string;
+  dueDate!: string;
 
   @ApiProperty()
-  status: string;
+  status!: string;
 
   @ApiProperty()
-  link: string;
+  link!: string;
 }
 
 export class MyWorkDto {
   @ApiProperty({ type: [WorkItemDto] })
-  tasks: WorkItemDto[];
+  tasks!: WorkItemDto[];
 
   @ApiProperty({ type: [WorkItemDto] })
-  approvals: WorkItemDto[];
+  approvals!: WorkItemDto[];
 
   @ApiProperty({ type: [WorkItemDto] })
-  notifications: WorkItemDto[];
+  notifications!: WorkItemDto[];
 }

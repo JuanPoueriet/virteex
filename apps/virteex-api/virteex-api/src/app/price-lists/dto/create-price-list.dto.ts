@@ -6,29 +6,29 @@ import { PriceListStatus } from '../entities/price-list.entity';
 class CreatePriceListItemDto {
   @IsUUID()
   @IsNotEmpty()
-  productId: string;
+  productId!: string;
 
   @IsNumber()
   @Min(0)
-  price: number;
+  price!: number;
 }
 
 export class CreatePriceListDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty()
-  currency: string;
+  currency!: string;
 
   @IsDateString()
   @IsNotEmpty()
-  validFrom: Date;
+  validFrom!: Date;
 
   @IsDateString()
   @IsNotEmpty()
-  validTo: Date;
+  validTo!: Date;
   
   @IsEnum(PriceListStatus)
   @IsOptional()
@@ -37,5 +37,5 @@ export class CreatePriceListDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreatePriceListItemDto)
-  items: CreatePriceListItemDto[];
+  items!: CreatePriceListItemDto[];
 }

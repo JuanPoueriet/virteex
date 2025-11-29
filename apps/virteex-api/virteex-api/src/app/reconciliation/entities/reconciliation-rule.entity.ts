@@ -14,23 +14,23 @@ export enum RuleConditionOperator {
 @Entity({ name: 'reconciliation_rules' })
 export class ReconciliationRule {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column({ name: 'organization_id' })
-    organizationId: string;
+    organizationId!: string;
     
     @Column()
-    name: string;
+    name!: string;
 
     @Column({ type: 'enum', enum: RuleConditionField })
-    conditionField: RuleConditionField;
+    conditionField!: RuleConditionField;
     
     @Column({ type: 'enum', enum: RuleConditionOperator })
-    conditionOperator: RuleConditionOperator;
+    conditionOperator!: RuleConditionOperator;
 
     @Column()
-    conditionValue: string;
+    conditionValue!: string;
     
     @Column({ name: 'target_account_id' })
-    targetAccountId: string;
+    targetAccountId!: string;
 }

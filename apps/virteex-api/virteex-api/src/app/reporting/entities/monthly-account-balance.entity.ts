@@ -1,35 +1,35 @@
 
-import { Account } from '../hart-of-accounts/entities/account.entity';
+import { Account } from '../../chart-of-accounts/entities/account.entity';
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 
 @Entity({ name: 'monthly_account_balances' })
 @Index(['organizationId', 'year', 'month'])
 export class MonthlyAccountBalance {
   @PrimaryColumn({ type: 'uuid' })
-  accountId: string;
+  accountId!: string;
 
   @PrimaryColumn({ type: 'int' })
-  year: number;
+  year!: number;
 
   @PrimaryColumn({ type: 'int' })
-  month: number;
+  month!: number;
 
   @PrimaryColumn({ type: 'uuid' })
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Account, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
-  account: Account;
+  account!: Account;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0.0 })
-  totalDebit: number;
+  totalDebit!: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0.0 })
-  totalCredit: number;
+  totalCredit!: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0.0 })
-  endBalance: number;
+  endBalance!: number;
 
   @Column({ type: 'decimal', precision: 18, scale: 2, default: 0.0 })
-  netChange: number;
+  netChange!: number;
 }

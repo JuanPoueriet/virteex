@@ -1,11 +1,11 @@
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { RecurringJournalEntry, Frequency } from './entities/recurring-journal-entry.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CreateRecurringJournalEntryDto, UpdateRecurringJournalEntryDto } from './dto/recurring-and-templates.dto';
-import { addDays, addMonths, addYears, isSameDay, isLastDayOfMonth } from 'date-fns';
+import { isSameDay, isLastDayOfMonth } from 'date-fns';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 

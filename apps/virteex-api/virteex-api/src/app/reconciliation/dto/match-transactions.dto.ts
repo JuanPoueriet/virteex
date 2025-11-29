@@ -5,20 +5,20 @@ import { Type } from 'class-transformer';
 class MatchDto {
   @IsUUID()
   @IsNotEmpty()
-  bankTransactionId: string;
+  bankTransactionId!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  journalEntryLineId: string;
+  journalEntryLineId!: string;
 }
 
 export class MatchTransactionsDto {
   @IsUUID()
   @IsNotEmpty()
-  statementId: string;
+  statementId!: string;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MatchDto)
-  matches: MatchDto[];
+  matches!: MatchDto[];
 }

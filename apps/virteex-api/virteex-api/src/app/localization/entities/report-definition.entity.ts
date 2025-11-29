@@ -9,22 +9,22 @@ export enum ReportFormat {
 @Entity({ name: 'report_definitions' })
 export class ReportDefinition {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  fiscalRegionId: string;
+  fiscalRegionId!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ type: 'enum', enum: ReportFormat })
-  format: ReportFormat;
+  format!: ReportFormat;
 
   @Column({ type: 'text' })
-  template: string;
+  template!: string;
 
   @Column({ type: 'jsonb' })
-  mappings: Record<string, string>;
+  mappings!: Record<string, string>;
 
   @Column({ type: 'jsonb', nullable: true })
   validationRules?: Record<string, any>;

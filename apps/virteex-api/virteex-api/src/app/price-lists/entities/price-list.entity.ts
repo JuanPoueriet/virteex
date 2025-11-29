@@ -1,5 +1,5 @@
 
-import { Organization } from '../rganizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -21,43 +21,43 @@ export enum PriceListStatus {
 @Entity({ name: 'price_lists' })
 export class PriceList {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  currency: string;
+  currency!: string;
 
   @Column({ type: 'date' })
-  validFrom: Date;
+  validFrom!: Date;
 
   @Column({ type: 'date' })
-  validTo: Date;
+  validTo!: Date;
 
   @Column({
     type: 'enum',
     enum: PriceListStatus,
     default: PriceListStatus.DRAFT,
   })
-  status: PriceListStatus;
+  status!: PriceListStatus;
 
   @OneToMany(() => PriceListItem, (item) => item.priceList, {
     cascade: true,
     eager: true,
   })
-  items: PriceListItem[];
+  items!: PriceListItem[];
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization!: Organization;
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

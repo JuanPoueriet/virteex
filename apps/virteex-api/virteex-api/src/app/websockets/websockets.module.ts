@@ -15,7 +15,7 @@ imports: [
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRATION_TIME'),
         },
-      }),
+      } as any),
     }),
   ],
   providers: [EventsGateway],

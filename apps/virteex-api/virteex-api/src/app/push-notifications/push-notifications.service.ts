@@ -13,7 +13,7 @@ export class PushNotificationsService {
     );
   }
 
-  async sendPushNotification(subscription: webpush.PushSubscription, payload: any) {
+  async sendPushNotification(subscription: any, payload: any) {
     try {
       await webpush.sendNotification(subscription, JSON.stringify(payload));
     } catch (error) {
