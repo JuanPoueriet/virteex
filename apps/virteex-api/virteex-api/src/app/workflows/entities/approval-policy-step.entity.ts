@@ -5,17 +5,17 @@ import { ApprovalPolicy } from './approval-policy.entity';
 @Entity({ name: 'approval_policy_steps' })
 export class ApprovalPolicyStep {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => ApprovalPolicy, (policy) => policy.steps)
-  policy: ApprovalPolicy;
+  policy!: ApprovalPolicy;
 
   @Column({ type: 'int' })
-  order: number;
+  order!: number;
 
   @Column('decimal', { precision: 12, scale: 2 })
-  minAmount: number;
+  minAmount!: number;
 
   @Column({ type: 'uuid' })
-  roleId: string;
+  roleId!: string;
 }

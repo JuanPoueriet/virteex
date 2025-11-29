@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
-import { Customer } from '../customers/entities/customer.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { Customer } from '../../customers/entities/customer.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
 export enum ActivityType {
   CALL = 'CALL',
@@ -12,10 +12,10 @@ export enum ActivityType {
 @Entity({ name: 'activities' })
 export class Activity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Customer, { nullable: true })
   @JoinColumn({ name: 'customer_id' })
@@ -23,20 +23,20 @@ export class Activity {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 
   @Column({ type: 'enum', enum: ActivityType })
-  type: ActivityType;
+  type!: ActivityType;
 
   @Column()
-  subject: string;
+  subject!: string;
 
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
   @Column({ type: 'timestamptz' })
-  activityTimestamp: Date;
+  activityTimestamp!: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

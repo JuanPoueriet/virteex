@@ -6,30 +6,30 @@ import { DocumentTypeForApproval } from '../entities/approval-policy.entity';
 class ApprovalPolicyStepDto {
   @IsNumber()
   @Min(0)
-  order: number;
+  order!: number;
 
   @IsNumber()
   @Min(0)
-  minAmount: number;
+  minAmount!: number;
 
   @IsUUID()
   @IsNotEmpty()
-  roleId: string;
+  roleId!: string;
 }
 
 export class CreateApprovalPolicyDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsEnum(DocumentTypeForApproval)
   @IsNotEmpty()
-  documentType: DocumentTypeForApproval;
+  documentType!: DocumentTypeForApproval;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ApprovalPolicyStepDto)
-  steps: ApprovalPolicyStepDto[];
+  steps!: ApprovalPolicyStepDto[];
 }
 
 export class UpdateApprovalPolicyDto {

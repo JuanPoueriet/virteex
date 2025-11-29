@@ -9,18 +9,18 @@ export enum WebhookEvent {
 @Entity({ name: 'webhook_subscriptions' })
 export class WebhookSubscription {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  targetUrl: string;
+  targetUrl!: string;
 
   @Column({ type: 'enum', enum: WebhookEvent })
-  event: WebhookEvent;
+  event!: WebhookEvent;
 
   @Column()
-  secret: string;
+  secret!: string;
 }

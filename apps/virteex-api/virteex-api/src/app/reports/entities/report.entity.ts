@@ -10,23 +10,23 @@ export enum ReportStatus {
 @Entity({ name: 'reports' })
 export class Report {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  reportType: string;
+  reportType!: string;
 
   @Column({ type: 'jsonb' })
   options: any;
 
   @Column({ type: 'enum', enum: ReportStatus, default: ReportStatus.PENDING })
-  status: ReportStatus;
+  status!: ReportStatus;
 
   @Column({ nullable: true })
   fileUrl?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

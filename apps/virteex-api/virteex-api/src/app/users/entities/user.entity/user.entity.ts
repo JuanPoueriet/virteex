@@ -27,19 +27,19 @@ export class User {
 
 
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
 
 
 
   @Column({ length: 100 })
-  firstName: string;
+  firstName!: string;
 
   @Column({ length: 100 })
-  lastName: string;
+  lastName!: string;
 
   @Column({ length: 255, unique: true })
-  email: string;
+  email!: string;
 
   @Column({
     name: 'password_hash',
@@ -47,7 +47,7 @@ export class User {
     nullable: true,
     select: false,
   })
-  passwordHash: string;
+  passwordHash!: string;
 
   @Column({ nullable: true })
   avatarUrl?: string;
@@ -63,7 +63,7 @@ export class User {
     enum: UserStatus,
     default: UserStatus.ACTIVE,
   })
-  status: UserStatus;
+  status!: UserStatus;
 
   @Column({
     name: 'token_version',
@@ -71,13 +71,13 @@ export class User {
     default: 0,
     comment: 'Incrementado para invalidar todos los JWT emitidos previamente.',
   })
-  tokenVersion: number;
+  tokenVersion!: number;
 
   @Column({ name: 'failed_login_attempts', type: 'integer', default: 0 })
-  failedLoginAttempts: number;
+  failedLoginAttempts!: number;
 
   @Column({ name: 'lockout_until', type: 'timestamptz', nullable: true })
-  lockoutUntil: Date | null;
+  lockoutUntil!: Date | null;
 
   @Column({
     name: 'password_reset_token',
@@ -91,7 +91,7 @@ export class User {
   passwordResetExpires?: Date | null;
 
   @Column({ name: 'is_online', default: false })
-  isOnline: boolean;
+  isOnline!: boolean;
 
   @Column({ name: 'last_activity', type: 'timestamptz', nullable: true })
   lastActivity?: Date;
@@ -100,11 +100,11 @@ export class User {
 
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @ManyToOne(() => Organization, (org) => org.users)
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization!: Organization;
 
   @ManyToMany(() => Role, { eager: true })
   @JoinTable({
@@ -112,7 +112,7 @@ export class User {
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
-  roles: Role[];
+  roles!: Role[];
 
 
 
@@ -143,8 +143,8 @@ export class User {
 
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

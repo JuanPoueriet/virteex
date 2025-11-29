@@ -1,7 +1,7 @@
 
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository, Between, DataSource } from 'typeorm';
+import { In, Repository, DataSource } from 'typeorm';
 import { Invoice, InvoiceStatus } from '../invoices/entities/invoice.entity';
 import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
 import { Account } from '../chart-of-accounts/entities/account.entity';
@@ -20,7 +20,7 @@ export class ReportsService {
     @InjectRepository(JournalEntryLine)
     private readonly journalEntryLineRepository: Repository<JournalEntryLine>,
     @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
+    // private readonly accountRepository: Repository<Account>,
     private readonly dataSource: DataSource,
   ) {}
 

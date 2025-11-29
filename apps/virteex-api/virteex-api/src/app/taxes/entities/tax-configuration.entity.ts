@@ -4,13 +4,13 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 @Entity({ name: 'tax_configurations' })
 export class TaxConfiguration {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  taxId: string;
+  taxId!: string;
 
   @Column({ nullable: true })
   countryCode?: string;
@@ -22,5 +22,5 @@ export class TaxConfiguration {
   customerTaxType?: 'INDIVIDUAL' | 'CORPORATE';
 
   @Column()
-  priority: number;
+  priority!: number;
 }

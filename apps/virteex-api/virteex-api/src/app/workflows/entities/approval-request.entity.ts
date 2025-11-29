@@ -1,5 +1,5 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, } from 'typeorm';
 
 export enum ApprovalStatus {
   PENDING = 'PENDING',
@@ -10,25 +10,25 @@ export enum ApprovalStatus {
 @Entity({ name: 'approval_requests' })
 export class ApprovalRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
   
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column({ type: 'uuid' })
-  documentId: string;
+  documentId!: string;
 
   @Column()
-  documentType: string;
+  documentType!: string;
 
   @Column({ type: 'enum', enum: ApprovalStatus })
-  status: ApprovalStatus;
+  status!: ApprovalStatus;
   
   @Column({ type: 'int' })
-  currentStep: number;
+  currentStep!: number;
   
   @Column({ type: 'uuid' })
-  policyId: string;
+  policyId!: string;
 
   @Column({ type: 'uuid', nullable: true })
   approvedByUserId?: string;

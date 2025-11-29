@@ -1,9 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { Customer } from '../ustomers/entities/customer.entity';
-import { User } from '../sers/entities/user.entity/user.entity';
+import { Customer } from '../../customers/entities/customer.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 import { Opportunity } from './opportunity.entity';
 import { QuoteLine } from './quote-line.entity';
-import { Currency } from '../urrencies/entities/currency.entity';
+import { Currency } from '../../currencies/entities/currency.entity';
 
 export enum QuoteStatus {
   DRAFT = 'DRAFT',
@@ -16,45 +16,45 @@ export enum QuoteStatus {
 @Entity({ name: 'quotes' })
 export class Quote {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
 
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @Column({ unique: true })
-  quoteNumber: string;
+  quoteNumber!: string;
 
   @ManyToOne(() => Customer, { eager: true })
   @JoinColumn({ name: 'customer_id' })
-  customer: Customer;
+  customer!: Customer;
 
   @ManyToOne(() => Opportunity, { nullable: true })
   @JoinColumn({ name: 'opportunity_id' })
   opportunity?: Opportunity;
 
   @OneToMany(() => QuoteLine, (line) => line.quote, { cascade: true, eager: true })
-  lines: QuoteLine[];
+  lines!: QuoteLine[];
 
   @Column({ type: 'date' })
-  issueDate: Date;
+  issueDate!: Date;
 
   @Column({ type: 'date' })
-  expiryDate: Date;
+  expiryDate!: Date;
 
   @Column('decimal', { precision: 12, scale: 2, comment: 'Subtotal in transaction currency' })
-  subtotal: number;
+  subtotal!: number;
 
   @Column('decimal', { precision: 12, scale: 2, comment: 'Total in transaction currency' })
-  total: number;
+  total!: number;
   
 
   @Column({ length: 3, name: 'currency_code' })
-  currencyCode: string;
+  currencyCode!: string;
 
   @ManyToOne(() => Currency)
   @JoinColumn({ name: 'currency_code', referencedColumnName: 'code' })
-  currency: Currency;
+  currency!: Currency;
 
   @Column('decimal', {
     precision: 18,
@@ -63,7 +63,7 @@ export class Quote {
     name: 'exchange_rate',
     comment: 'Rate to convert from transaction currency to base currency'
   })
-  exchangeRate: number;
+  exchangeRate!: number;
 
   @Column('decimal', {
     precision: 18,
@@ -71,19 +71,19 @@ export class Quote {
     name: 'total_in_base_currency',
     comment: 'Total amount converted to the organization\'s base currency'
   })
-  totalInBaseCurrency: number;
+  totalInBaseCurrency!: number;
 
 
   @Column({ type: 'enum', enum: QuoteStatus, default: QuoteStatus.DRAFT })
-  status: QuoteStatus;
+  status!: QuoteStatus;
 
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'owner_id' })
-  owner: User;
+  owner!: User;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

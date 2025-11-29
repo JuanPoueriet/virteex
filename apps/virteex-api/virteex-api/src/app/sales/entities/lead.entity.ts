@@ -1,19 +1,19 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { CustomerStatus } from '../customers/entities/customer.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { CustomerStatus } from '../../customers/entities/customer.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
 @Entity({ name: 'leads' })
 export class Lead {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Index()
   @Column({ name: 'organization_id' })
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  topic: string;
+  topic!: string;
 
   @Column({ nullable: true })
   firstName?: string;
@@ -25,21 +25,21 @@ export class Lead {
   companyName?: string;
 
   @Column({ unique: true })
-  email: string;
+  email!: string;
 
   @Column({ nullable: true })
   phone?: string;
 
   @Column({ type: 'enum', enum: CustomerStatus, default: CustomerStatus.LEAD })
-  status: CustomerStatus;
+  status!: CustomerStatus;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'owner_id' })
-  owner: User;
+  owner!: User;
 
   @Column({ name: 'owner_id', type: 'uuid' })
-  ownerId: string;
+  ownerId!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

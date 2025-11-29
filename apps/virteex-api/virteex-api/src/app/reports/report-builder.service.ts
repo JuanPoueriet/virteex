@@ -1,5 +1,5 @@
 
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
   ReportDefinitionDto,

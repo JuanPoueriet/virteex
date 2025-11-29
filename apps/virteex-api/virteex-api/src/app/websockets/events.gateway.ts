@@ -11,13 +11,15 @@ import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http:
+    // Allowing all origins; you can set a specific origin like 'http://localhost:4200' or use an env var
+    origin: '*',
     credentials: true,
   },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  // `server` is set by the decorator at runtime; mark as definitely assigned to satisfy TS strict checks
+  server!: Server;
 
   private connectedUsers = new Map<string, string>();
 
@@ -29,7 +31,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         ?.split('; ')
         .find((row) => row.startsWith('access_token='))
         ?.split('=')[1];
-      if (!token) return client.disconnect();
+      if (!token) {
+        client.disconnect();
+        return;
+      }
 
       const payload = this.jwtService.verify(token);
       this.connectedUsers.set(payload.id, client.id);
@@ -39,7 +44,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId: payload.id,
         isOnline: true,
       });
-    } catch (e) {
+    } catch (error) {
+      console.error(error);
       client.disconnect();
     }
   }
@@ -57,7 +63,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
 
-  sendToUser(userId: string, event: string, data: any) {
+  sendToUser(userId: string, event: string, data: unknown) {
     const socketId = this.connectedUsers.get(userId);
     if (socketId) {
       this.server.to(socketId).emit(event, data);

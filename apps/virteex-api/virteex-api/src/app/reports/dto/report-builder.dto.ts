@@ -37,7 +37,7 @@ export class ReportColumnDefinition {
   })
   @IsString()
   @IsNotEmpty()
-  id: string;
+  id!: string;
 
   @ApiProperty({
     description: 'El texto que se mostrará en el encabezado de la columna.',
@@ -45,14 +45,14 @@ export class ReportColumnDefinition {
   })
   @IsString()
   @IsNotEmpty()
-  header: string;
+  header!: string;
 
   @ApiProperty({
     description: 'El ID del libro contable (Ledger) del cual se extraerán los datos para esta columna.',
   })
   @IsUUID()
   @IsNotEmpty()
-  ledgerId: string;
+  ledgerId!: string;
 
   @ApiProperty({
     description: 'Define el rango de fechas para los datos de esta columna.',
@@ -60,7 +60,7 @@ export class ReportColumnDefinition {
   @IsObject()
   @ValidateNested()
   @Type(() => PeriodDefinition)
-  period: PeriodDefinition;
+  period!: PeriodDefinition;
 }
 
 export class PeriodDefinition {
@@ -69,14 +69,14 @@ export class PeriodDefinition {
   })
   @IsDateString()
   @IsNotEmpty()
-  startDate: string;
+  startDate!: string;
 
   @ApiProperty({
     description: 'Fecha de fin del período en formato ISO 8601 (YYYY-MM-DD).',
   })
   @IsDateString()
   @IsNotEmpty()
-  endDate: string;
+  endDate!: string;
 }
 
 export class ReportRowDefinition {
@@ -86,7 +86,7 @@ export class ReportRowDefinition {
   })
   @IsString()
   @IsNotEmpty()
-  id: string;
+  id!: string;
 
   @ApiProperty({
     description: 'El texto o etiqueta que se mostrará para esta fila.',
@@ -94,7 +94,7 @@ export class ReportRowDefinition {
   })
   @IsString()
   @IsNotEmpty()
-  label: string;
+  label!: string;
 
   @ApiProperty({
     enum: ReportRowType,
@@ -102,7 +102,7 @@ export class ReportRowDefinition {
   })
   @IsEnum(ReportRowType)
   @IsNotEmpty()
-  type: ReportRowType;
+  type!: ReportRowType;
 
   @ApiProperty({
     description: 'Array de IDs de cuentas contables cuyos saldos se sumarán para esta fila. Solo aplica si el tipo es ACCOUNT o GROUP.',
@@ -157,7 +157,7 @@ export class ReportDefinitionDto {
   })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({
     description: 'Una descripción opcional del propósito del reporte.',
@@ -174,7 +174,7 @@ export class ReportDefinitionDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ReportColumnDefinition)
-  columns: ReportColumnDefinition[];
+  columns!: ReportColumnDefinition[];
 
   @ApiProperty({
     description: 'Un array que define las filas del reporte en el orden en que deben aparecer.',
@@ -183,5 +183,5 @@ export class ReportDefinitionDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ReportRowDefinition)
-  rows: ReportRowDefinition[];
+  rows!: ReportRowDefinition[];
 }

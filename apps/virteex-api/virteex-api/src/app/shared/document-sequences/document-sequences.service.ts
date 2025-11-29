@@ -1,14 +1,17 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+// import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, 
+  // Repository 
+
+} from 'typeorm';
 import { DocumentSequence, DocumentType } from './entities/document-sequence.entity';
 
 @Injectable()
 export class DocumentSequencesService {
-  constructor(
-    @InjectRepository(DocumentSequence)
-    private readonly sequenceRepository: Repository<DocumentSequence>,
-  ) {}
+  // constructor(
+  //   @InjectRepository(DocumentSequence)
+  //   private readonly sequenceRepository: Repository<DocumentSequence>,
+  // ) {}
 
   async getNextNumber(
     organizationId: string,

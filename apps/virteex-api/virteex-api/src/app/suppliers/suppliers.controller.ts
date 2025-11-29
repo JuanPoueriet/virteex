@@ -12,9 +12,9 @@ import {
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
-import { JwtAuthGuard } from '../uth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../uth/decorators/current-user.decorator';
-import { User } from '../sers/entities/user.entity/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity/user.entity';
 
 @Controller('suppliers')
 @UseGuards(JwtAuthGuard)

@@ -13,17 +13,17 @@ export enum DocumentTypeForApproval {
 @Entity({ name: 'approval_policies' })
 export class ApprovalPolicy {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  organizationId: string;
+  organizationId!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column({ type: 'enum', enum: DocumentTypeForApproval })
-  documentType: DocumentTypeForApproval;
+  documentType!: DocumentTypeForApproval;
 
   @OneToMany(() => ApprovalPolicyStep, (step) => step.policy, { cascade: true })
-  steps: ApprovalPolicyStep[];
+  steps!: ApprovalPolicyStep[];
 }

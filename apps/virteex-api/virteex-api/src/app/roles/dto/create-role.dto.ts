@@ -3,7 +3,7 @@ import { IsString, IsArray, IsOptional, Length } from 'class-validator';
 export class CreateRoleDto {
   @IsString()
   @Length(3, 100)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()
@@ -11,5 +11,5 @@ export class CreateRoleDto {
   description?: string;
 
   @IsArray()
-  permissions: string[];
+  permissions!: string[];
 }

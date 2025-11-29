@@ -1,35 +1,35 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsNotEmpty, IsNumber, IsString, IsUUID, Min, ValidateNested, IsOptional, Length } from 'class-validator';
+import { IsArray, IsDateString, IsNumber, IsString, IsUUID, Min, ValidateNested, IsOptional, Length } from 'class-validator';
 
 class CreateQuoteLineDto {
   @IsUUID()
-  productId: string;
+  productId!: string;
 
   @IsString()
-  description: string;
+  description!: string;
 
   @IsNumber()
   @Min(1)
-  quantity: number;
+  quantity!: number;
 
   @IsNumber()
   @Min(0)
-  unitPrice: number;
+  unitPrice!: number;
 }
 
 export class CreateQuoteDto {
   @IsUUID()
-  customerId: string;
+  customerId!: string;
 
   @IsUUID()
   @IsOptional()
   opportunityId?: string;
   
   @IsDateString()
-  issueDate: string;
+  issueDate!: string;
 
   @IsDateString()
-  expiryDate: string;
+  expiryDate!: string;
 
 
   @IsString()
@@ -41,5 +41,5 @@ export class CreateQuoteDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateQuoteLineDto)
-  lines: CreateQuoteLineDto[];
+  lines!: CreateQuoteLineDto[];
 }

@@ -1,5 +1,5 @@
 
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -13,30 +13,30 @@ import {
 @Entity({ name: 'roles' })
 export class Role {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id!: string;
 
     @Column({ length: 100 })
-    name: string;
+    name!: string;
 
     @Column({ type: 'text', nullable: true })
-    description: string;
+    description!: string;
 
     @Column('simple-array')
-    permissions: string[];
+    permissions!: string[];
 
     @Column({ name: 'is_system_role', default: false })
-    isSystemRole: boolean;
+    isSystemRole!: boolean;
 
     @Column({ name: 'organization_id' })
-    organizationId: string;
+    organizationId!: string;
 
     @ManyToOne(() => Organization)
     @JoinColumn({ name: 'organization_id' })
-    organization: Organization;
+    organization!: Organization;
 
     @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-    createdAt: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-    updatedAt: Date;
+    updatedAt!: Date;
 }
