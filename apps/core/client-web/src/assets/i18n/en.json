@@ -1,0 +1,16 @@
+{
+  "SETTINGS": {
+    "TITLE": "Settings",
+    "DESCRIPTION": "Manage your account, company, and user details.",
+    "BRANDING": {
+      "TITLE": "Advanced Customization",
+      "DESCRIPTION": "Complete the information to customize the appearance of your application.",
+      "SAVE_BUTTON": "Save Changes"
+    }
+  },
+  "NAV": {
+    "DASHBOARD": "Dashboard",
+    "MY_WORK": "My Work",
+    "APPROVALS": "Approvals"
+  }
+}

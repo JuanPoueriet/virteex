@@ -1,0 +1,59 @@
+<div class="view-container">
+    <div class="view-header">
+        <div class="header-content">
+            <h1>Facturas</h1>
+            <p>Crea, envía y da seguimiento a todas tus facturas.</p>
+        </div>
+        <div class="header-actions">
+            <button class="secondary-button">
+                <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
+                <span>Filtros</span>
+            </button>
+            <a routerLink="/app/invoices/new" class="primary-button">
+                <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
+                <span>Crear Factura</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="table-container card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Factura #</th>
+                    <th>Cliente</th>
+                    <th>Fecha de Emisión</th>
+                    <th>Fecha de Vencimiento</th>
+                    <th class="text-right">Total</th>
+                    <th>Estado</th>
+                    <th class="actions-column"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (invoice of invoices(); track invoice.id) {
+                <tr>
+                    <td><a routerLink="/app/invoices/{{invoice.id}}" class="table-link">{{ invoice.id }}</a></td>
+                    <td>{{ invoice.customerName }}</td>
+                    <td>{{ invoice.issueDate }}</td>
+                    <td>{{ invoice.dueDate }}</td>
+                    <td class="text-right">{{ invoice.total | number:'1.2-2' }}</td>
+                    <td>
+                        <span class="status-badge" [ngClass]="getStatusClass(invoice.status)">
+                            {{ invoice.status }}
+                        </span>
+                    </td>
+                    <td class="actions-column">
+                        <button class="icon-button">
+                            <lucide-icon [img]="MoreHorizontalIcon" size="18"></lucide-icon>
+                        </button>
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="7" class="empty-state">No has creado ninguna factura todavía.</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

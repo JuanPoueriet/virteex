@@ -1,0 +1,95 @@
+<div class="step-container" [formGroup]="parentForm">
+    <div class="step-header">
+        <h3>Identidad de tu Negocio</h3>
+        <p>Cuéntanos sobre la empresa que estás registrando.</p>
+    </div>
+    <div class="form-field file-upload-field">
+        <label>Logo de tu Empresa (Opcional)</label>
+        <div class="file-input-container logo-container">
+            <input type="file" id="logoFile" (change)="onFileSelected($event)" accept="image/png, image/jpeg">
+            <label for="logoFile" class="file-input-label">
+                @if(logoPreview()){<img [src]="logoPreview()" alt="Vista previa del logo">} @else {<lucide-icon
+                    [img]="LogoIcon" size="32" /><span>Subir logo</span>}
+            </label>
+        </div>
+    </div>
+    <div class="form-field"
+        [class.error]="parentForm.get('companyName')?.invalid && (parentForm.get('companyName')?.touched || parentForm.get('companyName')?.dirty)">
+        <label for="companyName">Nombre Comercial / Razón Social*</label>
+        <div class="input-wrapper"><lucide-icon [img]="CompanyIcon" size="18" class="input-icon"></lucide-icon><input
+                id="companyName" formControlName="companyName"></div>
+        @if (parentForm.get('companyName')?.invalid && (parentForm.get('companyName')?.touched ||
+        parentForm.get('companyName')?.dirty)) {
+        <div class="error-message">
+            @if (parentForm.get('companyName')?.errors?.['required']) { <span>Nombre de empresa es obligatorio</span> }
+            @if (parentForm.get('companyName')?.errors?.['serverError']) { <span>{{
+                parentForm.get('companyName')?.errors?.['serverError'] }}</span> }
+        </div>
+        }
+    </div>
+
+    <div class="form-field" [class.error]="parentForm.get('fiscalRegionId')?.invalid && (parentForm.get('fiscalRegionId')?.touched || parentForm.get('fiscalRegionId')?.dirty)">
+        <label for="fiscalRegionId">País de Operación*</label>
+        <div class="input-wrapper">
+            <lucide-icon [img]="FiscalRegionIcon" size="18" class="input-icon"></lucide-icon>
+            <select id="fiscalRegionId" formControlName="fiscalRegionId">
+                <option value="" disabled>Selecciona tu país</option>
+                @for(region of fiscalRegions$ | async; track region.id){
+                    <option [value]="region.id">{{ region.name }}</option>
+                }
+            </select>
+        </div>
+        @if (parentForm.get('fiscalRegionId')?.invalid && (parentForm.get('fiscalRegionId')?.touched || parentForm.get('fiscalRegionId')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('fiscalRegionId')?.errors?.['required']) { <span>El país de operación es obligatorio</span> }
+            </div>
+        }
+    </div>
+
+    <div class="form-row">
+        <div class="form-field"
+            [class.error]="parentForm.get('industry')?.invalid && (parentForm.get('industry')?.touched || parentForm.get('industry')?.dirty)">
+            <label for="industry">Industria*</label>
+            <div class="input-wrapper"><lucide-icon [img]="IndustryIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="industry" formControlName="industry">
+                    <option value="" disabled>Selecciona un sector</option>
+                    <option value="retail">Venta al por menor</option>
+                    <option value="services">Servicios</option>
+                </select></div>
+            @if (parentForm.get('industry')?.invalid && (parentForm.get('industry')?.touched ||
+            parentForm.get('industry')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('industry')?.errors?.['required']) { <span>Industria es obligatoria</span> }
+                @if (parentForm.get('industry')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('industry')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+        <div class="form-field">
+            <label for="legalForm">Forma Legal (Opcional)</label>
+            <div class="input-wrapper"><lucide-icon [img]="LegalFormIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="legalForm" formControlName="legalForm">
+                    <option value="">No especificado</option>
+                    <option value="SAS">SAS</option>
+                    <option value="SRL">SRL</option>
+                </select></div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-field">
+            <label for="numberOfEmployees">Tamaño (Opcional)</label>
+            <div class="input-wrapper"><lucide-icon [img]="EmployeesIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="numberOfEmployees" formControlName="numberOfEmployees">
+                    <option value="">Selecciona una opción</option>
+                    <option value="1">Solo yo</option>
+                    <option value="2-5">2-5</option>
+                </select></div>
+        </div>
+        <div class="form-field">
+            <label for="website">Sitio Web (Opcional)</label>
+            <div class="input-wrapper"><lucide-icon [img]="WebsiteIcon" size="18"
+                    class="input-icon"></lucide-icon><input id="website" formControlName="website"
+                    placeholder="https://tuempresa.com"></div>
+        </div>
+    </div>
+</div>

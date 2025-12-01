@@ -1,0 +1,321 @@
+<div class="login-wrapper">
+  <!-- Nuevo selector de idiomas en la esquina superior derecha -->
+  <div class="top-language-selector">
+    <div class="language-selector" #topLanguageSelector>
+      <div
+        class="selector-trigger"
+        (click)="toggleDropdown($event, 'top')"
+        [class.active]="dropdownOpen()"
+      >
+        <lucide-icon
+          [img]="GlobeIcon"
+          size="18"
+          class="selector-icon"
+          aria-hidden="true"
+        ></lucide-icon>
+        <span class="selected-language">
+          {{ languageService.currentLang() === "es" ? "Español (LATAM)" : "English (US)" }}
+        </span>
+        <lucide-icon
+          [img]="dropdownOpen() ? ChevronUp : ChevronDown"
+          size="16"
+          class="dropdown-icon"
+          aria-hidden="true"
+        ></lucide-icon>
+      </div>
+
+      <div
+        class="dropdown-menu"
+        [class.show]="dropdownOpen()"
+        [class.dropup]="isDropUp()"
+      >
+        <div
+          class="dropdown-item"
+          [class.active]="languageService.currentLang() === 'es'"
+          (click)="changeLanguage('es')"
+        >
+          <span class="flag-icon">🇪🇸</span>
+          <span class="language-name">Español (LATAM)</span>
+          @if(languageService.currentLang() === 'es'){
+            <lucide-icon
+              [img]="Check"
+              size="16"
+              class="check-icon"
+            ></lucide-icon>
+          }
+        </div>
+
+        <div
+          class="dropdown-item"
+          [class.active]="languageService.currentLang() === 'en'"
+          (click)="changeLanguage('en')"
+        >
+          <span class="flag-icon">🇺🇸</span>
+          <span class="language-name">English (US)</span>
+          @if(languageService.currentLang() === 'en'){
+            <lucide-icon
+              [img]="Check"
+              size="16"
+              class="check-icon"
+            ></lucide-icon>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title">{{ "LOGIN.TITLE" | translate }}</h1>
+        <p class="auth-subtitle">{{ "LOGIN.SUBTITLE" | translate }}</p>
+      </div>
+
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="onSubmit()"
+        class="auth-form"
+        novalidate
+        #formElement
+      >
+        <div class="form-field">
+          <label for="email" class="input-label">{{
+            "LOGIN.EMAIL_LABEL" | translate
+          }}</label>
+          <div class="input-wrapper">
+            <lucide-icon
+              [img]="MailIcon"
+              size="18"
+              class="input-icon"
+              aria-hidden="true"
+            ></lucide-icon>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              placeholder="email@ejemplo.com"
+            />
+          </div>
+          @if (email?.invalid && email?.touched) {
+            <div class="error-message">
+              @if (email?.errors?.['required']) {
+                {{ 'LOGIN.ERRORS.EMAIL_REQUIRED' | translate }}
+              }
+              @if (email?.errors?.['email']) {
+                {{ 'LOGIN.ERRORS.EMAIL_INVALID' | translate }}
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-field">
+          <div class="password-header">
+            <label for="password" class="input-label">{{
+              "LOGIN.PASSWORD_LABEL" | translate
+            }}</label>
+            <a
+              [routerLink]="[
+                '/',
+                languageService.currentLang(),
+                'auth',
+                'forgot-password'
+              ]"
+              class="forgot-password"
+              >{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a
+            >
+          </div>
+          <div class="input-wrapper">
+            <lucide-icon
+              [img]="LockIcon"
+              size="18"
+              class="input-icon"
+              aria-hidden="true"
+            ></lucide-icon>
+            <input
+              id="password"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="toggle-password"
+              [attr.aria-label]="
+                passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              "
+            >
+              @if (passwordVisible()) {
+              <lucide-icon
+                [img]="EyeOffIcon"
+                size="18"
+                aria-hidden="true"
+              ></lucide-icon>
+              } @else {
+              <lucide-icon
+                [img]="EyeIcon"
+                size="18"
+                aria-hidden="true"
+              ></lucide-icon>
+              }
+            </button>
+          </div>
+          @if (password?.invalid && password?.touched) {
+            <div class="error-message">
+              {{ 'LOGIN.ERRORS.PASSWORD_REQUIRED' | translate }}
+            </div>
+          }
+        </div>
+
+        <div class="remember-container">
+          <label class="checkbox-container">
+            <input
+              type="checkbox"
+              class="remember-checkbox"
+              formControlName="rememberMe"
+              id="remember-me"
+            />
+            <span class="checkmark"></span>
+            <span class="remember-label">{{
+              "LOGIN.REMEMBER_ME" | translate
+            }}</span>
+          </label>
+        </div>
+
+        @if (errorMessage()) {
+        <div class="error-message global-error" role="alert" id="global-error">
+          <lucide-icon
+            [img]="AlertCircleIcon"
+            size="16"
+            aria-hidden="true"
+          ></lucide-icon>
+          <span>{{ errorMessage() | translate }}</span>
+        </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || isLoggingIn()"
+          class="submit-button"
+          [class.loading]="isLoggingIn()"
+          [attr.aria-busy]="isLoggingIn()"
+          [attr.aria-describedby]="errorMessage() ? 'global-error' : null"
+        >
+          @if (isLoggingIn()) {
+          <span class="spinner" aria-hidden="true"></span>
+          }
+          <span>{{ "LOGIN.SUBMIT_BUTTON" | translate }}</span>
+        </button>
+
+        <div class="auth-footer">
+          <p class="register-text">
+            {{ "LOGIN.NO_ACCOUNT" | translate }}
+            <a
+              [routerLink]="[
+                '/',
+                languageService.currentLang(),
+                'auth',
+                'register'
+              ]"
+              class="register-link"
+              >{{ "LOGIN.REGISTER_LINK" | translate }}</a
+            >
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div class="footer-top">
+        <div class="language-section">
+          <div class="language-selector" #footerLanguageSelector>
+            <div
+              class="selector-trigger"
+              (click)="toggleDropdown($event, 'footer')"
+              [class.active]="dropdownOpen()"
+            >
+              <lucide-icon
+                [img]="GlobeIcon"
+                size="18"
+                class="selector-icon"
+                aria-hidden="true"
+              ></lucide-icon>
+              <span class="selected-language">
+                {{ languageService.currentLang() === "es" ? "Español (LATAM)" : "English (US)" }}
+              </span>
+              <lucide-icon
+                [img]="dropdownOpen() ? ChevronUp : ChevronDown"
+                size="16"
+                class="dropdown-icon"
+                aria-hidden="true"
+              ></lucide-icon>
+            </div>
+
+            <div
+              class="dropdown-menu"
+              [class.show]="dropdownOpen()"
+              [class.dropup]="isDropUp()"
+            >
+              <div
+                class="dropdown-item"
+                [class.active]="languageService.currentLang() === 'es'"
+                (click)="changeLanguage('es')"
+              >
+                <span class="flag-icon">🇪🇸</span>
+                <span class="language-name">Español (LATAM)</span>
+                @if(languageService.currentLang() === 'es'){
+                  <lucide-icon
+                    [img]="Check"
+                    size="16"
+                    class="check-icon"
+                  ></lucide-icon>
+                }
+              </div>
+
+              <div
+                class="dropdown-item"
+                [class.active]="languageService.currentLang() === 'en'"
+                (click)="changeLanguage('en')"
+              >
+                <span class="flag-icon">🇺🇸</span>
+                <span class="language-name">English (US)</span>
+                @if(languageService.currentLang() === 'en'){
+                  <lucide-icon
+                    [img]="Check"
+                    size="16"
+                    class="check-icon"
+                  ></lucide-icon>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="support-section">
+          <p class="support-text">
+            ¿Preguntas? Llama al
+            <a href="tel:+18492001043" class="support-link">+1 (849) 200-1043</a>
+          </p>
+        </div>
+      </div>
+
+      <nav class="footer-links">
+        <a routerLink="/faq">Preguntas frecuentes</a>
+        <a routerLink="/help">Centro de ayuda</a>
+        <a routerLink="/terms">{{ "FOOTER.TERMS" | translate }}</a>
+        <a routerLink="/privacy">{{ "FOOTER.PRIVACY" | translate }}</a>
+        <a routerLink="/cookies">Preferencias de cookies</a>
+        <a routerLink="/corp-info">Información empresarial</a>
+        <a routerLink="/security">{{ "FOOTER.SECURITY" | translate }}</a>
+      </nav>
+
+      <div class="footer-bottom">
+        <p class="copyright">
+          {{ "FOOTER.COPYRIGHT" | translate }}
+        </p>
+      </div>
+    </div>
+  </footer>
+</div>

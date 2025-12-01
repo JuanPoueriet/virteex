@@ -1,0 +1,51 @@
+<!--
+  Componente de Modal Genérico
+  - Usa animaciones de entrada/salida para una mejor UX.
+  - El fondo oscuro (`backdrop`) cierra el modal al hacer clic.
+  - El contenido (título, mensaje, botones) es dinámico y se pasa a través de `options`.
+  - Escucha la tecla 'Escape' para cerrar.
+-->
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center p-4"
+  [@fade]="'in'">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="close()"></div>
+
+  <!-- Panel del Modal -->
+  <div
+    class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl dark:bg-gray-800"
+    role="dialog"
+    aria-modal="true"
+    [@slide]="'in'">
+    
+    <!-- Título -->
+    <h3 class="text-lg font-semibold leading-6 text-gray-900 dark:text-white" id="modal-title">
+      {{ options.title }}
+    </h3>
+
+    <!-- Contenido del Mensaje -->
+    <div class="mt-3">
+      <p class="text-sm text-gray-600 dark:text-gray-300">
+        {{ options.message }}
+      </p>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="mt-6 flex justify-end space-x-3">
+      @if (options.cancelText) {
+        <button
+          type="button"
+          class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+          (click)="cancel()">
+          {{ options.cancelText }}
+        </button>
+      }
+      <button
+        type="button"
+        class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        (click)="confirm()">
+        {{ options.confirmText || 'Aceptar' }}
+      </button>
+    </div>
+  </div>
+</div>

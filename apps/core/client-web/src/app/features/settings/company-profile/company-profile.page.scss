@@ -1,0 +1,52 @@
+@use '../../../../assets/styles/forms' as mixins;
+
+.settings-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .primary-button {
+        @include mixins.submit-button;
+        gap: 0.5rem;
+    }
+}
+
+.form-section {
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-field {
+    @include mixins.form-field;
+
+    &.full-width {
+        grid-column: 1 / -1;
+    }
+
+    input,
+    select {
+        @include mixins.input-wrapper;
+        padding-left: 1rem;
+    }
+}

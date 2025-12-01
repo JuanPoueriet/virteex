@@ -1,0 +1,128 @@
+<div class="step-container" [formGroup]="parentForm">
+    <div class="step-header">
+        <h3>Localización y Fiscal</h3>
+        <p>Información clave para tus facturas y cumplimiento de normativas.</p>
+    </div>
+    <div class="form-field">
+        <label for="address">Dirección de la Empresa (Opcional)</label>
+        <div class="input-wrapper"><lucide-icon [img]="AddressIcon" size="18" class="input-icon"></lucide-icon><input
+                id="address" formControlName="address"></div>
+    </div>
+    <div class="form-row three-cols">
+        <div class="form-field">
+            <label for="city">Ciudad (Opcional)</label>
+            <div class="input-wrapper"><input id="city" formControlName="city"></div>
+        </div>
+        <div class="form-field">
+            <label for="stateOrProvince">Estado / Provincia (Opcional)</label>
+            <div class="input-wrapper"><input id="stateOrProvince" formControlName="stateOrProvince"></div>
+        </div>
+        <div class="form-field">
+            <label for="postalCode">Cód. Postal (Opcional)</label>
+            <div class="input-wrapper"><input id="postalCode" formControlName="postalCode"></div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-field"
+            [class.error]="parentForm.get('country')?.invalid && (parentForm.get('country')?.touched || parentForm.get('country')?.dirty)">
+            <label for="country">País / Región*</label>
+            <div class="input-wrapper"><lucide-icon [img]="CountryIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="country" formControlName="country">
+                    <option value="DO">República Dominicana</option>
+                </select></div>
+            @if (parentForm.get('country')?.invalid && (parentForm.get('country')?.touched ||
+            parentForm.get('country')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('country')?.errors?.['required']) { <span>País es obligatorio</span> }
+                @if (parentForm.get('country')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('country')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+        <div class="form-field"
+            [class.error]="parentForm.get('companyPhone')?.invalid && (parentForm.get('companyPhone')?.touched || parentForm.get('companyPhone')?.dirty)">
+            <label for="companyPhone">Teléfono de la Empresa*</label>
+            <div class="input-wrapper"><lucide-icon [img]="PhoneIcon" size="18" class="input-icon"></lucide-icon><input
+                    id="companyPhone" type="tel" formControlName="companyPhone"></div>
+            @if (parentForm.get('companyPhone')?.invalid && (parentForm.get('companyPhone')?.touched ||
+            parentForm.get('companyPhone')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('companyPhone')?.errors?.['required']) { <span>Teléfono es obligatorio</span> }
+                @if (parentForm.get('companyPhone')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('companyPhone')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+    </div>
+    <div class="separator"></div>
+    <div class="form-row">
+        <div class="form-field"
+            [class.error]="parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched || parentForm.get('taxId')?.dirty)">
+            <label for="taxId">ID Fiscal (RNC, CUIT, etc.)*</label>
+            <div class="input-wrapper"><lucide-icon [img]="TaxIdIcon" size="18" class="input-icon"></lucide-icon><input
+                    id="taxId" formControlName="taxId"></div>
+            @if (parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched ||
+            parentForm.get('taxId')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('taxId')?.errors?.['required']) { <span>ID Fiscal es obligatorio</span> }
+                @if (parentForm.get('taxId')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('taxId')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+        <div class="form-field">
+            <label for="naicsCode">Código de Actividad (Opcional)</label>
+            <div class="input-wrapper"><lucide-icon [img]="CodeIcon" size="18" class="input-icon"></lucide-icon><input
+                    id="naicsCode" formControlName="naicsCode"></div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-field"
+            [class.error]="parentForm.get('currency')?.invalid && (parentForm.get('currency')?.touched || parentForm.get('currency')?.dirty)">
+            <label for="currency">Divisa Principal*</label>
+            <div class="input-wrapper"><lucide-icon [img]="CurrencyIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="currency" formControlName="currency">
+                    <option value="DOP">DOP</option>
+                    <option value="USD">USD</option>
+                </select></div>
+            @if (parentForm.get('currency')?.invalid && (parentForm.get('currency')?.touched ||
+            parentForm.get('currency')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('currency')?.errors?.['required']) { <span>Divisa es obligatoria</span> }
+                @if (parentForm.get('currency')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('currency')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+        <div class="form-field">
+            <label for="defaultTaxRate">Impuesto por Defecto (%)</label>
+            <div class="input-wrapper"><lucide-icon [img]="PercentIcon" size="18"
+                    class="input-icon"></lucide-icon><input id="defaultTaxRate" type="number"
+                    formControlName="defaultTaxRate"></div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-field">
+            <label for="fiscalYearStart">Inicio Año Fiscal (Opcional)</label>
+            <div class="input-wrapper"><lucide-icon [img]="CalendarIcon" size="18"
+                    class="input-icon"></lucide-icon><input id="fiscalYearStart" formControlName="fiscalYearStart"
+                    placeholder="MM-DD"></div>
+        </div>
+        <div class="form-field"
+            [class.error]="parentForm.get('timezone')?.invalid && (parentForm.get('timezone')?.touched || parentForm.get('timezone')?.dirty)">
+            <label for="timezone">Zona Horaria*</label>
+            <div class="input-wrapper"><lucide-icon [img]="TimezoneIcon" size="18"
+                    class="input-icon"></lucide-icon><select id="timezone" formControlName="timezone">
+                    <option value="America/Santo_Domingo">GMT-4 (Sto. Dgo.)</option>
+                </select></div>
+            @if (parentForm.get('timezone')?.invalid && (parentForm.get('timezone')?.touched ||
+            parentForm.get('timezone')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('timezone')?.errors?.['required']) { <span>Zona horaria es obligatoria</span> }
+                @if (parentForm.get('timezone')?.errors?.['serverError']) { <span>{{
+                    parentForm.get('timezone')?.errors?.['serverError'] }}</span> }
+            </div>
+            }
+        </div>
+    </div>
+</div>

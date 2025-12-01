@@ -1,0 +1,168 @@
+@use '../../../../assets/styles/variables' as *;
+@use '../../../../assets/styles/forms' as mixins;
+@use '../../sales/history/history.page.scss'; // Reutiliza la base de estilos
+
+.invoice-id {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.status-badge {
+    // Estilos ya definidos en list.page.scss, pero los ajustamos para el header
+    margin-left: 1rem;
+    vertical-align: middle;
+
+    &.pagada {
+        background-color: rgba(74, 222, 128, 0.1);
+        color: #4ade80;
+    }
+
+    &.pendiente {
+        background-color: rgba(251, 146, 60, 0.1);
+        color: #fb923c;
+    }
+
+    &.vencida {
+        background-color: rgba(248, 113, 113, 0.1);
+        color: #f87171;
+    }
+}
+
+.invoice-document {
+    padding: 3rem;
+    max-width: 800px;
+    margin: auto;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+
+    .company-info h2 {
+        font-size: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .company-info p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .invoice-meta {
+        text-align: right;
+    }
+
+    .meta-item {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+
+        span {
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+    }
+}
+
+.customer-info {
+    margin-bottom: 3rem;
+
+    h3 {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        line-height: 1.5;
+    }
+}
+
+.line-items-table {
+    width: 100%;
+    margin-bottom: 3rem;
+
+    thead th {
+        border-bottom: 2px solid var(--text-primary);
+        color: var(--text-secondary);
+    }
+
+    tbody td {
+        color: var(--text-primary);
+    }
+}
+
+.invoice-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .summary-notes {
+        max-width: 50%;
+
+        h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    }
+
+    .summary-totals {
+        width: 250px;
+
+        .summary-row,
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .summary-total {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-top: 2px solid var(--text-primary);
+            padding-top: 1rem;
+        }
+    }
+}
+
+// Estilos de Impresión
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    .invoice-document,
+    .invoice-document * {
+        visibility: visible;
+    }
+
+    .invoice-document {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        --text-primary: #000; // Colores para impresión
+        --text-secondary: #555;
+    }
+
+    .view-container {
+        padding: 0;
+    }
+}

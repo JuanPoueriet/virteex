@@ -1,0 +1,56 @@
+<div class="step-container" [formGroup]="parentForm">
+    <div class="step-header">
+        <h3>Elige tu Plan</h3>
+        <p>Comienza con una prueba gratuita de 15 días. Sin necesidad de tarjeta de crédito.</p>
+    </div>
+    <div class="plans-container">
+        <div class="plan-card" [class.selected]="parentForm.get('planId')?.value === 'trial'"
+            (click)="selectPlan('trial')">
+            <div class="plan-badge trial">Prueba Gratuita</div>
+            <h4>Explorador</h4>
+            <div class="plan-price">$0 <span class="price-period">/ 15 días</span></div>
+            <ul class="plan-features">
+                <li><lucide-icon [img]="CheckIcon" size="16" /> 50 Facturas</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> 1 Usuario</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Reportes Básicos</li>
+            </ul>
+        </div>
+        <div class="plan-card popular" [class.selected]="parentForm.get('planId')?.value === 'pro'"
+            (click)="selectPlan('pro')">
+            <div class="plan-badge">Más Popular</div>
+            <h4>Profesional</h4>
+            <div class="plan-price">$49 <span class="price-period">/ mes</span></div>
+            <ul class="plan-features">
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Facturas Ilimitadas</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Hasta 5 Usuarios</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Reportes Avanzados</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Soporte Prioritario</li>
+            </ul>
+        </div>
+        <div class="plan-card" [class.selected]="parentForm.get('planId')?.value === 'enterprise'"
+            (click)="selectPlan('enterprise')">
+            <h4>Empresarial</h4>
+            <div class="plan-price">$99 <span class="price-period">/ mes</span></div>
+            <ul class="plan-features">
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Todo lo de Profesional</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> Usuarios Ilimitados</li>
+                <li><lucide-icon [img]="CheckIcon" size="16" /> API de Integración</li>
+            </ul>
+        </div>
+    </div>
+    <div class="terms-field"
+        [class.error]="parentForm.get('agreeToTerms')?.invalid && parentForm.get('agreeToTerms')?.touched">
+        <input id="agreeToTerms" type="checkbox" formControlName="agreeToTerms">
+        <label for="agreeToTerms">Acepto los <a href="#" class="link">Términos de Servicio</a> y la <a href="#"
+                class="link">Política de Privacidad</a> de FacturaPRO.*</label>
+        @if (parentForm.get('agreeToTerms')?.invalid && parentForm.get('agreeToTerms')?.touched) {
+        <div class="error-message">
+            <span>Debes aceptar los términos y condiciones</span>
+        </div>
+        }
+    </div>
+    <div class="terms-field">
+        <input id="marketingOptIn" type="checkbox" formControlName="marketingOptIn">
+        <label for="marketingOptIn">Quiero recibir correos con consejos, ofertas y actualizaciones de productos.</label>
+    </div>
+</div>

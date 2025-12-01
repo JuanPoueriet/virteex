@@ -1,0 +1,117 @@
+<div class="settings-page-container">
+  <div class="page-header">
+    <h2>Mi Perfil</h2>
+  </div>
+
+  <div class="profile-layout">
+    <div class="card">
+      <div class="card-header">
+        <h3>Información Personal</h3>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+          <div class="form-field file-upload-field">
+            <div class="file-input-container">
+              <input
+                type="file"
+                id="avatarUrl"
+                (change)="onFileSelected($event)"
+                accept="image/png, image/jpeg"
+              />
+              <label for="avatarUrl" class="file-input-label">
+                @if(avatarPreview()){
+                <img
+                  [src]="avatarPreview()"
+                  alt="Vista previa del avatar"
+                  class="avatar-preview"
+                />
+                } @else {
+                <lucide-icon [img]="ImageIcon" size="32"></lucide-icon>
+                <span>Subir foto</span>
+                }
+              </label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="firstName">Nombre</label>
+              <input id="firstName" formControlName="firstName" />
+            </div>
+            <div class="form-field">
+              <label for="lastName">Apellido</label>
+              <input id="lastName" formControlName="lastName" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="email">Correo Electrónico</label>
+            <input id="email" formControlName="email" />
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="phone">Teléfono</label>
+              <input id="phone" formControlName="phone" />
+            </div>
+            <div class="form-field">
+              <label for="jobTitle">Cargo</label>
+              <input id="jobTitle" formControlName="jobTitle" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="profileForm.pristine || profileForm.invalid"
+            >
+              <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
+              <span>Guardar Cambios</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>Seguridad y Contraseña</h3>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+          <div class="form-field">
+            <label for="currentPassword">Contraseña Actual</label>
+            <input
+              id="currentPassword"
+              type="password"
+              formControlName="currentPassword"
+            />
+          </div>
+          <div class="form-field">
+            <label for="newPassword">Nueva Contraseña</label>
+            <input
+              id="newPassword"
+              type="password"
+              formControlName="newPassword"
+            />
+          </div>
+          <div class="form-field">
+            <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              formControlName="confirmPassword"
+            />
+          </div>
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="passwordForm.invalid"
+            >
+              <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
+              <span>Cambiar Contraseña</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

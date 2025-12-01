@@ -1,0 +1,44 @@
+<div class="view-container">
+  @if (invoice(); as inv) {
+  <div class="view-header">
+    <div class="header-content">
+      <h1>
+        Factura <span class="invoice-id">#{{ inv.invoiceNumber }}</span>
+      </h1>
+      <div
+        class="status-badge"
+        [ngClass]="inv.status.toLowerCase().replace(' ', '-')"
+      >
+        {{ inv.status }}
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="secondary-button" (click)="printInvoice()">
+        <lucide-icon [img]="PrinterIcon" size="16"></lucide-icon
+        ><span>Imprimir</span>
+      </button>
+      <button class="secondary-button" (click)="downloadPdf()">
+        <lucide-icon [img]="DownloadIcon" size="16"></lucide-icon
+        ><span>Descargar PDF</span>
+      </button>
+      <button class="primary-button">
+        <lucide-icon [img]="MailIcon" size="16"></lucide-icon
+        ><span>Enviar por Correo</span>
+      </button>
+      @if(inv.status !== 'Void' && inv.status !== 'Credit Note') {
+      <button class="danger-button" (click)="createCreditNote(inv.id)">
+        Anular con Nota de Crédito
+      </button>
+      }
+    </div>
+  </div>
+
+  <div class="invoice-document card"></div>
+  } @else {
+  <div class="card">
+    <p class="placeholder">
+      Cargando datos de la factura o la factura no fue encontrada...
+    </p>
+  </div>
+  }
+</div>

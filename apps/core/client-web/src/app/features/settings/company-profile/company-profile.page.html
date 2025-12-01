@@ -1,0 +1,42 @@
+<div class="settings-page-container">
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+        <div class="page-header">
+            <h2>Perfil de la Empresa</h2>
+            <button type="submit" class="primary-button" [disabled]="profileForm.pristine || profileForm.invalid">
+                <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
+                <span>Guardar Cambios</span>
+            </button>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">Información General</h3>
+            <div class="form-grid">
+                <div class="form-field"><label for="companyName">Nombre de la Empresa*</label><input id="companyName"
+                        formControlName="companyName"></div>
+                <div class="form-field"><label for="industry">Industria</label><select id="industry"
+                        formControlName="industry">
+                        <option value="tech">Tecnología</option>
+                    </select></div>
+                <div class="form-field"><label for="taxId">ID Fiscal*</label><input id="taxId" formControlName="taxId">
+                </div>
+                <div class="form-field"><label for="website">Sitio Web</label><input id="website"
+                        formControlName="website"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 class="section-title">Dirección y Contacto</h3>
+            <div class="form-grid">
+                <div class="form-field full-width"><label for="address">Dirección</label><input id="address"
+                        formControlName="address"></div>
+                <div class="form-field"><label for="city">Ciudad</label><input id="city" formControlName="city"></div>
+                <div class="form-field"><label for="country">País*</label><select id="country"
+                        formControlName="country">
+                        <option value="DO">República Dominicana</option>
+                    </select></div>
+                <div class="form-field"><label for="companyPhone">Teléfono*</label><input id="companyPhone" type="tel"
+                        formControlName="companyPhone"></div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,159 @@
+<div class="step-container" [formGroup]="parentForm">
+    <div class="step-header">
+        <h3>¡Hola! Comencemos por ti</h3>
+        <p>Estos son los datos del administrador principal y de acceso.</p>
+    </div>
+
+    <div class="form-field file-upload-field">
+        <label class="input-label">Tu Foto de Perfil (Opcional)</label>
+        <div class="file-input-container">
+            <input type="file" id="avatarUrl" (change)="onFileSelected($event)" #avatarUpload
+                accept="image/png, image/jpeg">
+            <label for="avatarUrl" class="file-input-label">
+                @if(avatarPreview()) {
+                <img [src]="avatarPreview()" alt="Vista previa del avatar" class="avatar-preview">
+                } @else {
+                <lucide-icon [img]="AvatarIcon" size="32"></lucide-icon>
+                <span>Subir imagen</span>
+                }
+            </label>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-field"
+            [class.error]="parentForm.get('firstName')?.invalid && (parentForm.get('firstName')?.touched || parentForm.get('firstName')?.dirty)">
+            <label for="firstName" class="input-label">Nombre*</label>
+            <div class="input-wrapper">
+                <lucide-icon [img]="UserIcon" size="18" class="input-icon"></lucide-icon>
+                <input id="firstName" formControlName="firstName" placeholder="Ej: Juan">
+            </div>
+            @if (parentForm.get('firstName')?.invalid && (parentForm.get('firstName')?.touched ||
+            parentForm.get('firstName')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('firstName')?.errors?.['required']) { <span>Nombre es obligatorio</span> }
+            </div>
+            }
+        </div>
+        <div class="form-field"
+            [class.error]="parentForm.get('lastName')?.invalid && (parentForm.get('lastName')?.touched || parentForm.get('lastName')?.dirty)">
+            <label for="lastName" class="input-label">Apellido*</label>
+            <div class="input-wrapper">
+                <lucide-icon [img]="UserIcon" size="18" class="input-icon"></lucide-icon>
+                <input id="lastName" formControlName="lastName" placeholder="Ej: Pérez">
+            </div>
+            @if (parentForm.get('lastName')?.invalid && (parentForm.get('lastName')?.touched ||
+            parentForm.get('lastName')?.dirty)) {
+            <div class="error-message">
+                @if (parentForm.get('lastName')?.errors?.['required']) { <span>Apellido es obligatorio</span> }
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-field">
+            <label for="jobTitle" class="input-label">Cargo (Opcional)</label>
+            <div class="input-wrapper">
+                <lucide-icon [img]="JobIcon" size="18" class="input-icon"></lucide-icon>
+                <input id="jobTitle" formControlName="jobTitle" placeholder="Ej: Gerente General">
+            </div>
+        </div>
+        <div class="form-field">
+            <label for="phone" class="input-label">Teléfono (Opcional)</label>
+            <div class="input-wrapper">
+                <lucide-icon [img]="PhoneIcon" size="18" class="input-icon"></lucide-icon>
+                <input id="phone" formControlName="phone" placeholder="Ej: 809-555-1234">
+            </div>
+        </div>
+    </div>
+    <div class="form-field"
+        [class.error]="parentForm.get('email')?.invalid && (parentForm.get('email')?.touched || parentForm.get('email')?.dirty)">
+        <label for="email" class="input-label">Correo Electrónico (será tu usuario)*</label>
+        <div class="input-wrapper">
+            <lucide-icon [img]="MailIcon" size="18" class="input-icon"></lucide-icon>
+            <input id="email" type="email" formControlName="email" placeholder="tu@correo.com">
+        </div>
+        @if (parentForm.get('email')?.invalid && (parentForm.get('email')?.touched || parentForm.get('email')?.dirty)) {
+        <div class="error-message">
+            @if (parentForm.get('email')?.errors?.['required']) { <span>Email es obligatorio</span> }
+            @if (parentForm.get('email')?.errors?.['email']) { <span>Formato de email inválido</span> }
+        </div>
+        }
+    </div>
+
+    <div formGroupName="passwordGroup">
+        <div class="form-row">
+            <div class="form-field password-field"
+                [class.error]="passwordGroup?.get?.('password')?.invalid && (passwordGroup?.get?.('password')?.touched || passwordGroup?.get?.('password')?.dirty)">
+                <label for="password" class="input-label">Contraseña*</label>
+                <div class="input-wrapper">
+                    <lucide-icon [img]="LockIcon" size="18" class="input-icon"></lucide-icon>
+                    <input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                        placeholder="Mínimo 8 caracteres" (focus)="showPasswordHints = true" (blur)="onPasswordBlur()">
+                    <button type="button" class="toggle-password" (click)="showPassword = !showPassword"
+                        [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                        <lucide-icon [img]="showPassword ? EyeOffIcon : EyeIcon" size="18"></lucide-icon>
+                    </button>
+                </div>
+
+                @if (showPasswordHints) {
+                <div class="password-hints-popup">
+                    <p [class.valid]="passwordValue.length >= 8">
+                        <lucide-icon [img]="passwordValue.length >= 8 ? CheckIcon : XIcon" size="16"></lucide-icon>
+                        Al menos 8 caracteres
+                    </p>
+                    <p [class.valid]="hasLowerCase(passwordValue)">
+                        <lucide-icon [img]="hasLowerCase(passwordValue) ? CheckIcon : XIcon" size="16"></lucide-icon>
+                        Una letra minúscula
+                    </p>
+                    <p [class.valid]="hasUpperCase(passwordValue)">
+                        <lucide-icon [img]="hasUpperCase(passwordValue) ? CheckIcon : XIcon" size="16"></lucide-icon>
+                        Una letra mayúscula
+                    </p>
+                    <p [class.valid]="hasNumber(passwordValue)">
+                        <lucide-icon [img]="hasNumber(passwordValue) ? CheckIcon : XIcon" size="16"></lucide-icon>
+                        Un número
+                    </p>
+                    <p [class.valid]="hasSpecialChar(passwordValue)">
+                        <lucide-icon [img]="hasSpecialChar(passwordValue) ? CheckIcon : XIcon" size="16"></lucide-icon>
+                        Un símbolo
+                    </p>
+                </div>
+                }
+
+                @if (passwordGroup?.get?.('password')?.invalid && (passwordGroup?.get?.('password')?.touched ||
+                passwordGroup?.get?.('password')?.dirty)) {
+                <div class="error-message">
+                    @if (passwordGroup?.get?.('password')?.errors?.['required']) {
+                    <span>Contraseña es obligatoria</span>
+                    }
+                    @if (passwordGroup?.get?.('password')?.errors?.['strongPassword']) {
+                    <span>Debe ser más segura.</span>
+                    }
+                </div>
+                }
+            </div>
+            <div class="form-field"
+                [class.error]="passwordGroup?.get?.('confirmPassword')?.invalid && (passwordGroup?.get?.('confirmPassword')?.touched || passwordGroup?.get?.('confirmPassword')?.dirty) || passwordGroup?.hasError('passwordMismatch')">
+                <label for="confirmPassword" class="input-label">Confirmar Contraseña*</label>
+                <div class="input-wrapper">
+                    <lucide-icon [img]="LockIcon" size="18" class="input-icon"></lucide-icon>
+                    <input id="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'"
+                        formControlName="confirmPassword" placeholder="Confirma tu contraseña"
+                        (focus)="showPasswordHints = false">
+                    <button type="button" class="toggle-password" (click)="showConfirmPassword = !showConfirmPassword"
+                        [attr.aria-label]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                        <lucide-icon [img]="showConfirmPassword ? EyeOffIcon : EyeIcon" size="18"></lucide-icon>
+                    </button>
+                </div>
+                @if (passwordGroup?.hasError('passwordMismatch') && (passwordGroup?.get('confirmPassword')?.touched ||
+                passwordGroup?.get('confirmPassword')?.dirty)) {
+                <div class="error-message">
+                    Las contraseñas no coinciden
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+@use "./assets/styles/variables" as *;
+
+// Reset básico y estilos fundamentales
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: $font-family;
+  font-size: $font-size-base;
+  background-color: var(--bg-solid);
+  color: var(--text-primary);
+  transition: background-color $transition-duration ease,
+    color $transition-duration ease;
+}
+
+// Estilo de la barra de scroll
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-bg);
+  border-radius: $border-radius;
+}
+
+gridster .gridster-row,
+gridster .gridster-column {
+  border-color: rgba(255, 255, 255, 0.062) !important;
+}
+
+gridster.scrollVertical {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
+/* Add to existing styles */
+.form-field {
+  &.error {
+    .input-wrapper {
+      border-color: #f44336;
+      // box-shadow: 0 0 0 1px #f44336;
+    }
+
+    label {
+      color: #f44336;
+    }
+  }
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0 0.5rem;
+}
+
+.global-error {
+  background-color: #f443361a;
+  border: 1px solid #f44336;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 1rem 0;
+  color: #f44336;
+}
+gridster-item{
+  background: transparent !important;
+}

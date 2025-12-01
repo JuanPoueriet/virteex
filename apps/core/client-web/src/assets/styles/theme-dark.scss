@@ -1,0 +1,32 @@
+@use './variables' as *;
+
+:root {
+    // Colores de Texto
+    --text-primary: #f2f2f2;
+    --text-secondary: #c1c1c1;
+    --text-tertiary: #9e9e9e;
+    --text-disabled: #5a5a5a;
+
+    // Fondos y Superficies (Simulación de "Mica")
+    --bg-solid: #202020;
+    // --bg-layer-1: rgba(45, 45, 45, 0.85); // Cards, modales
+    --bg-layer-1: rgb(45, 45, 45); // Cards, modales
+    --bg-layer-2: rgba(55, 55, 55, 0.5); // Elementos elevados
+    --bg-layer-3: rgba(0, 0, 0, 0.85); // Cards, modales
+
+    --bg-hover: rgba(255, 255, 255, 0.06);
+    --bg-disabled: #3a3a3a;
+
+    // Acento de Color
+    --accent-primary: #60a5fa;
+    --accent-primary-hover: #7ab2fb;
+    --accent-text: #1c1c1c;
+
+    // Bordes y Foco
+    --border-color: #4a4a4a;
+    --border-focus: #60a5fa;
+    --focus-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
+
+    // Sombras
+    --shadow-color: rgba(0, 0, 0, 0.25);
+}
