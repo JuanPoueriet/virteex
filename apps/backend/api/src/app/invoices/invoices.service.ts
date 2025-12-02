@@ -13,6 +13,7 @@ import { Repository, DataSource, LessThanOrEqual, LessThan, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Invoice, InvoiceStatus, InvoiceType } from './entities/invoice.entity';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { CreateCreditNoteDto } from './dto/create-credit-note.dto';
 import { CustomersService } from '../customers/customers.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { Product } from '../inventory/entities/product.entity';
@@ -95,7 +96,11 @@ export class InvoicesService {
         organizationId,
       );
 
+      const settings = await this.getOrgAccountingConfig(organizationId);
+      const defaultTaxRate = settings.defaultTaxRate / 100 || 0.18;
+
       let subtotal = 0;
+      let totalTax = 0;
       const detailedLineItems: InvoiceLineItem[] = [];
 
       for (const itemDto of createInvoiceDto.lineItems) {
@@ -111,13 +116,21 @@ export class InvoicesService {
 
         const linePrice = itemDto.price ?? product.price;
         const lineTotal = linePrice * itemDto.quantity;
+        
+        // Calculate tax per line
+        const lineTaxRate = itemDto.taxRate !== undefined ? itemDto.taxRate : defaultTaxRate;
+        const lineTaxAmount = lineTotal * lineTaxRate;
+
         subtotal += lineTotal;
+        totalTax += lineTaxAmount;
 
         const lineItem = new InvoiceLineItem();
         lineItem.product = product;
         lineItem.description = itemDto.description ?? product.name;
         lineItem.quantity = itemDto.quantity;
         lineItem.price = linePrice;
+        lineItem.taxRate = lineTaxRate;
+        lineItem.taxAmount = lineTaxAmount;
         detailedLineItems.push(lineItem);
 
 
@@ -128,10 +141,7 @@ export class InvoicesService {
         );
       }
       
-      const settings = await this.getOrgAccountingConfig(organizationId);
-
-      const taxRate = settings.defaultTaxRate / 100 || 0.18; 
-      const tax = subtotal * taxRate;
+      const tax = totalTax;
       const total = subtotal + tax;
       
 
@@ -254,10 +264,11 @@ export class InvoicesService {
   }
 
   async createCreditNote(
-    invoiceId: string,
+    dto: CreateCreditNoteDto,
     organizationId: string,
   ): Promise<Invoice> {
     return this.dataSource.transaction(async (manager) => {
+        const { invoiceId, items } = dto;
         const originalInvoice = await manager.findOne(Invoice, {
             where: { id: invoiceId, organizationId },
             relations: ['lineItems', 'lineItems.product'],
@@ -267,11 +278,73 @@ export class InvoicesService {
             throw new NotFoundException(`Factura original con ID "${invoiceId}" no encontrada.`);
         }
         if (
-            originalInvoice.status === InvoiceStatus.VOID ||
-            originalInvoice.status === InvoiceStatus.CREDIT_NOTE
+            originalInvoice.status === InvoiceStatus.VOID
         ) {
-            throw new BadRequestException('La factura ya ha sido anulada o tiene una nota de crédito.');
+            throw new BadRequestException('La factura ya ha sido anulada.');
         }
+        
+        // If items are provided, this is a partial credit note. 
+        // We need to validate items against the original invoice.
+        // If no items are provided, we assume a full refund (Void).
+
+        let itemsToReturn = [];
+        let isFullRefund = false;
+
+        if (!items || items.length === 0) {
+            isFullRefund = true;
+            itemsToReturn = originalInvoice.lineItems.map(line => ({
+                productId: line.product.id,
+                quantity: line.quantity,
+                originalLine: line
+            }));
+        } else {
+            // Validate and map partial items
+            for (const item of items) {
+                const originalLine = originalInvoice.lineItems.find(l => l.product.id === item.productId);
+                if (!originalLine) {
+                    throw new BadRequestException(`El producto con ID ${item.productId} no pertenece a la factura original.`);
+                }
+                if (item.quantity > originalLine.quantity) {
+                    throw new BadRequestException(`La cantidad a devolver (${item.quantity}) excede la cantidad original (${originalLine.quantity}) para el producto ${originalLine.product.name}.`);
+                }
+                itemsToReturn.push({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    originalLine: originalLine
+                });
+            }
+        }
+
+        // Calculate totals for the credit note
+        let cnSubtotal = 0;
+        let cnTax = 0;
+        const cnLineItems: InvoiceLineItem[] = [];
+
+        for (const item of itemsToReturn) {
+            const originalLine = item.originalLine;
+            const quantity = item.quantity;
+            const price = originalLine.price;
+            
+            // Recalculate tax based on original tax rate
+            const lineTotal = price * quantity;
+            const lineTax = lineTotal * (originalLine.taxRate || 0); // Use 0 if taxRate is missing (backward compatibility)
+
+            cnSubtotal += lineTotal;
+            cnTax += lineTax;
+
+            const newLine = manager.create(InvoiceLineItem, {
+                product: originalLine.product,
+                description: originalLine.description,
+                quantity: quantity,
+                price: price,
+                taxRate: originalLine.taxRate,
+                taxAmount: lineTax
+            });
+            cnLineItems.push(newLine);
+        }
+
+        const cnTotal = cnSubtotal + cnTax;
+
 
         const creditNoteNcf = await this.complianceService.getNextNcf(
             organizationId,
@@ -286,46 +359,67 @@ export class InvoicesService {
         );
 
         const creditNote = manager.create(Invoice, {
-            ...originalInvoice,
-            id: undefined,
+            organizationId,
             invoiceNumber: creditNoteNumber,
             ncfNumber: creditNoteNcf,
             originalInvoiceId: originalInvoice.id,
             status: InvoiceStatus.CREDIT_NOTE,
             type: InvoiceType.CREDIT_NOTE,
-            total: -originalInvoice.total,
-            subtotal: -originalInvoice.subtotal,
-            tax: -originalInvoice.tax,
+            customer: originalInvoice.customer,
+            customerId: originalInvoice.customerId,
+            customerName: originalInvoice.customerName,
+            customerAddress: originalInvoice.customerAddress,
+            issueDate: new Date().toISOString(), // Credit note date is now
+            dueDate: new Date().toISOString(),
+            currencyCode: originalInvoice.currencyCode,
+            exchangeRate: originalInvoice.exchangeRate,
+            
+            // Negative amounts
+            subtotal: -cnSubtotal,
+            tax: -cnTax,
+            total: -cnTotal,
+            totalInBaseCurrency: -cnTotal * originalInvoice.exchangeRate,
+            
             balance: 0,
-            totalInBaseCurrency: -originalInvoice.totalInBaseCurrency,
-            lineItems: originalInvoice.lineItems.map((line) => manager.create(InvoiceLineItem, {
-                ...line,
-                id: undefined,
-                quantity: line.quantity,
-            })),
+            lineItems: cnLineItems,
+            notes: dto.reason || `Nota de crédito para factura ${originalInvoice.invoiceNumber}`
         });
 
         const savedCreditNote = await manager.save(creditNote);
 
-        originalInvoice.status = InvoiceStatus.VOID;
-        originalInvoice.balance = 0;
-        await manager.save(originalInvoice);
-
-
-        for (const line of originalInvoice.lineItems) {
+        // Update inventory
+        for (const item of itemsToReturn) {
             await this.inventoryService.increaseStock(
-            line.product.id,
-            line.quantity,
-            manager,
+                item.productId,
+                item.quantity,
+                manager,
             );
         }
 
-        this.eventEmitter.emit('invoice.voided', {
+        // If full refund, mark original as VOID. Otherwise, update its status or just leave it.
+        // Usually, for partial refunds, the original invoice remains processed, but the balance might be adjusted if it wasn't paid.
+        // But here we are just creating a Credit Note document.
+        // If it was a full refund, we explicitly set to VOID as per previous logic.
+        if (isFullRefund) {
+             originalInvoice.status = InvoiceStatus.VOID;
+             originalInvoice.balance = 0;
+             await manager.save(originalInvoice);
+        } else {
+             // For partial, we might want to ensure the invoice reflects that a CN exists?
+             // Since we have a 'CREDIT_NOTE' status in the enum, maybe we should use that only for the CN document itself (which we are doing).
+             // The original invoice status might not need to change if it was already PAID or PENDING.
+             // However, strictly speaking, if we return goods, we might want to update the balance of the customer. 
+             // But the invoice balance usually reflects payment.
+             // Let's keep it simple: Only update original status if full refund.
+        }
+
+
+        this.eventEmitter.emit('invoice.credit-note-created', {
             originalInvoice,
             creditNote: savedCreditNote,
         });
 
-        this.logger.log(`Nota de crédito ${savedCreditNote.invoiceNumber} creada para anular la factura ${originalInvoice.invoiceNumber}.`);
+        this.logger.log(`Nota de crédito ${savedCreditNote.invoiceNumber} creada para factura ${originalInvoice.invoiceNumber}.`);
         return savedCreditNote;
     });
   }

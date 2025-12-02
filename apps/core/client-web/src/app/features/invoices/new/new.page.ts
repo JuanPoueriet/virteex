@@ -62,7 +62,8 @@ export class NewInvoicePage implements OnInit {
       productId: ['', Validators.required],
       description: [''],
       quantity: [1, [Validators.required, Validators.min(1)]],
-      price: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0)]],
+      price: [{ value: 0, disabled: false }, [Validators.required, Validators.min(0)]],
+      taxRate: [0.18, [Validators.required, Validators.min(0), Validators.max(1)]],
     });
   }
 
@@ -83,8 +84,45 @@ export class NewInvoicePage implements OnInit {
       this.lineItems.at(index).patchValue({
         description: selectedProduct.name,
         price: selectedProduct.price,
+        // Default tax rate could come from product category or settings, keeping 0.18 as default
       });
     }
+  }
+
+  get totals() {
+    let subtotal = 0;
+    let tax = 0;
+
+    this.lineItems.controls.forEach((control) => {
+        const qty = control.get('quantity')?.value || 0;
+        const price = control.get('price')?.value || 0;
+        const taxRate = control.get('taxRate')?.value || 0;
+
+        const lineTotal = qty * price;
+        subtotal += lineTotal;
+        tax += lineTotal * taxRate;
+    });
+
+    return {
+        subtotal,
+        tax,
+        total: subtotal + tax
+    };
+  }
+
+  // Validator to check stock
+  validateStock(index: number): boolean {
+      const control = this.lineItems.at(index);
+      const productId = control.get('productId')?.value;
+      const qty = control.get('quantity')?.value;
+
+      if (!productId || !qty) return true;
+
+      const product = this.products.find(p => p.id === productId);
+      if (product && qty > product.stock) {
+          return false;
+      }
+      return true;
   }
 
   onSubmit(): void {
@@ -103,8 +141,9 @@ export class NewInvoicePage implements OnInit {
         lineItems: formValue.lineItems.map((item: any) => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.price, // El precio se envía para referencia, pero el backend lo validará
-            description: item.description
+            price: item.price,
+            description: item.description,
+            taxRate: item.taxRate
         }))
     };
     

@@ -27,6 +27,11 @@ class LineItemDto {
   @IsNumber()
   @Min(0)
   price: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  taxRate?: number;
 }
 
 export class CreateInvoiceDto {

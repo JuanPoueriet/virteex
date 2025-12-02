@@ -68,6 +68,16 @@
               class="form-control"
               placeholder="Precio"
             />
+             <input
+              type="number"
+              formControlName="taxRate"
+              class="form-control"
+              placeholder="Tasa Imp."
+              step="0.01"
+            />
+            <div *ngIf="!validateStock(i)" class="text-danger">
+                Stock insuficiente
+            </div>
             <button
               type="button"
               class="btn-icon"
@@ -80,6 +90,21 @@
         <button type="button" class="btn" (click)="addLineItem()">
           + Agregar Línea
         </button>
+
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>{{ totals.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row">
+                <span>Impuestos:</span>
+                <span>{{ totals.tax | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row total-final">
+                <span>Total:</span>
+                <span>{{ totals.total | number:'1.2-2' }}</span>
+            </div>
+        </div>
 
         <div class="form-group">
           <label class="form-label">Notas</label>
