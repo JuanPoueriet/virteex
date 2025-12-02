@@ -25,7 +25,7 @@ import { ModalService } from '../../shared/service/modal.service';
 
 interface LoginResponse {
   user: User;
-  access_token: string;
+  accessToken: string;
 }
 
 @Injectable({
@@ -126,7 +126,7 @@ export class AuthService {
       .pipe()
       .pipe(
         tap((response) => {
-          if (response && response.user && response.access_token) {
+          if (response && response.user && response.accessToken) {
             this._isAuthenticated.next(true);
             this._user.next(response.user);
             console.log('[AuthService] Token refrescado exitosamente');
@@ -254,7 +254,7 @@ export class AuthService {
     const url = `${this.apiUrl}/forgot-password`;
     // Añade el recaptchaToken al cuerpo de la solicitud
     return this.http
-      .post<{ message: string }>(url, { email, recaptchaToken })
+      .post<{ message: string }>(url, { email, 'g-recaptcha-response': recaptchaToken })
       .pipe(catchError((err) => this.handleError('forgotPassword', err)));
   }
 

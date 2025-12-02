@@ -1,5 +1,5 @@
 <div class="login-wrapper">
-  <!-- Nuevo selector de idiomas en la esquina superior derecha -->
+  <!-- Top Language Selector -->
   <div class="top-language-selector">
     <div class="language-selector" #topLanguageSelector>
       <div
@@ -93,11 +93,13 @@
               id="email"
               type="email"
               formControlName="email"
-              placeholder="email@ejemplo.com"
+              placeholder="name@company.com"
+              [class.error]="email?.invalid && email?.touched"
             />
           </div>
           @if (email?.invalid && email?.touched) {
             <div class="error-message">
+              <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
               @if (email?.errors?.['required']) {
                 {{ 'LOGIN.ERRORS.EMAIL_REQUIRED' | translate }}
               }
@@ -136,6 +138,7 @@
               [type]="passwordVisible() ? 'text' : 'password'"
               formControlName="password"
               placeholder="••••••••"
+              [class.error]="password?.invalid && password?.touched"
             />
             <button
               type="button"
@@ -145,23 +148,16 @@
                 passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'
               "
             >
-              @if (passwordVisible()) {
               <lucide-icon
-                [img]="EyeOffIcon"
+                [img]="passwordVisible() ? EyeOffIcon : EyeIcon"
                 size="18"
                 aria-hidden="true"
               ></lucide-icon>
-              } @else {
-              <lucide-icon
-                [img]="EyeIcon"
-                size="18"
-                aria-hidden="true"
-              ></lucide-icon>
-              }
             </button>
           </div>
           @if (password?.invalid && password?.touched) {
             <div class="error-message">
+              <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
               {{ 'LOGIN.ERRORS.PASSWORD_REQUIRED' | translate }}
             </div>
           }
@@ -202,9 +198,11 @@
           [attr.aria-describedby]="errorMessage() ? 'global-error' : null"
         >
           @if (isLoggingIn()) {
-          <span class="spinner" aria-hidden="true"></span>
+            <span class="spinner" aria-hidden="true"></span>
+            <span>{{ "LOGIN.LOGGING_IN" | translate }}...</span>
+          } @else {
+            <span>{{ "LOGIN.SUBMIT_BUTTON" | translate }}</span>
           }
-          <span>{{ "LOGIN.SUBMIT_BUTTON" | translate }}</span>
         </button>
 
         <div class="auth-footer">
@@ -229,91 +227,23 @@
   <footer class="main-footer">
     <div class="footer-content">
       <div class="footer-top">
-        <div class="language-section">
-          <div class="language-selector" #footerLanguageSelector>
-            <div
-              class="selector-trigger"
-              (click)="toggleDropdown($event, 'footer')"
-              [class.active]="dropdownOpen()"
-            >
-              <lucide-icon
-                [img]="GlobeIcon"
-                size="18"
-                class="selector-icon"
-                aria-hidden="true"
-              ></lucide-icon>
-              <span class="selected-language">
-                {{ languageService.currentLang() === "es" ? "Español (LATAM)" : "English (US)" }}
-              </span>
-              <lucide-icon
-                [img]="dropdownOpen() ? ChevronUp : ChevronDown"
-                size="16"
-                class="dropdown-icon"
-                aria-hidden="true"
-              ></lucide-icon>
-            </div>
-
-            <div
-              class="dropdown-menu"
-              [class.show]="dropdownOpen()"
-              [class.dropup]="isDropUp()"
-            >
-              <div
-                class="dropdown-item"
-                [class.active]="languageService.currentLang() === 'es'"
-                (click)="changeLanguage('es')"
-              >
-                <span class="flag-icon">🇪🇸</span>
-                <span class="language-name">Español (LATAM)</span>
-                @if(languageService.currentLang() === 'es'){
-                  <lucide-icon
-                    [img]="Check"
-                    size="16"
-                    class="check-icon"
-                  ></lucide-icon>
-                }
-              </div>
-
-              <div
-                class="dropdown-item"
-                [class.active]="languageService.currentLang() === 'en'"
-                (click)="changeLanguage('en')"
-              >
-                <span class="flag-icon">🇺🇸</span>
-                <span class="language-name">English (US)</span>
-                @if(languageService.currentLang() === 'en'){
-                  <lucide-icon
-                    [img]="Check"
-                    size="16"
-                    class="check-icon"
-                  ></lucide-icon>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="support-section">
           <p class="support-text">
-            ¿Preguntas? Llama al
+            Questions? Call
             <a href="tel:+18492001043" class="support-link">+1 (849) 200-1043</a>
           </p>
         </div>
       </div>
 
       <nav class="footer-links">
-        <a routerLink="/faq">Preguntas frecuentes</a>
-        <a routerLink="/help">Centro de ayuda</a>
-        <a routerLink="/terms">{{ "FOOTER.TERMS" | translate }}</a>
         <a routerLink="/privacy">{{ "FOOTER.PRIVACY" | translate }}</a>
-        <a routerLink="/cookies">Preferencias de cookies</a>
-        <a routerLink="/corp-info">Información empresarial</a>
-        <a routerLink="/security">{{ "FOOTER.SECURITY" | translate }}</a>
+        <a routerLink="/terms">{{ "FOOTER.TERMS" | translate }}</a>
+        <a routerLink="/cookies">Cookies</a>
       </nav>
 
       <div class="footer-bottom">
         <p class="copyright">
-          {{ "FOOTER.COPYRIGHT" | translate }}
+          &copy; {{ "FOOTER.COPYRIGHT" | translate }} Virteex. All rights reserved.
         </p>
       </div>
     </div>
