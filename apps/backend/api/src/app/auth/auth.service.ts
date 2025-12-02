@@ -82,7 +82,7 @@ export class AuthService {
       }
       if (rnc) {
         const existingOrg = await queryRunner.manager.findOne(Organization, {
-          where: { rnc },
+          where: { taxId: rnc },
         });
         if (existingOrg) {
           throw new ConflictException('El RNC ya está registrado');
@@ -92,7 +92,7 @@ export class AuthService {
 
       organization = queryRunner.manager.create(Organization, {
         legalName: organizationName,
-        rnc: rnc || null,
+        taxId: rnc || null,
         fiscalRegionId: fiscalRegionId,
       });
       await queryRunner.manager.save(organization);
