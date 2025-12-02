@@ -1,7 +1,7 @@
 // ../localization/templates/do-fiscal-package.ts
-import { NcfType } from "../compliance/entities/ncf-sequence.entity";
-import { TaxType } from "../taxes/entities/tax.entity";
-import { AccountNature, AccountType, AccountCategory } from "../chart-of-accounts/enums/account-enums";
+import { NcfType } from "../../compliance/entities/ncf-sequence.entity";
+import { TaxType } from "../../taxes/entities/tax.entity";
+import { AccountNature, AccountType, AccountCategory } from "../../chart-of-accounts/enums/account-enums";
 import { AccountTemplateDto } from "../entities/coa-template.entity";
 
 interface FiscalPackage {

@@ -1,5 +1,5 @@
 
-import { CreateAccountDto } from "../chart-of-accounts/dto/create-account.dto";
+import { CreateAccountDto } from "../../chart-of-accounts/dto/create-account.dto";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { LocalizationTemplate } from "./localization-template.entity";
 

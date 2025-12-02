@@ -10,8 +10,8 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Organization } from '../../../../organizations/entities/organization.entity';
-import { Role } from '../../../../roles/entities/role.entity';
+import { Organization } from '../../../organizations/entities/organization.entity';
+import { Role } from '../../../roles/entities/role.entity';
 
 export enum UserStatus {
   PENDING = 'PENDING',

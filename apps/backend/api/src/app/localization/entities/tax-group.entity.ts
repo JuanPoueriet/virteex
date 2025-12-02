@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Tax } from '../taxes/entities/tax.entity';
+import { Tax } from '../../taxes/entities/tax.entity';
 
 @Entity({ name: 'tax_groups' })
 export class TaxGroup {

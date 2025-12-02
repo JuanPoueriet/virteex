@@ -1,4 +1,4 @@
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../../organizations/entities/organization.entity';
 import { Entity, PrimaryGeneratedColumn, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 
 export enum DocumentType {

@@ -1,5 +1,5 @@
 
-import { Ledger } from '../accounting/entities/ledger.entity';
+import { Ledger } from '../../accounting/entities/ledger.entity';
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn, VersionColumn } from 'typeorm';
 import { Account } from './account.entity';
 

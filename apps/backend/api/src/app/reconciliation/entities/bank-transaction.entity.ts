@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BankStatement } from './bank-statement.entity';
-import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
+import { JournalEntryLine } from '../../journal-entries/entities/journal-entry-line.entity';
 
 export enum TransactionStatus {
   UNRECONCILED = 'unreconciled',

@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryColumn, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { Account } from '../chart-of-accounts/entities/account.entity';
+import { Account } from '../../chart-of-accounts/entities/account.entity';
 import { AccountingPeriod } from './accounting-period.entity';
 
 @Entity({ name: 'account_period_locks' })

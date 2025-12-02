@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, Input, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { trigger, state, style, animate, transition } from '@angular/animations';
+import { trigger, style, animate, transition } from '@angular/animations';
 import { ModalOptions } from '../../service/modal.service';
 // import { ModalOptions } from '../../services/modal.service';
 

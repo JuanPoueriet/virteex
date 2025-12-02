@@ -8,8 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request } from 'express';
 
-import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
-import { User, UserStatus } from '../users/entities/user.entity/user.entity';
+import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
+import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

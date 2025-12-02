@@ -6,7 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { CustomerPayment } from './customer-payment.entity';
-import { Invoice } from '../invoices/entities/invoice.entity';
+import { Invoice } from '../../invoices/entities/invoice.entity';
 
 @Entity({ name: 'customer_payment_lines' })
 export class CustomerPaymentLine {

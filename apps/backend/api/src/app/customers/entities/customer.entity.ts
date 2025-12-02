@@ -1,5 +1,5 @@
 
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import {
   Column,
   CreateDateColumn,
@@ -13,7 +13,7 @@ import {
 import { CustomerAddress } from './customer-address.entity';
 import { CustomerContact } from './customer-contact.entity';
 import { CustomerGroup } from './customer-group.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
 export enum CustomerStatus {
   LEAD = 'LEAD',

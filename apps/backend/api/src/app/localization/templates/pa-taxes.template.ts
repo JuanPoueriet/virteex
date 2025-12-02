@@ -1,5 +1,5 @@
 
-import { TaxType } from "../taxes/entities/tax.entity";
+import { TaxType } from "../../taxes/entities/tax.entity";
 
 
 

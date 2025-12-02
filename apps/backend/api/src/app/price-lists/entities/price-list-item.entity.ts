@@ -1,5 +1,5 @@
 
-import { Product } from '../inventory/entities/product.entity';
+import { Product } from '../../inventory/entities/product.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,

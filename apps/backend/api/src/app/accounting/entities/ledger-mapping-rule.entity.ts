@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index, OneToMany } from 'typeorm';
 import { Ledger } from './ledger.entity';
-import { Account } from '../chart-of-accounts/entities/account.entity';
+import { Account } from '../../chart-of-accounts/entities/account.entity';
 import { LedgerMappingRuleCondition } from './ledger-mapping-rule-condition.entity';
 
 @Entity({ name: 'ledger_mapping_rules' })

@@ -1,7 +1,7 @@
 
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Account } from '../chart-of-accounts/entities/account.entity';
+import { Account } from '../../chart-of-accounts/entities/account.entity';
 
 @Injectable()
 export class TemporalValidityGuard implements CanActivate {

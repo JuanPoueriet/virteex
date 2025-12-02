@@ -1,5 +1,5 @@
 
-import { CreateTaxDto } from "../taxes/dto/create-tax.dto";
+import { CreateTaxDto } from "../../taxes/dto/create-tax.dto";
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
 import { LocalizationTemplate } from "./localization-template.entity";
 

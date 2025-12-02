@@ -1,5 +1,5 @@
 
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 
 @Entity({ name: 'account_segment_definitions' })

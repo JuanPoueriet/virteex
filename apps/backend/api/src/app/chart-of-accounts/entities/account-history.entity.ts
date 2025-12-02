@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { Account } from './account.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
 @Entity({ name: 'account_history' })
 @Index(['accountId'])

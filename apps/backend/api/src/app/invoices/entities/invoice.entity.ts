@@ -11,9 +11,9 @@ import {
   VersionColumn,
 } from 'typeorm';
 import { InvoiceLineItem } from './invoice-line-item.entity';
-import { Customer } from '../customers/entities/customer.entity';
-import { Currency } from '../currencies/entities/currency.entity';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Customer } from '../../customers/entities/customer.entity';
+import { Currency } from '../../currencies/entities/currency.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 export enum InvoiceStatus {
     DRAFT = 'Draft',

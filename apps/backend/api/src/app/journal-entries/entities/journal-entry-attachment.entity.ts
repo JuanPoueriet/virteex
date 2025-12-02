@@ -8,7 +8,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { JournalEntry } from './journal-entry.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
 @Entity({ name: 'journal_entry_attachments' })
 export class JournalEntryAttachment {

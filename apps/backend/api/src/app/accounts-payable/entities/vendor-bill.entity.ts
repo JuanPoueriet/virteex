@@ -11,9 +11,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { VendorBillLine } from './vendor-bill-line.entity';
-import { Supplier } from '../suppliers/entities/supplier.entity';
-import { Currency } from '../currencies/entities/currency.entity';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Supplier } from '../../suppliers/entities/supplier.entity';
+import { Currency } from '../../currencies/entities/currency.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 
 export enum VendorBillStatus {
   DRAFT = 'DRAFT',

@@ -1,9 +1,9 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { ChartOfAccountsService } from '../chart-of-accounts/chart-of-accounts.service';
-import { TaxesService } from '../taxes/taxes.service';
-import { DocumentSequencesService } from '../shared/document-sequences/document-sequences.service';
+import { ChartOfAccountsService } from '../../chart-of-accounts/chart-of-accounts.service';
+import { TaxesService } from '../../taxes/taxes.service';
+import { DocumentSequencesService } from '../../shared/document-sequences/document-sequences.service';
 
 
 @Processor('localization')

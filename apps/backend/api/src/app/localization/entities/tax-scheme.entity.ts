@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { FiscalRegion } from './fiscal-region.entity';
-import { TaxConfiguration } from '../taxes/entities/tax-configuration.entity';
+import { TaxConfiguration } from '../../taxes/entities/tax-configuration.entity';
 
 @Entity({ name: 'tax_schemes' })
 export class TaxScheme {

@@ -1,5 +1,5 @@
 
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { DimensionValue } from './dimension-value.entity';
 

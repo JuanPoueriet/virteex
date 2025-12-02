@@ -10,11 +10,11 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '../../organizations/entities/organization.entity';
 import { JournalEntryLine } from './journal-entry-line.entity';
 import { JournalEntryAttachment } from './journal-entry-attachment.entity';
 import { Journal } from './journal.entity';
-import { Ledger } from '../accounting/entities/ledger.entity';
+import { Ledger } from '../../accounting/entities/ledger.entity';
 
 export enum JournalEntryStatus {
   DRAFT = 'Draft',
