@@ -51,7 +51,7 @@ import { LocalizationModule } from '../localization/localization.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secretKey: config.get<string>('RECAPTCHA_SECRET_KEY'),
-        response: () => config.get<string>('RECAPTCHA_RESPONSE', 'g-recaptcha-response'),
+        response: (req) => req.body.recaptchaToken,
       }),
     }),
     MailModule,
