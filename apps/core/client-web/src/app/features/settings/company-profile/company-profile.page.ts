@@ -2,8 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, Save } from 'lucide-angular';
-// Aquí se importaría un servicio para obtener y actualizar los datos
-// import { CompanyService } from '...';
+import { OrganizationService } from '../../../shared/service/organization.service';
+import { NotificationService } from '../../../core/services/notification';
 
 @Component({
   selector: 'app-company-profile-page',
@@ -14,46 +14,57 @@ import { LucideAngularModule, Save } from 'lucide-angular';
 })
 export class CompanyProfilePage implements OnInit {
   private fb = inject(FormBuilder);
-  // private companyService = inject(CompanyService);
+  private organizationService = inject(OrganizationService);
+  private notificationService = inject(NotificationService);
 
   protected readonly SaveIcon = Save;
   profileForm!: FormGroup;
+  isLoading = false;
 
   ngOnInit(): void {
     this.profileForm = this.fb.group({
-      companyName: ['', Validators.required],
+      legalName: ['', Validators.required],
       industry: [''],
       taxId: ['', Validators.required],
       address: [''],
       city: [''],
       country: ['', Validators.required],
-      companyPhone: ['', Validators.required],
+      phone: ['', Validators.required],
       website: [''],
     });
 
-    // Simulación de carga de datos
     this.loadCompanyData();
   }
 
   loadCompanyData(): void {
-    // En una app real: this.companyService.getProfile().subscribe(data => ...)
-    const mockData = {
-      companyName: 'FacturaPRO Inc.',
-      industry: 'tech',
-      taxId: '130-00000-1',
-      address: 'Calle Ficticia 123',
-      city: 'Santo Domingo',
-      country: 'DO',
-      companyPhone: '809-555-0101',
-      website: 'https://facturapro.com'
-    };
-    this.profileForm.patchValue(mockData);
+    this.isLoading = true;
+    this.organizationService.getProfile().subscribe({
+      next: (data) => {
+        this.profileForm.patchValue(data);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading company profile', error);
+        this.notificationService.showError('Error cargando el perfil de la empresa');
+        this.isLoading = false;
+      }
+    });
   }
 
   saveProfile(): void {
     if (this.profileForm.valid) {
-      console.log('Guardando perfil:', this.profileForm.value);
-      // this.companyService.updateProfile(this.profileForm.value).subscribe(...);
+      this.isLoading = true;
+      this.organizationService.updateProfile(this.profileForm.value).subscribe({
+        next: (data) => {
+          this.notificationService.showSuccess('Perfil actualizado correctamente');
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error updating profile', error);
+          this.notificationService.showError('Error actualizando el perfil');
+          this.isLoading = false;
+        }
+      });
     }
   }
 }
