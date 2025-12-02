@@ -168,19 +168,31 @@ export class AuthService {
   checkAuthStatus(): Observable<boolean> {
     const url = `${this.apiUrl}/status`;
     this._authStatus.set(AuthStatus.pending);
-    return this.http.get<{ user: User }>(url, { withCredentials: true }).pipe(
+    return this.http.get<{ isAuthenticated: boolean; user: User | null }>(url, { withCredentials: true }).pipe(
       map((res) => {
-        this._currentUser.set(res.user);
-        this._authStatus.set(AuthStatus.authenticated);
-        // 🔥 Actualizar BehaviorSubjects
-        this._user.next(res.user);
-        this._isAuthenticated.next(true);
-        this.webSocketService.connect();
-        this.webSocketService.emit('user-status', { isOnline: true });
-        this.listenForForcedLogout();
-        return true;
+        if (res.isAuthenticated && res.user) {
+          this._currentUser.set(res.user);
+          this._authStatus.set(AuthStatus.authenticated);
+          // 🔥 Actualizar BehaviorSubjects
+          this._user.next(res.user);
+          this._isAuthenticated.next(true);
+          this.webSocketService.connect();
+          this.webSocketService.emit('user-status', { isOnline: true });
+          this.listenForForcedLogout();
+          return true;
+        } else {
+          this._currentUser.set(null);
+          this._authStatus.set(AuthStatus.unauthenticated);
+          this.webSocketService.disconnect();
+
+          // 🔥 Actualizar BehaviorSubjects
+          this._user.next(null);
+          this._isAuthenticated.next(false);
+          return false;
+        }
       }),
       catchError(() => {
+        // En caso de error 500 real u otros problemas de red
         this._currentUser.set(null);
         this._authStatus.set(AuthStatus.unauthenticated);
         this.webSocketService.disconnect();
