@@ -258,11 +258,15 @@ export class AuthService {
 
   public async sendPasswordResetLink(
     forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<void> {
+  ): Promise<{ message: string }> {
     const { email } = forgotPasswordDto;
+    const genericMessage = 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.';
 
     const user = await this.userRepository.findOneBy({ email });
-    if (!user) return;
+    if (!user) {
+      await this.simulateDelay();
+      return { message: genericMessage };
+    }
 
     const expirationTime =
       this.configService.get<string>('JWT_RESET_PASSWORD_EXPIRATION_TIME') ||
@@ -281,6 +285,14 @@ export class AuthService {
     await this.userRepository.save(user);
 
     await this.mailService.sendPasswordResetEmail(user, token, expirationTime);
+
+    return { message: genericMessage };
+  }
+
+  private async simulateDelay() {
+    // Simula un retardo aleatorio entre 500ms y 1500ms para evitar timing attacks
+    const delay = Math.floor(Math.random() * 1000) + 500;
+    return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
 
@@ -654,9 +666,30 @@ export class AuthService {
     secret?: string,
   ) {
     return this.jwtService.sign(payload, {
-      secret: secret || this.configService.get('JWT_SECRET'),
+      secret: secret || this.configService.getOrThrow('JWT_SECRET'),
       expiresIn: expiresIn || DEFAULT_ACCESS_EXPIRATION,
     });
+  }
+
+  async verifyUserFromToken(token: string): Promise<User | null> {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+      });
+
+      const user = await this.userRepository.findOne({
+        where: { id: payload.id },
+        relations: ['roles', 'organization'],
+      });
+
+      if (!user || user.status !== UserStatus.ACTIVE || user.tokenVersion !== payload.tokenVersion) {
+        return null;
+      }
+
+      return user;
+    } catch (e) {
+      return null;
+    }
   }
 
   private async _generatePasswordResetToken(

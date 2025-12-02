@@ -144,9 +144,28 @@ export class AuthController {
   }
 
   @Get('status')
-  @UseGuards(JwtAuthGuard)
-  checkAuthStatus(@CurrentUser() user: User) {
-    return this.authService.status(user);
+  async checkAuthStatus(@Req() req: Request) {
+    const token = req.cookies['access_token'];
+
+    if (!token) {
+      return { isAuthenticated: false, user: null };
+    }
+
+    const user = await this.authService.verifyUserFromToken(token);
+
+    if (!user) {
+      return { isAuthenticated: false, user: null };
+    }
+
+    const statusResponse = await this.authService.status({
+      id: user.id,
+      isImpersonating: false,
+    });
+
+    return {
+      isAuthenticated: true,
+      user: statusResponse.user
+    };
   }
 
   @Post('forgot-password')
