@@ -27,6 +27,7 @@ import { OrganizationSettings } from '../organizations/entities/organization-set
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { NcfType } from '../compliance/entities/ncf-sequence.entity';
 import { ComplianceService } from '../compliance/compliance.service';
+import { FiscalAdapterFactory } from './adapters/fiscal-adapter.factory';
 import { DocumentSequencesService } from '../shared/document-sequences/document-sequences.service';
 import { DocumentType } from '../shared/document-sequences/entities/document-sequence.entity';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
@@ -52,6 +53,7 @@ export class InvoicesService {
     private eventEmitter: EventEmitter2,
     private readonly complianceService: ComplianceService,
     private readonly documentSequencesService: DocumentSequencesService,
+    private readonly fiscalAdapterFactory: FiscalAdapterFactory,
   ) {
     this.compileTemplate();
   }
@@ -97,7 +99,8 @@ export class InvoicesService {
       );
 
       const settings = await this.getOrgAccountingConfig(organizationId);
-      const defaultTaxRate = settings.defaultTaxRate / 100 || 0.18;
+      // Remove hardcoded defaultTaxRate here. If not provided in DTO, it should be 0 or validated elsewhere.
+      // Ideally, the frontend sends the correct tax rate. If missing, we assume 0 or handle it via a tax engine in the future.
 
       let subtotal = 0;
       let totalTax = 0;
@@ -118,7 +121,8 @@ export class InvoicesService {
         const lineTotal = linePrice * itemDto.quantity;
         
         // Calculate tax per line
-        const lineTaxRate = itemDto.taxRate !== undefined ? itemDto.taxRate : defaultTaxRate;
+        // If taxRate is undefined, we default to 0 instead of 0.18 to avoid unexpected taxes.
+        const lineTaxRate = itemDto.taxRate !== undefined ? itemDto.taxRate : 0;
         const lineTaxAmount = lineTotal * lineTaxRate;
 
         subtotal += lineTotal;
@@ -168,17 +172,11 @@ export class InvoicesService {
         manager
       );
 
-      const ncfNumber = await this.complianceService.getNextNcf(
-        organizationId,
-        NcfType.B01,
-        manager
-      );
-
       const invoice = manager.create(Invoice, {
         ...createInvoiceDto,
         organizationId,
         invoiceNumber,
-        ncfNumber,
+        // ncfNumber will be set by the fiscal adapter if applicable
         customer,
         customerName: customer.companyName,
         customerAddress: customer.address,
@@ -193,6 +191,10 @@ export class InvoicesService {
         exchangeRate,
         totalInBaseCurrency: total * exchangeRate,
       });
+
+      // Apply fiscal logic (NCF, etc.) via strategy
+      const fiscalAdapter = await this.fiscalAdapterFactory.getAdapter(organizationId);
+      await fiscalAdapter.processInvoice(invoice, createInvoiceDto, organizationId, manager);
 
       const savedInvoice = await manager.save(invoice);
       
@@ -346,12 +348,6 @@ export class InvoicesService {
         const cnTotal = cnSubtotal + cnTax;
 
 
-        const creditNoteNcf = await this.complianceService.getNextNcf(
-            organizationId,
-            NcfType.B04,
-            manager,
-        );
-
         const creditNoteNumber = await this.documentSequencesService.getNextNumber(
             organizationId,
             DocumentType.CREDIT_NOTE,
@@ -361,7 +357,7 @@ export class InvoicesService {
         const creditNote = manager.create(Invoice, {
             organizationId,
             invoiceNumber: creditNoteNumber,
-            ncfNumber: creditNoteNcf,
+            // ncfNumber handled by adapter
             originalInvoiceId: originalInvoice.id,
             status: InvoiceStatus.CREDIT_NOTE,
             type: InvoiceType.CREDIT_NOTE,
@@ -384,6 +380,10 @@ export class InvoicesService {
             lineItems: cnLineItems,
             notes: dto.reason || `Nota de crédito para factura ${originalInvoice.invoiceNumber}`
         });
+
+        // Apply fiscal logic via strategy
+        const fiscalAdapter = await this.fiscalAdapterFactory.getAdapter(organizationId);
+        await fiscalAdapter.processCreditNote(creditNote, originalInvoice, organizationId, manager);
 
         const savedCreditNote = await manager.save(creditNote);
 
@@ -434,13 +434,13 @@ export class InvoicesService {
     );
   }
 
-  private async getOrgAccountingConfig(organizationId: string): Promise<OrganizationSettings & { defaultTaxRate: number }> {
+  private async getOrgAccountingConfig(organizationId: string): Promise<OrganizationSettings> {
 
     const settings = await this.orgSettingsRepository.findOne({ where: { organizationId } });
     if (!settings || !settings.defaultAccountsReceivableId || !settings.defaultSalesRevenueId || !settings.defaultSalesTaxId) {
       throw new BadRequestException('La configuración de cuentas automáticas para esta organización es incompleta. Faltan cuentas de Cuentas por Cobrar, Ingresos por Ventas o Impuestos sobre Ventas.');
     }
 
-    return { ...settings, defaultTaxRate: 18.00 };
+    return settings;
   }
 }

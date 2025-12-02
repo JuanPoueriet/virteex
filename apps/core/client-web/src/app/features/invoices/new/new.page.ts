@@ -63,7 +63,7 @@ export class NewInvoicePage implements OnInit {
       description: [''],
       quantity: [1, [Validators.required, Validators.min(1)]],
       price: [{ value: 0, disabled: false }, [Validators.required, Validators.min(0)]],
-      taxRate: [0.18, [Validators.required, Validators.min(0), Validators.max(1)]],
+      taxRate: [0, [Validators.required, Validators.min(0), Validators.max(1)]],
     });
   }
 

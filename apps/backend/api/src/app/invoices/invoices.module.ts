@@ -48,6 +48,9 @@ import { Module, forwardRef } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { InvoicesController } from './invoices.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { GenericFiscalAdapter } from './adapters/generic-fiscal.adapter';
+import { DominicanRepublicFiscalAdapter } from './adapters/dominican-republic-fiscal.adapter';
+import { FiscalAdapterFactory } from './adapters/fiscal-adapter.factory';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
 import { AuthModule } from '../auth/auth.module';
@@ -84,7 +87,12 @@ import { SharedModule } from '../shared/shared.module';
     forwardRef(() => SharedModule),
   ],
   controllers: [InvoicesController],
-  providers: [InvoicesService],
+  providers: [
+    InvoicesService,
+    GenericFiscalAdapter,
+    DominicanRepublicFiscalAdapter,
+    FiscalAdapterFactory,
+  ],
   exports: [InvoicesService],
 })
 export class InvoicesModule {}
