@@ -5,7 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, EntityManager, Repository, Not, IsNull } from 'typeorm';
 import { NcfSequence, NcfType } from './entities/ncf-sequence.entity';
 import { VendorBill } from '../accounts-payable/entities/vendor-bill.entity';
-import { Invoice, InvoiceType } from '../invoices/entities/invoice.entity';
+import { Invoice } from '../invoices/entities/invoice.entity';
+import { DominicanRepublicReports } from './reports/dr-reports';
 
 @Injectable()
 export class ComplianceService {
@@ -49,64 +50,12 @@ export class ComplianceService {
   }
   
   async generate607Report(organizationId: string, year: number, month: number): Promise<string> {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-
-      const sales = await this.invoiceRepository.find({
-          relations: ['customer'],
-          where: {
-              customer: { organizationId },
-              issueDate: Between(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]),
-
-              ncfNumber: Not(IsNull()),
-          },
-      });
-
-      const lines = sales.map(sale => {
-          const customerTaxId = sale.customer?.taxId?.replace(/-/g, '') || '';
-          const idType = this.getTaxIdType(customerTaxId);
-          const ncf = sale.ncfNumber || '';
-          const modifiedNcf = sale.type === InvoiceType.CREDIT_NOTE ? (sale.originalInvoiceId || '') : '';
-          
-          const totalAmount = Math.abs(sale.total).toFixed(2);
-          const taxAmount = Math.abs(sale.tax).toFixed(2);
-
-          return `${customerTaxId}|${idType}|${ncf}|${modifiedNcf}|${totalAmount}|${taxAmount}`;
-      });
-      
-      return lines.join('\n');
+     // TODO: Check organization country before generating.
+     return DominicanRepublicReports.generate607Report(organizationId, year, month, this.invoiceRepository);
   }
 
   async generate606Report(organizationId: string, year: number, month: number): Promise<string> {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-
-      const purchases = await this.vendorBillRepository.find({
-          relations: ['vendor'],
-          where: {
-              organizationId,
-              date: Between(startDate, endDate),
-
-              ncf: Not(IsNull())
-          },
-      });
-
-      const lines = purchases.map(p => {
-          const rnc = p.vendor?.taxId?.replace(/-/g, '') || ''; 
-          const ncf = p.ncf || '';
-          const totalAmount = p.total.toFixed(2);
-          const itbis = (p.total * 0.18).toFixed(2);
-          
-          return `${rnc}|2|${ncf}|${totalAmount}|${itbis}`;
-      });
-      
-      return lines.join('\n');
-  }
-
-  private getTaxIdType(taxId: string): '1' | '2' {
-      if (taxId.length === 9) {
-          return '1';
-      }
-      return '2';
+     // TODO: Check organization country before generating.
+     return DominicanRepublicReports.generate606Report(organizationId, year, month, this.vendorBillRepository);
   }
 }
