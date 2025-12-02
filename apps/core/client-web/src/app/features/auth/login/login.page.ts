@@ -199,7 +199,7 @@ export class LoginPage implements OnInit {
         const credentials: any = {
           email: formValue.email,
           password: formValue.password,
-          recaptchaToken: token,
+          'g-recaptcha-response': token,
           rememberMe: formValue.rememberMe,
         };
 

@@ -117,6 +117,7 @@
     "lucide-angular": "^0.555.0",
     "nestjs-request-context": "^4.0.0",
     "nestjs-typeorm-paginate": "^4.1.0",
+    "ng-recaptcha-19": "^20.0.4",
     "node-forge": "^1.3.1",
     "nodemailer": "^7.0.5",
     "papaparse": "^5.5.3",
