@@ -19,9 +19,26 @@
           {
             "glob": "**/*",
             "input": "apps/core/client-web/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/core/client-web/src/assets",
+            "output": "assets"
           }
         ],
-        "styles": ["apps/core/client-web/src/styles.scss"]
+        "styles": [
+          "apps/core/client-web/src/styles.scss",
+          {
+            "input": "apps/core/client-web/src/assets/styles/theme-dark.scss",
+            "inject": false,
+            "bundleName": "theme-dark"
+          },
+          {
+            "input": "apps/core/client-web/src/assets/styles/theme-light.scss",
+            "inject": false,
+            "bundleName": "theme-light"
+          }
+        ]
       },
       "configurations": {
         "production": {
