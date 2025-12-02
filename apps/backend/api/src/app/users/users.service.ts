@@ -1,12 +1,4 @@
 
-
-
-
-
-
-
-
-
 import {
   BadRequestException,
   ForbiddenException,
@@ -19,6 +11,7 @@ import { User } from './entities/user.entity/user.entity';
 import { UserStatus } from './entities/user.entity/user.entity';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
@@ -34,6 +27,11 @@ export class UsersService {
     private readonly mailService: MailService,
   ) {}
 
+  async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<User> {
+    const user = await this.findOne(id);
+    Object.assign(user, updateProfileDto);
+    return this.userRepository.save(user);
+  }
 
   async findAllByOrg(
     organizationId: string,

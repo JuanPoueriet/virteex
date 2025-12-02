@@ -1,60 +1,51 @@
-
-import { User } from '../users/entities/user.entity/user.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
-import { FiscalRegion } from '../localization/entities/fiscal-region.entity';
+import { User } from '../../users/entities/user.entity/user.entity';
 
-@Entity({ name: 'organizations' })
+@Entity('organizations')
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  name?: string;
-
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ name: 'legal_name' })
   legalName: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
-  rnc?: string | null;
+  @Column({ name: 'tax_id', nullable: true })
+  taxId: string;
 
-  @Column({ name: 'logo_url', type: 'text', nullable: true })
-  logoUrl?: string;
+  @Column({ nullable: true })
+  address: string;
 
-  @Column({ name: 'accent_color', type: 'varchar', length: 7, nullable: true, default: '#0078d4' })
-  accentColor?: string;
+  @Column({ nullable: true })
+  city: string;
 
-  @Column({ name: 'font_family', type: 'varchar', length: 50, nullable: true, default: 'Inter' })
-  fontFamily?: string;
+  @Column({ nullable: true })
+  country: string;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
+  @Column({ nullable: true })
+  phone: string;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  @Column({ nullable: true })
+  website: string;
 
-  @OneToMany(() => User, (user) => user.organization)
-  users: User[];
+  @Column({ nullable: true })
+  industry: string;
 
+  @Column({ name: 'logo_url', nullable: true })
+  logoUrl: string;
 
   @Column({ name: 'fiscal_region_id', nullable: true })
-  fiscalRegionId?: string;
-
-  @ManyToOne(() => FiscalRegion)
-  @JoinColumn({ name: 'fiscal_region_id' })
-  fiscalRegion: FiscalRegion;
-
+  fiscalRegionId: string;
 
   @OneToMany(() => OrganizationSubsidiary, sub => sub.parent)
   subsidiaries: OrganizationSubsidiary[];
 
+  @OneToMany(() => User, user => user.organization)
+  users: User[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

@@ -1,5 +1,4 @@
 
-
 import {
   Controller,
   Get,
@@ -21,12 +20,25 @@ import { User } from './entities/user.entity/user.entity';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('profile')
+  getProfile(@CurrentUser() user: User) {
+    return this.usersService.findOne(user.id);
+  }
+
+  @Patch('profile')
+  updateProfile(
+    @CurrentUser() user: User,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.usersService.updateProfile(user.id, updateProfileDto);
+  }
 
   @Get()
   findAll(

@@ -16,7 +16,13 @@ export interface UpdateUserDto {
   lastName?: string;
   email?: string;
   roleId?: string;
-  preferredLanguage?: string; // <-- AÑADIDO: Esta línea soluciona el error
+  preferredLanguage?: string;
+}
+
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  preferredLanguage?: string;
 }
 
 // Interfaz para la respuesta paginada
@@ -29,6 +35,14 @@ export interface PaginatedUsersResponse {
 export class UsersService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/users`;
+
+  getProfile(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/profile`);
+  }
+
+  updateProfile(data: UpdateProfileDto): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/profile`, data);
+  }
 
   getUsers(options: {
     page: number;
@@ -70,10 +84,19 @@ export class UsersService {
     return this.http.post<User>(`${this.apiUrl}/invite`, userData);
   }
 
-  setUserStatus(userId: string, isActive: boolean): Observable<User> {
-    return this.http.patch<User>(`${this.apiUrl}/${userId}/status`, {
-      isActive,
-    });
+  setUserStatus(userId: string, isOnline: boolean): Observable<User> {
+      // Corregido: PUT y propiedad isOnline para coincidir con el backend
+      return this.http.put<User>(`${this.apiUrl}/${userId}/status`, {
+        isOnline,
+      });
+  }
+
+  // Si necesitamos bloquear usuario, usamos una ruta distinta o el update normal
+  blockUser(userId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiUrl}/${userId}/block-and-logout`,
+      {},
+    );
   }
 
   sendPasswordReset(userId: string): Observable<{ message: string }> {

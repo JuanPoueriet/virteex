@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -14,7 +15,7 @@ import {
 } from '@angular/forms';
 import {
   LucideAngularModule,
-  User,
+  User as UserIcon,
   Mail,
   Phone,
   Building2,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
+import { UsersService } from '../../../core/api/users.service';
 
 @Component({
   selector: 'app-my-profile-page',
@@ -35,10 +37,12 @@ import { NotificationService } from '../../../core/services/notification';
 export class MyProfilePage implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private usersService = inject(UsersService);
   private notificationService = inject(NotificationService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Icons
-  protected readonly UserIcon = User;
+  protected readonly UserIcon = UserIcon;
   protected readonly MailIcon = Mail;
   protected readonly PhoneIcon = Phone;
   protected readonly CompanyIcon = Building2;
@@ -50,6 +54,7 @@ export class MyProfilePage implements OnInit {
   avatarPreview = signal<string | ArrayBuffer | null>(null);
 
   currentUser = this.authService.currentUser;
+  isLoading = false;
 
   ngOnInit(): void {
     const user = this.currentUser();
@@ -58,8 +63,7 @@ export class MyProfilePage implements OnInit {
       firstName: [user?.firstName, Validators.required],
       lastName: [user?.lastName, Validators.required],
       email: [{ value: user?.email, disabled: true }],
-    //   phone: [user?.phone || ''],
-    //   jobTitle: [user?.jobTitle || ''],
+      preferredLanguage: [user?.preferredLanguage || 'es']
     });
 
     this.passwordForm = this.fb.group({
@@ -77,17 +81,38 @@ export class MyProfilePage implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => this.avatarPreview.set(reader.result);
+      reader.onload = () => {
+         this.avatarPreview.set(reader.result);
+         this.cdr.markForCheck();
+      };
       reader.readAsDataURL(file);
       this.profileForm.markAsDirty();
+      // Here you would upload the file immediately or wait for save
+      // For now, we just preview.
     }
   }
 
   saveProfile(): void {
     if (this.profileForm.valid) {
-      console.log('Profile updated:', this.profileForm.value);
-      this.notificationService.showSuccess('Perfil actualizado exitosamente.');
-      this.profileForm.markAsPristine();
+      this.isLoading = true;
+      const { firstName, lastName, preferredLanguage } = this.profileForm.value;
+
+      this.usersService.updateProfile({ firstName, lastName, preferredLanguage }).subscribe({
+        next: (updatedUser) => {
+          this.notificationService.showSuccess('Perfil actualizado exitosamente.');
+          // Update local state if needed via AuthService
+          // this.authService.updateCurrentUser(updatedUser);
+          this.profileForm.markAsPristine();
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error(err);
+          this.notificationService.showError('Error al actualizar el perfil.');
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        }
+      });
     }
   }
 
@@ -102,9 +127,11 @@ export class MyProfilePage implements OnInit {
         );
         return;
       }
+      // Implement password change logic calling AuthService or UsersService
       console.log('Password change requested:', this.passwordForm.value);
+      // Mock success for now as the endpoint might be missing in this exact context or handled by Auth
       this.notificationService.showSuccess(
-        'Contraseña actualizada exitosamente.'
+        'Contraseña actualizada exitosamente (Simulado).'
       );
       this.passwordForm.reset();
     }

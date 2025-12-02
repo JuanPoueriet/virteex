@@ -10,8 +10,8 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
-import { Role } from '../roles/entities/role.entity';
+import { Organization } from '../../../../organizations/entities/organization.entity';
+import { Role } from '../../../../roles/entities/role.entity';
 
 export enum UserStatus {
   PENDING = 'PENDING',
@@ -24,13 +24,8 @@ export enum UserStatus {
 @Entity({ name: 'users' })
 export class User {
 
-
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-
-
 
   @Column({ length: 100 })
   firstName: string;
@@ -54,9 +49,6 @@ export class User {
 
   @Column({ nullable: true })
   department?: string;
-
-
-
 
   @Column({
     type: 'enum',
@@ -96,9 +88,6 @@ export class User {
   @Column({ name: 'last_activity', type: 'timestamptz', nullable: true })
   lastActivity?: Date;
 
-
-
-
   @Column({ name: 'organization_id' })
   organizationId: string;
 
@@ -114,33 +103,19 @@ export class User {
   })
   roles: Role[];
 
-
-
-
   permissions?: string[];
-
 
   isImpersonating?: boolean;
   originalUserId?: string;
 
-
-
   @Column({ name: 'preferred_language', length: 5, nullable: true, default: 'es' })
   preferredLanguage?: string;
-
-
-
-
-
 
   @Column({ nullable: true })
   invitationToken?: string;
 
   @Column({ type: 'timestamptz', nullable: true })
   invitationTokenExpires?: Date;
-
-
-
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
