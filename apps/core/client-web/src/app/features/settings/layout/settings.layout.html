@@ -100,8 +100,9 @@
                 </div>
             </nav>
         </aside>
-        <main class="settings-content">
+        <main class="settings-content" style="position: relative;">
             <router-outlet></router-outlet>
+            <app-loader [overlay]="false" *ngIf="loaderService.isLoading('settings')()"></app-loader>
         </main>
     </div>
 </div>

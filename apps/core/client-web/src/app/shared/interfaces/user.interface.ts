@@ -54,6 +54,8 @@ export interface User {
   department?: string;
   avatarUrl?: string;
   online: boolean;
+  phone?: string;
+  jobTitle?: string;
 
   // **************************************************
 

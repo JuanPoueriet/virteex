@@ -1,9 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { ThemeService } from './core/services/theme';
 import { LanguageService } from './core/services/language';
 import { AuthService } from './core/services/auth';
 import { ModalService } from './shared/service/modal.service';
+import { LoaderService } from './shared/service/loader.service';
 import { ModalComponent } from './shared/components/modal/modal.component';
 import { CommonModule } from '@angular/common';
 import { LoaderComponent } from './shared/components/loader/loader.component';
@@ -19,22 +20,36 @@ export class App implements OnInit {
   private languageService = inject(LanguageService);
   private authService = inject(AuthService);
   public modalService = inject(ModalService);
+  public loaderService = inject(LoaderService);
   private router = inject(Router);
-
-  public isLoading = signal(false);
 
   ngOnInit(): void {
     // this.authService.checkAuthStatus().subscribe();
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
-        this.isLoading.set(true);
+        // If we are navigating to settings and we are already in settings, let the settings loader handle it.
+        // Actually, the simpler rule is: If the target URL belongs to a module with its own loader,
+        // AND we are arguably 'inside' that module context (or will be), we might want to suppress global.
+
+        // However, robust logic suggests:
+        // 1. If I am in `/settings/general` and go to `/settings/profile`, suppress global loader.
+        // 2. If I am in `/dashboard` and go to `/settings/profile`, global loader is fine (transitioning contexts).
+
+        const currentUrl = this.router.url;
+        const targetUrl = event.url;
+
+        const isInternalSettingsNav = currentUrl.includes('/settings') && targetUrl.includes('/settings');
+
+        if (!isInternalSettingsNav) {
+            this.loaderService.show('global');
+        }
       } else if (
         event instanceof NavigationEnd ||
         event instanceof NavigationCancel ||
         event instanceof NavigationError
       ) {
-        this.isLoading.set(false);
+        this.loaderService.hide('global');
       }
     });
   }
@@ -50,6 +65,3 @@ export class App implements OnInit {
     });
   }
 }
-
-
-
