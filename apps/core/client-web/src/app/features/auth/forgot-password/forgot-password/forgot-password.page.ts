@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth';
 import { RECAPTCHA_V3_SITE_KEY, RecaptchaV3Module, ReCaptchaV3Service } from 'ng-recaptcha-19';
 import { environment } from '../../../../../environments/environment';
-import { LucideAngularModule, Mail, AlertCircle, CheckCircle } from 'lucide-angular';
+import { LucideAngularModule, Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-angular';
 // Importa switchMap para encadenar observables
 import { switchMap } from 'rxjs/operators';
 
@@ -42,6 +42,7 @@ export class ForgotPasswordPage {
   MailIcon = Mail;
   AlertCircleIcon = AlertCircle;
   CheckCircleIcon = CheckCircle;
+  ArrowLeftIcon = ArrowLeft;
 
   constructor() {
     this.forgotPasswordForm = this.fb.group({
