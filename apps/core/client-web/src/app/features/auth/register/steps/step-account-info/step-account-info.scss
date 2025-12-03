@@ -62,7 +62,7 @@
     color: var(--text-secondary);
   }
   
-  input, select {
+  input {
     width: 100%;
     height: 3rem;
     padding: 0 1rem 0 2.75rem;
@@ -76,11 +76,6 @@
     &::placeholder {
       color: var(--text-tertiary);
     }
-  }
-
-  select {
-     appearance: none;
-     cursor: pointer;
   }
 }
 
