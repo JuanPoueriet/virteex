@@ -208,7 +208,7 @@ export class LoginPage implements OnInit, OnDestroy {
             if (user.preferredLanguage) {
               this.languageService.setLanguage(user.preferredLanguage);
             }
-            this.router.navigate(['/app/dashboard']);
+            this.router.navigate(['/dashboard']);
             this.isLoggingIn.set(false);
           },
           error: (err) => {

@@ -31,6 +31,15 @@ export class StepAccountInfo implements OnInit, OnChanges {
   showConfirmPassword = false;
   showPasswordHints = false;
 
+  jobTitles = [
+    { id: 'CEO', label: 'CEO / Director General' },
+    { id: 'MANAGER', label: 'Gerente / Mánager' },
+    { id: 'ACCOUNTANT', label: 'Contador / Finanzas' },
+    { id: 'ADMIN', label: 'Administrador' },
+    { id: 'EMPLOYEE', label: 'Empleado / Operativo' },
+    { id: 'OTHER', label: 'Otro' }
+  ];
+
   private cdRef = inject(ChangeDetectorRef);
   private passwordChangesSubscription: any;
 
