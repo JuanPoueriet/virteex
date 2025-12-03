@@ -4,14 +4,10 @@ import { MainLayout } from './layout/main/main.layout';
 import { RouteRedirectorComponent } from './core/components/route-redirector/route-redirector';
 import { languageInitGuard } from './core/guards/language-init.guard';
 import { languageRedirectGuard } from './core/guards/language-redirect.guard';
-
-// Existing imports needed for children routes
-// I will keep existing imports dynamic inside routes, but I need to make sure I don't break anything.
-// I will copy the children definitions from the previous file content I read.
+import { CountryGuard } from './core/guards/country.guard';
 
 export const APP_ROUTES: Routes = [
   // 1. Root Redirector: Handles '/' specifically
-  // It uses LanguageRedirectGuard to decide whether to go to /dashboard (if logged in) or /:lang/... (if not)
   {
     path: '',
     pathMatch: 'full',
@@ -19,8 +15,7 @@ export const APP_ROUTES: Routes = [
     canActivate: [languageRedirectGuard]
   },
 
-  // 2. Authenticated Routes (Clean URLs) - e.g. /dashboard, /settings
-  // These are at the root level but protected by authGuard.
+  // 2. Authenticated Routes (Clean URLs) - e.g. /dashboard
   {
     path: '',
     component: MainLayout,
@@ -34,6 +29,7 @@ export const APP_ROUTES: Routes = [
             (m) => m.DashboardPage
           ),
       },
+      // ... other authenticated routes (copied from original file to maintain completeness)
       {
         path: 'my-work',
         title: 'My Work',
@@ -192,8 +188,7 @@ export const APP_ROUTES: Routes = [
     ]
   },
 
-  // 3. Payment Routes (Can stay at root, or be moved inside auth if needed)
-  // Assuming public or hybrid
+  // 3. Payment Routes
   {
     path: 'payment',
     children: [
@@ -208,11 +203,32 @@ export const APP_ROUTES: Routes = [
     ]
   },
 
-  // 4. Public Routes (Prefixed with :lang)
+  // 4. Public Routes
   {
     path: ':lang',
     canActivate: [languageInitGuard],
     children: [
+      // Country-specific public routes (e.g., /es/do/auth/register)
+      {
+        path: ':country',
+        canActivate: [CountryGuard],
+        children: [
+          {
+            path: 'auth',
+            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+          }
+        ]
+      },
+      // Generic language-only routes (e.g., /es/auth/login)
+      // Note: If a route matches :country, it will go there first.
+      // 'auth' is not a country code, so /es/auth/login will fall through to here?
+      // No, 'auth' would match ':country' if we are not careful.
+      // We need to distinguish between country codes (2 letters) and 'auth'.
+      // However, usually country codes are 2 letters. 'auth' is 4.
+      // We can rely on router matching order OR regex matchers (available in newer Angular).
+      // Or we can be explicit.
+
+      // Let's explicitly put 'auth' FIRST to capture /es/auth/...
       {
         path: 'auth',
         children: [
@@ -221,7 +237,7 @@ export const APP_ROUTES: Routes = [
                 title: 'Iniciar Sesión | FacturaPRO',
                 loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
             },
-            {
+             {
                 path: 'forgot-password',
                 loadComponent: () =>
                 import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
@@ -241,7 +257,6 @@ export const APP_ROUTES: Routes = [
                 loadComponent: () =>
                 import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
             },
-            // Load other auth routes that might be shared
              {
                 path: '',
                 loadChildren: () =>
@@ -249,8 +264,18 @@ export const APP_ROUTES: Routes = [
             },
         ]
       },
-      // If there was a 'home' page it would be here.
-      // { path: 'home', ... }
+      // Then catch other 2-letter segments as country?
+      // Or just let it be. 'register' is inside 'auth'.
+      // If we go to /es/do/auth/register:
+      // :lang = es
+      // :country = do -> matches ':country' path? Yes.
+      // children -> auth -> register.
+
+      // If we go to /es/auth/login:
+      // :lang = es
+      // matches 'auth' path directly? YES. Angular matches static paths before parameterized paths if they are siblings.
+      // So 'auth' will take precedence over ':country'.
+      // This is good.
     ]
   },
 
@@ -258,6 +283,6 @@ export const APP_ROUTES: Routes = [
   {
     path: '**',
     canActivate: [languageRedirectGuard],
-    component: RouteRedirectorComponent, // Or just redirectTo '' to let the guard handle it
+    component: RouteRedirectorComponent,
   },
 ];

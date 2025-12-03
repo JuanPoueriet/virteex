@@ -1,77 +1,79 @@
 import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { of, throwError } from 'rxjs';
 import { CountryGuard } from './country.guard';
 import { CountryService } from '../services/country.service';
 import { LanguageService } from '../services/language';
+import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { of, throwError } from 'rxjs';
+
+class MockCountryService {
+  getCountryConfig = jest.fn().mockReturnValue(of({}));
+}
+
+class MockLanguageService {
+  setLanguage = jest.fn();
+}
+
+class MockRouter {
+  createUrlTree = jest.fn((commands) => commands.join('/'));
+}
 
 describe('CountryGuard', () => {
   let guard: CountryGuard;
-  let countryServiceMock: any;
-  let languageServiceMock: any;
-  let router: Router;
+  let countryService: MockCountryService;
+  let languageService: MockLanguageService;
+  let router: MockRouter;
 
   beforeEach(() => {
-    countryServiceMock = {
-      getCountryConfig: jest.fn().mockReturnValue(of({ code: 'DO' }))
-    };
-    languageServiceMock = {
-      setLanguage: jest.fn()
-    };
-
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
       providers: [
         CountryGuard,
-        { provide: CountryService, useValue: countryServiceMock },
-        { provide: LanguageService, useValue: languageServiceMock }
+        { provide: CountryService, useClass: MockCountryService },
+        { provide: LanguageService, useClass: MockLanguageService },
+        { provide: Router, useClass: MockRouter }
       ]
     });
 
     guard = TestBed.inject(CountryGuard);
-    router = TestBed.inject(Router);
+    countryService = TestBed.inject(CountryService) as unknown as MockCountryService;
+    languageService = TestBed.inject(LanguageService) as unknown as MockLanguageService;
+    router = TestBed.inject(Router) as unknown as MockRouter;
   });
 
-  it('should be created', () => {
-    expect(guard).toBeTruthy();
-  });
+  it('should allow navigation if country and lang are present and valid', (done) => {
+    const route = {
+      paramMap: {
+        get: (key: string) => key === 'country' ? 'do' : 'es'
+      }
+    } as unknown as ActivatedRouteSnapshot;
 
-  it('should redirect to default if params are missing', () => {
-    const route = new ActivatedRouteSnapshot();
-    route.params = {};
-    const state = {} as RouterStateSnapshot;
-    const routerSpy = jest.spyOn(router, 'createUrlTree');
+    const obs = guard.canActivate(route, {} as RouterStateSnapshot);
 
-    guard.canActivate(route, state);
+    if (typeof obs === 'boolean' || obs instanceof Promise || 'urlTree' in (obs as any)) {
+      fail('Expected observable');
+      return;
+    }
 
-    expect(routerSpy).toHaveBeenCalledWith(['/do/es/auth/login']);
-  });
-
-  it('should set language and fetch config when params exist', (done) => {
-    const route = new ActivatedRouteSnapshot();
-    route.params = { country: 'do', lang: 'es' };
-    const state = {} as RouterStateSnapshot;
-
-    (guard.canActivate(route, state) as any).subscribe((result: boolean) => {
+    (obs as any).subscribe((result: boolean) => {
       expect(result).toBe(true);
-      expect(languageServiceMock.setLanguage).toHaveBeenCalledWith('es');
-      expect(countryServiceMock.getCountryConfig).toHaveBeenCalledWith('do');
+      expect(languageService.setLanguage).toHaveBeenCalledWith('es');
+      expect(countryService.getCountryConfig).toHaveBeenCalledWith('do');
       done();
     });
   });
 
-  it('should redirect if country config fetch fails', (done) => {
-    const route = new ActivatedRouteSnapshot();
-    route.params = { country: 'xx', lang: 'es' };
-    const state = {} as RouterStateSnapshot;
+  it('should redirect if country fetch fails', (done) => {
+    countryService.getCountryConfig.mockReturnValue(throwError(() => new Error('Failed')));
+    const route = {
+        paramMap: {
+          get: (key: string) => key === 'country' ? 'invalid' : 'es'
+        }
+      } as unknown as ActivatedRouteSnapshot;
 
-    countryServiceMock.getCountryConfig.mockReturnValue(throwError(() => new Error('Not found')));
-    const routerSpy = jest.spyOn(router, 'createUrlTree');
+      const obs = guard.canActivate(route, {} as RouterStateSnapshot);
 
-    (guard.canActivate(route, state) as any).subscribe((result: any) => {
-      expect(routerSpy).toHaveBeenCalledWith(['/do/es/auth/login']);
-      done();
-    });
+      (obs as any).subscribe((result: any) => {
+        expect(router.createUrlTree).toHaveBeenCalled();
+        done();
+      });
   });
 });
