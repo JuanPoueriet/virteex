@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import {
   LucideAngularModule,
   Building,
@@ -23,6 +23,9 @@ import {
 } from 'lucide-angular';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { CommonModule } from '@angular/common';
+import { LoaderService } from '../../../shared/service/loader.service';
+import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-settings-layout',
@@ -33,13 +36,18 @@ import { CommonModule } from '@angular/common';
     RouterLink,
     RouterLinkActive,
     LucideAngularModule,
-    HasPermissionDirective
+    HasPermissionDirective,
+    LoaderComponent
   ],
   templateUrl: './settings.layout.html',
   styleUrls: ['./settings.layout.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsLayout {
+export class SettingsLayout implements OnInit, OnDestroy {
+  public loaderService = inject(LoaderService);
+  private router = inject(Router);
+  private routerSub: Subscription | undefined;
+
   // Categoría: Mi Cuenta
   protected readonly MyProfileIcon = UserCircle;
   protected readonly NotificationsIcon = Bell;
@@ -67,4 +75,29 @@ export class SettingsLayout {
   protected readonly SecurityIcon = Lock;
   protected readonly IntegrationsIcon = Server;
   protected readonly SmtpIcon = Mail;
+
+  ngOnInit() {
+    this.routerSub = this.router.events.subscribe(event => {
+      // Logic: If we are navigating WITHIN settings, show local loader.
+      // Note: App component suppresses global loader if current & target are settings.
+
+      if (event instanceof NavigationStart) {
+        if (event.url.includes('/settings')) {
+          this.loaderService.show('settings');
+        }
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.loaderService.hide('settings');
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.routerSub) {
+      this.routerSub.unsubscribe();
+    }
+  }
 }
