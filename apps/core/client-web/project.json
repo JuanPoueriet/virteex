@@ -12,7 +12,7 @@
       "options": {
         "outputPath": "dist/apps/core/client-web",
         "browser": "apps/core/client-web/src/main.ts",
-        "polyfills": ["zone.js"],
+        "polyfills": [],
         "tsConfig": "apps/core/client-web/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
