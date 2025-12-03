@@ -63,8 +63,8 @@ export class MyProfilePage implements OnInit {
       firstName: [user?.firstName, Validators.required],
       lastName: [user?.lastName, Validators.required],
       email: [{ value: user?.email, disabled: true }],
-      // phone: [user?.phone || ''],
-      // jobTitle: [user?.jobTitle || ''],
+      phone: [user?.phone || ''],
+      jobTitle: [user?.jobTitle || ''],
       preferredLanguage: [user?.preferredLanguage || 'es']
     });
 
