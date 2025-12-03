@@ -1,116 +1,148 @@
 <div class="settings-page-container">
   <div class="page-header">
     <h2>Mi Perfil</h2>
+    <p class="text-secondary">Administra tu información personal y configuración de seguridad.</p>
   </div>
 
   <div class="profile-layout">
-    <div class="card">
-      <div class="card-header">
+    <!-- Información Personal -->
+    <div class="settings-section">
+      <div class="section-header">
         <h3>Información Personal</h3>
+        <p>Actualiza tus datos de contacto y rol.</p>
       </div>
-      <div class="card-body">
-        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-          <div class="form-field file-upload-field">
-            <div class="file-input-container">
-              <input
-                type="file"
-                id="avatarUrl"
-                (change)="onFileSelected($event)"
-                accept="image/png, image/jpeg"
-              />
-              <label for="avatarUrl" class="file-input-label">
-                @if(avatarPreview()){
-                <img
-                  [src]="avatarPreview()"
-                  alt="Vista previa del avatar"
-                  class="avatar-preview"
+
+      <div class="card">
+        <div class="card-body">
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+
+            <div class="profile-header">
+              <div class="avatar-upload">
+                 <input
+                  type="file"
+                  id="avatarUrl"
+                  (change)="onFileSelected($event)"
+                  accept="image/png, image/jpeg"
                 />
-                } @else {
-                <lucide-icon [img]="ImageIcon" size="32"></lucide-icon>
-                <span>Subir foto</span>
-                }
-              </label>
+                <label for="avatarUrl" class="avatar-label">
+                   @if(avatarPreview()){
+                    <img
+                      [src]="avatarPreview()"
+                      alt="Avatar"
+                      class="avatar-image"
+                    />
+                    <div class="avatar-overlay">
+                      <lucide-icon [img]="ImageIcon" size="20"></lucide-icon>
+                    </div>
+                  } @else {
+                    <div class="avatar-placeholder">
+                       <lucide-icon [img]="ImageIcon" size="24"></lucide-icon>
+                    </div>
+                  }
+                </label>
+              </div>
+              <div class="profile-info-text">
+                <h4>Foto de Perfil</h4>
+                <p>Formatos permitidos: JPG, PNG. Máximo 2MB.</p>
+              </div>
             </div>
-          </div>
-          <div class="form-row">
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="firstName">Nombre</label>
+                <input id="firstName" type="text" formControlName="firstName" class="form-input" placeholder="Tu nombre" />
+              </div>
+              <div class="form-field">
+                <label for="lastName">Apellido</label>
+                <input id="lastName" type="text" formControlName="lastName" class="form-input" placeholder="Tu apellido" />
+              </div>
+            </div>
+
             <div class="form-field">
-              <label for="firstName">Nombre</label>
-              <input id="firstName" formControlName="firstName" />
+              <label for="email">Correo Electrónico</label>
+              <input id="email" type="email" formControlName="email" class="form-input" readonly />
+              <span class="help-text">El correo electrónico no se puede cambiar.</span>
             </div>
-            <div class="form-field">
-              <label for="lastName">Apellido</label>
-              <input id="lastName" formControlName="lastName" />
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="phone">Teléfono</label>
+                <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1 (000) 000-0000" />
+              </div>
+              <div class="form-field">
+                <label for="jobTitle">Cargo</label>
+                <input id="jobTitle" type="text" formControlName="jobTitle" class="form-input" placeholder="Ej. Gerente de Ventas" />
+              </div>
             </div>
-          </div>
-          <div class="form-field">
-            <label for="email">Correo Electrónico</label>
-            <input id="email" formControlName="email" />
-          </div>
-          <div class="form-row">
-            <div class="form-field">
-              <label for="phone">Teléfono</label>
-              <input id="phone" formControlName="phone" />
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="profileForm.pristine || profileForm.invalid"
+              >
+                <lucide-icon [img]="SaveIcon" size="18"></lucide-icon>
+                <span>Guardar Cambios</span>
+              </button>
             </div>
-            <div class="form-field">
-              <label for="jobTitle">Cargo</label>
-              <input id="jobTitle" formControlName="jobTitle" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button
-              type="submit"
-              class="primary-button"
-              [disabled]="profileForm.pristine || profileForm.invalid"
-            >
-              <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
-              <span>Guardar Cambios</span>
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <h3>Seguridad y Contraseña</h3>
+    <!-- Seguridad -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>Seguridad</h3>
+        <p>Gestiona tu contraseña y acceso.</p>
       </div>
-      <div class="card-body">
-        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-          <div class="form-field">
-            <label for="currentPassword">Contraseña Actual</label>
-            <input
-              id="currentPassword"
-              type="password"
-              formControlName="currentPassword"
-            />
-          </div>
-          <div class="form-field">
-            <label for="newPassword">Nueva Contraseña</label>
-            <input
-              id="newPassword"
-              type="password"
-              formControlName="newPassword"
-            />
-          </div>
-          <div class="form-field">
-            <label for="confirmPassword">Confirmar Nueva Contraseña</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              formControlName="confirmPassword"
-            />
-          </div>
-          <div class="form-actions">
-            <button
-              type="submit"
-              class="primary-button"
-              [disabled]="passwordForm.invalid"
-            >
-              <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
-              <span>Cambiar Contraseña</span>
-            </button>
-          </div>
-        </form>
+
+      <div class="card">
+        <div class="card-body">
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+            <div class="form-field">
+              <label for="currentPassword">Contraseña Actual</label>
+              <input
+                id="currentPassword"
+                type="password"
+                formControlName="currentPassword"
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="newPassword">Nueva Contraseña</label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  formControlName="newPassword"
+                  class="form-input"
+                />
+              </div>
+              <div class="form-field">
+                <label for="confirmPassword">Confirmar Contraseña</label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  formControlName="confirmPassword"
+                  class="form-input"
+                />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="passwordForm.invalid"
+              >
+                <lucide-icon [img]="SaveIcon" size="18"></lucide-icon>
+                <span>Actualizar Contraseña</span>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
