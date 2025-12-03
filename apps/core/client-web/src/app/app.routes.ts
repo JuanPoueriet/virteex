@@ -215,7 +215,7 @@ export const APP_ROUTES: Routes = [
         children: [
           {
             path: 'auth',
-            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.REGISTER_ROUTES),
           }
         ]
       },
