@@ -189,8 +189,8 @@ export class AuthService {
         'role.permissions',
         'organization.id',
         'organization.legalName',
-        'organization.rnc',
-        'organization.logo_url',
+        'organization.taxId',
+        'organization.logoUrl',
       ])
       .getOne();
 
