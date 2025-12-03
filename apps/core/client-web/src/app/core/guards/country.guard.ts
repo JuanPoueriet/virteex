@@ -19,22 +19,48 @@ export class CountryGuard implements CanActivate {
     const countryCode = route.paramMap.get('country');
     const langCode = route.paramMap.get('lang');
 
-    // Basic validation
+    // Validación básica: si falta algo, redirigir al login por defecto
     if (!countryCode || !langCode) {
-       // Should probably redirect to a default or detect IP
-       // For now, redirect to /do/es/login if missing
-       return this.router.createUrlTree(['/do/es/auth/login']);
+       return this.router.createUrlTree(['/es/do/auth/login']);
     }
 
-    // Set language
+    // Establecer idioma
     this.languageService.setLanguage(langCode);
 
-    // Fetch Country Config
+    // Obtener Configuración de País
     return this.countryService.getCountryConfig(countryCode).pipe(
-      map(() => true),
+      map((config) => {
+        // Lógica de Redirección Inteligente:
+        // Si el código de la configuración obtenida (config.code) es diferente al de la URL (countryCode),
+        // significa que el país de la URL no existe y el servicio nos dio uno por defecto (fallback).
+        // En ese caso, redirigimos al usuario a la URL con el código correcto.
+        if (config && config.code.toLowerCase() !== countryCode.toLowerCase()) {
+            const url = state.url; // ej: /es/asdfas/auth/register
+            const segments = url.split('/'); 
+            
+            // Asumiendo estructura estándar: ['', ':lang', ':country', ...]
+            // Reemplazamos el segmento del país (índice 2) por el código válido
+            if (segments.length > 2) {
+                segments[2] = config.code.toLowerCase();
+                const newUrl = segments.join('/');
+                // Redirige a /es/us/auth/register (o el país por defecto que devuelva el servicio)
+                return this.router.parseUrl(newUrl);
+            }
+        }
+        
+        // Si coinciden, permitimos la navegación
+        return true;
+      }),
       catchError(() => {
-        // If country not found, redirect to default or 404
-        return of(this.router.createUrlTree(['/do/es/auth/login']));
+        // En caso de error crítico (API caída), intentar redirigir a 'do' preservando la ruta
+        const fallbackCountry = 'do';
+        const segments = state.url.split('/');
+        if (segments.length > 2) {
+            segments[2] = fallbackCountry;
+            return of(this.router.parseUrl(segments.join('/')));
+        }
+        // Si todo falla, al login
+        return of(this.router.createUrlTree(['/es/do/auth/login']));
       })
     );
   }
