@@ -266,7 +266,7 @@ export class AuthService {
     const url = `${this.apiUrl}/forgot-password`;
     // Añade el recaptchaToken al cuerpo de la solicitud
     return this.http
-      .post<{ message: string }>(url, { email, 'g-recaptcha-response': recaptchaToken })
+      .post<{ message: string }>(url, { email, recaptchaToken })
       .pipe(catchError((err) => this.handleError('forgotPassword', err)));
   }
 
