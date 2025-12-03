@@ -16,6 +16,8 @@ import { strongPasswordValidator } from '../../../shared/validators/password.val
 import { RECAPTCHA_V3_SITE_KEY, RecaptchaV3Module, ReCaptchaV3Service } from 'ng-recaptcha-19';
 import { environment } from '../../../../environments/environment';
 import { LanguageService } from '../../../core/services/language';
+import { CountryService } from '../../../core/services/country.service';
+import { GeoMismatchModalComponent } from '../../../shared/components/geo-mismatch-modal/geo-mismatch-modal.component';
 
 export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -35,7 +37,8 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     StepBusiness,
     StepConfiguration,
     StepPlan,
-    RecaptchaV3Module
+    RecaptchaV3Module,
+    GeoMismatchModalComponent
   ],
   
   providers: [
@@ -71,6 +74,7 @@ export class RegisterPage implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private recaptchaV3Service = inject(ReCaptchaV3Service);
+  public countryService = inject(CountryService);
 
     public languageService = inject(LanguageService); // FIX: Inyectar y hacer público el servicio
 
@@ -110,11 +114,11 @@ export class RegisterPage implements OnInit {
       }),
       configuration: this.fb.group({
         address: [''], city: [''], stateOrProvince: [''], postalCode: [''],
-        country: ['DO', [Validators.required]],
+        country: [this.countryService.currentCountry()?.code || 'DO', [Validators.required]],
         companyPhone: ['', [Validators.required]],
-        taxId: ['', [Validators.required]],
+        taxId: ['', [Validators.required]], // Will get custom validators in ngOnInit
         naicsCode: [''],
-        currency: ['DOP', [Validators.required]],
+        currency: [this.countryService.currentCountry()?.currencyCode || 'DOP', [Validators.required]],
         defaultTaxRate: [0],
         fiscalYearStart: ['01-01'],
         timezone: ['America/Santo_Domingo', [Validators.required]],
@@ -125,6 +129,16 @@ export class RegisterPage implements OnInit {
         marketingOptIn: [true],
       }),
     });
+
+    // Apply Dynamic Validators based on Country Config
+    const countryConfig = this.countryService.currentCountry();
+    if (countryConfig && countryConfig.formSchema?.taxId) {
+       const taxIdControl = this.registerForm.get('configuration.taxId');
+       if (taxIdControl) {
+         taxIdControl.addValidators(Validators.pattern(countryConfig.formSchema.taxId.pattern));
+         taxIdControl.updateValueAndValidity();
+       }
+    }
   }
 
   nextStep(): void {

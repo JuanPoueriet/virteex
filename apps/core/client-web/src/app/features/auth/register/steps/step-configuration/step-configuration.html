@@ -28,7 +28,7 @@
             <label for="country">País / Región*</label>
             <div class="input-wrapper"><lucide-icon [img]="CountryIcon" size="18"
                     class="input-icon"></lucide-icon><select id="country" formControlName="country">
-                    <option value="DO">República Dominicana</option>
+                    <option [value]="countryService.currentCountry()?.code">{{ countryService.currentCountry()?.name }}</option>
                 </select></div>
             @if (parentForm.get('country')?.invalid && (parentForm.get('country')?.touched ||
             parentForm.get('country')?.dirty)) {
@@ -58,13 +58,14 @@
     <div class="form-row">
         <div class="form-field"
             [class.error]="parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched || parentForm.get('taxId')?.dirty)">
-            <label for="taxId">ID Fiscal (RNC, CUIT, etc.)*</label>
+            <label for="taxId">{{ countryService.currentCountry()?.formSchema?.taxId?.label || 'ID Fiscal' }}*</label>
             <div class="input-wrapper"><lucide-icon [img]="TaxIdIcon" size="18" class="input-icon"></lucide-icon><input
                     id="taxId" formControlName="taxId"></div>
             @if (parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched ||
             parentForm.get('taxId')?.dirty)) {
             <div class="error-message">
-                @if (parentForm.get('taxId')?.errors?.['required']) { <span>ID Fiscal es obligatorio</span> }
+                @if (parentForm.get('taxId')?.errors?.['required']) { <span>{{ countryService.currentCountry()?.formSchema?.taxId?.label }} es obligatorio</span> }
+                @if (parentForm.get('taxId')?.errors?.['pattern']) { <span>{{ countryService.currentCountry()?.formSchema?.taxId?.errorMessage }}</span> }
                 @if (parentForm.get('taxId')?.errors?.['serverError']) { <span>{{
                     parentForm.get('taxId')?.errors?.['serverError'] }}</span> }
             </div>
@@ -82,8 +83,7 @@
             <label for="currency">Divisa Principal*</label>
             <div class="input-wrapper"><lucide-icon [img]="CurrencyIcon" size="18"
                     class="input-icon"></lucide-icon><select id="currency" formControlName="currency">
-                    <option value="DOP">DOP</option>
-                    <option value="USD">USD</option>
+                    <option [value]="countryService.currentCountry()?.currencyCode">{{ countryService.currentCountry()?.currencyCode }}</option>
                 </select></div>
             @if (parentForm.get('currency')?.invalid && (parentForm.get('currency')?.touched ||
             parentForm.get('currency')?.dirty)) {

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { MainLayout } from './layout/main/main.layout';
 import { languageRedirectGuard } from './core/guards/language.guard';
+import { CountryGuard } from './core/guards/country.guard';
 
 export const APP_ROUTES: Routes = [
   {
@@ -17,21 +18,23 @@ export const APP_ROUTES: Routes = [
       }
     ]
   },
+  // New Country/Lang aware routing
   {
-    path: ':lang',
+    path: ':country/:lang',
+    canActivate: [CountryGuard],
     children: [
       {
         path: 'auth',
         loadChildren: () =>
           import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
       },
-      {
-        path: '',
-        redirectTo: 'auth/login',
-        pathMatch: 'full',
-      },
-    ],
+      // App routes can also be nested here if we want /do/es/app/dashboard
+      // But usually 'app' might be global or also localized.
+      // Based on prompt "if user accesses /do/es/auth/register", it implies auth is localized.
+      // Let's assume for now that 'app' might stay global or we redirect to it.
+    ]
   },
+  // Keep legacy support or redirection if needed, but the requirement is specific about the structure.
   {
     path: 'app',
     component: MainLayout,
