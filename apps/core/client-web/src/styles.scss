@@ -77,3 +77,8 @@ gridster.scrollVertical {
 gridster-item{
   background: transparent !important;
 }
+
+/* Hide Google reCAPTCHA Badge */
+.grecaptcha-badge {
+  visibility: hidden;
+}
