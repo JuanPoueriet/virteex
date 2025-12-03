@@ -209,10 +209,14 @@ export class RegisterPage implements OnInit {
             };
 
             this.authService.register(payload).subscribe({
-                next: () => {
+                next: (response: any) => {
                     this.isRegistering.set(false);
-                    alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                    this.router.navigate(['/auth/login']);
+                    // Automatically login after register if the backend returns token, or prompt user to login.
+                    // Assuming for "robustness" we want to reduce friction.
+                    // If the backend auto-logs in, we might have tokens in cookies.
+
+                    // Navigate to Plan Selection
+                    this.router.navigate(['/auth/plan-selection']);
                 },
                 error: (err) => {
                     if (err.status === 409) {

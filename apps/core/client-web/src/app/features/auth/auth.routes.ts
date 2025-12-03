@@ -43,6 +43,11 @@ export const AUTH_ROUTES: Routes = [
       import('./set-password/set-password.page').then((m) => m.SetPasswordPage),
   },
   {
+    path: 'plan-selection',
+    title: 'Seleccionar Plan | FacturaPRO',
+    loadComponent: () => import('../payment/components/plan-selection/plan-selection.component').then(m => m.PlanSelectionComponent)
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',
