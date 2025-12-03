@@ -96,7 +96,7 @@ export class PriceListFormPage implements OnInit {
     return this.priceListForm.get('items') as FormArray;
   }
 
-  createLine(productId: string = '', price: number = 0): FormGroup {
+  createLine(productId = '', price = 0): FormGroup {
     return this.fb.group({
       productId: [productId, Validators.required],
       price: [price, [Validators.required, Validators.min(0.01)]],

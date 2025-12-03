@@ -17,7 +17,7 @@ import Exporting from 'highcharts/modules/exporting';
 })
 export class SalesChart {
   @Input({ required: true }) widget!: DashboardWidget;
-  @Input() isEditMode: boolean = false;
+  @Input() isEditMode = false;
 
   private dashboardService = inject(DashboardService);
 

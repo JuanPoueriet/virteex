@@ -5,8 +5,6 @@ import { LucideAngularModule, Building2, Briefcase, Users, Globe, Landmark, Imag
 import { Observable } from 'rxjs';
 import { FiscalRegion } from '../../../../../core/models/fiscal-region.model';
 import { LocalizationApiService } from '../../../../../core/api/localization.service';
-// import { FiscalRegion } from '../app/core/models/fiscal-region.model';
-// import { LocalizationApiService } from '../app/core/api/localization.service';
 
 @Component({
   selector: 'app-step-business', standalone: true,
@@ -23,22 +21,28 @@ export class StepBusiness implements OnInit {
   protected readonly LogoIcon = Image;
   protected readonly FiscalRegionIcon = MapPin;
 
-  logoPreview = signal<string | ArrayBuffer | null>(null);
-  fiscalRegions$!: Observable<FiscalRegion[]>;
+  // Data for Selects
+  industries = [
+    { id: 'tech', label: 'Tecnología y Software' },
+    { id: 'retail', label: 'Comercio Minorista (Retail)' },
+    { id: 'services', label: 'Servicios Profesionales' },
+    { id: 'construction', label: 'Construcción e Inmobiliaria' },
+    { id: 'health', label: 'Salud y Medicina' },
+    { id: 'manufacturing', label: 'Manufactura' },
+    { id: 'education', label: 'Educación' },
+    { id: 'other', label: 'Otro' }
+  ];
+
+  companySizes = [
+    { id: '1-10', label: '1 - 10 empleados' },
+    { id: '11-50', label: '11 - 50 empleados' },
+    { id: '51-200', label: '51 - 200 empleados' },
+    { id: '201+', label: 'Más de 200 empleados' }
+  ];
 
   private localizationApiService = inject(LocalizationApiService);
 
   ngOnInit(): void {
-    this.fiscalRegions$ = this.localizationApiService.getFiscalRegions();
-  }
-
-  onFileSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) {
-      this.parentForm.patchValue({ logoFile: file });
-      const reader = new FileReader();
-      reader.onload = () => this.logoPreview.set(reader.result);
-      reader.readAsDataURL(file);
-    }
+    // No explicit initialization needed for static lists
   }
 }

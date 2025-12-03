@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { JournalsService } from '../../../core/api/journals.service';
@@ -15,7 +15,7 @@ import { Journal } from '../../../core/models/journal.model';
   templateUrl: './journal-form.page.html',
   styleUrls: ['./journal-form.page.scss']
 })
-export class JournalFormPage {
+export class JournalFormPage implements OnInit {
   private fb = inject(FormBuilder);
   private journalsService = inject(JournalsService);
   private router = inject(Router);

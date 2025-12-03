@@ -21,7 +21,7 @@ export class InvoiceDetailPage implements OnInit {
   private route = inject(ActivatedRoute);
 
   // Mantenemos el @Input por si se usa en otros contextos, pero ahora no es la fuente principal.
-  @Input() id: string = '';
+  @Input() id = '';
   invoice = signal<Invoice | undefined>(undefined);
 
   protected readonly PrinterIcon = Printer;
