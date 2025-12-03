@@ -100,7 +100,7 @@ export class MyProfilePage implements OnInit {
       const { firstName, lastName, preferredLanguage } = this.profileForm.value;
 
       this.usersService.updateProfile({ firstName, lastName, preferredLanguage }).subscribe({
-        next: (updatedUser) => {
+        next: () => {
           this.notificationService.showSuccess('Perfil actualizado exitosamente.');
           // Update local state if needed via AuthService
           // this.authService.updateCurrentUser(updatedUser);

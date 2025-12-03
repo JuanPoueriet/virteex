@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { SwPush } from '@angular/service-worker';
@@ -9,10 +9,8 @@ import { SwPush } from '@angular/service-worker';
 export class PushNotificationService {
   readonly VAPID_PUBLIC_KEY = environment.vapidPublicKey;
 
-  constructor(
-    private swPush: SwPush,
-    private http: HttpClient
-  ) {}
+  private swPush = inject(SwPush);
+  private http = inject(HttpClient);
 
   subscribeToNotifications() {
     if (!this.swPush.isEnabled) {
@@ -23,7 +21,7 @@ export class PushNotificationService {
       serverPublicKey: this.VAPID_PUBLIC_KEY
     })
     .then((sub: PushSubscription) => this.sendToServer(sub))
-    .catch((err: any) => console.error('Could not subscribe to notifications', err));
+    .catch((err: unknown) => console.error('Could not subscribe to notifications', err));
   }
 
   private sendToServer(params: PushSubscription) {

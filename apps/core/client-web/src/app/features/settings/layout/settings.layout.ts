@@ -5,9 +5,7 @@ import {
   Building,
   Users,
   Palette,
-  CreditCard,
   UserCircle,
-  Landmark,
   Briefcase,
   Shield,
   Server,
@@ -16,13 +14,11 @@ import {
   Workflow,
   Globe,
   Mail,
-  Key,
   Database,
   Calculator,
   Percent,
   CalendarClock,
   ArrowRightLeft,
-  Settings,
   Bell
 } from 'lucide-angular';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
