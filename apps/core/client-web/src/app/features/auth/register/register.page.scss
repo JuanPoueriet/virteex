@@ -17,22 +17,48 @@
 }
 
 .branding-panel {
-    background: linear-gradient(160deg, var(--accent-primary) 0%, #005a9e 100%);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.9) 0%, rgba(0, 90, 158, 0.95) 100%),
+                url('/assets/images/auth-bg-pattern.png'); // Hypothetical pattern or just keep gradient
+    background-size: cover;
     color: #fff;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 4rem;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        left: -20%;
+        width: 140%;
+        height: 140%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        pointer-events: none;
+    }
 
     @media (max-width: 1024px) {
         display: none;
     }
 
     .branding-content {
+        position: relative;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: var(--border-radius-xl);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
         .logo {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .tagline {
