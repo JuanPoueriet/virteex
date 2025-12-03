@@ -1,5 +1,4 @@
 <div class="login-wrapper">
-  <!-- Top Language Selector -->
   <div class="top-language-selector">
     <div class="language-selector" #topLanguageSelector>
       <div
@@ -212,6 +211,7 @@
               [routerLink]="[
                 '/',
                 languageService.currentLang(),
+                countryService.currentCountry().code,
                 'auth',
                 'register'
               ]"

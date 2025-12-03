@@ -33,6 +33,7 @@ import {
 import { RecaptchaV3Module, ReCaptchaV3Service } from 'ng-recaptcha-19';
 import { LanguageService } from '../../../core/services/language';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CountryService } from '../../../core/services/country.service';
 
 @Component({
   selector: 'app-login',
@@ -79,7 +80,8 @@ export class LoginPage implements OnInit, OnDestroy {
 
   constructor(
     public languageService: LanguageService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    public countryService: CountryService
   ) {}
 
   ngOnDestroy(): void {
