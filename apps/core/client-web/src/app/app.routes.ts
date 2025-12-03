@@ -1,77 +1,28 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
-import { publicGuard } from './core/guards/public.guard';
 import { MainLayout } from './layout/main/main.layout';
-import { languageRedirectGuard } from './core/guards/language.guard';
-import { CountryGuard } from './core/guards/country.guard';
+import { RouteRedirectorComponent } from './core/components/route-redirector/route-redirector';
+import { languageInitGuard } from './core/guards/language-init.guard';
+import { languageRedirectGuard } from './core/guards/language-redirect.guard';
+
+// Existing imports needed for children routes
+// I will keep existing imports dynamic inside routes, but I need to make sure I don't break anything.
+// I will copy the children definitions from the previous file content I read.
 
 export const APP_ROUTES: Routes = [
+  // 1. Root Redirector: Handles '/' specifically
+  // It uses LanguageRedirectGuard to decide whether to go to /dashboard (if logged in) or /:lang/... (if not)
   {
-    path: 'payment',
-    children: [
-      {
-        path: 'success',
-        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
-      },
-      {
-        path: 'cancel',
-        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
-      }
-    ]
+    path: '',
+    pathMatch: 'full',
+    component: RouteRedirectorComponent,
+    canActivate: [languageRedirectGuard]
   },
-  // Global Auth Routes (Language only)
+
+  // 2. Authenticated Routes (Clean URLs) - e.g. /dashboard, /settings
+  // These are at the root level but protected by authGuard.
   {
-    path: ':lang/auth',
-    children: [
-      {
-        path: 'login',
-        title: 'Iniciar Sesión | FacturaPRO',
-        canActivate: [publicGuard],
-        loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
-      },
-      {
-        path: 'forgot-password',
-        canActivate: [publicGuard],
-        loadComponent: () =>
-          import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
-            (m) => m.ForgotPasswordPage
-          ),
-      },
-      {
-        path: 'reset-password',
-        canActivate: [publicGuard],
-        loadComponent: () =>
-          import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
-            (m) => m.ResetPasswordPage
-          ),
-      },
-      {
-        path: 'set-password',
-        title: 'Configurar Contraseña',
-        loadComponent: () =>
-          import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
-      },
-    ]
-  },
-  // New Country/Lang aware routing
-  {
-    path: ':country/:lang',
-    canActivate: [CountryGuard],
-    children: [
-      {
-        path: 'auth',
-        loadChildren: () =>
-          import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
-      },
-      // App routes can also be nested here if we want /do/es/app/dashboard
-      // But usually 'app' might be global or also localized.
-      // Based on prompt "if user accesses /do/es/auth/register", it implies auth is localized.
-      // Let's assume for now that 'app' might stay global or we redirect to it.
-    ]
-  },
-  // Keep legacy support or redirection if needed, but the requirement is specific about the structure.
-  {
-    path: 'app',
+    path: '',
     component: MainLayout,
     canActivate: [authGuard],
     children: [
@@ -237,13 +188,76 @@ export const APP_ROUTES: Routes = [
           import('./features/unauthorized/unauthorized.page').then(
             (m) => m.UnauthorizedPage
           ),
-      },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-    ],
+      }
+    ]
   },
+
+  // 3. Payment Routes (Can stay at root, or be moved inside auth if needed)
+  // Assuming public or hybrid
+  {
+    path: 'payment',
+    children: [
+      {
+        path: 'success',
+        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'cancel',
+        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
+      }
+    ]
+  },
+
+  // 4. Public Routes (Prefixed with :lang)
+  {
+    path: ':lang',
+    canActivate: [languageInitGuard],
+    children: [
+      {
+        path: 'auth',
+        children: [
+            {
+                path: 'login',
+                title: 'Iniciar Sesión | FacturaPRO',
+                loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
+            },
+            {
+                path: 'forgot-password',
+                loadComponent: () =>
+                import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
+                    (m) => m.ForgotPasswordPage
+                ),
+            },
+            {
+                path: 'reset-password',
+                loadComponent: () =>
+                import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
+                    (m) => m.ResetPasswordPage
+                ),
+            },
+            {
+                path: 'set-password',
+                title: 'Configurar Contraseña',
+                loadComponent: () =>
+                import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
+            },
+            // Load other auth routes that might be shared
+             {
+                path: '',
+                loadChildren: () =>
+                import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+            },
+        ]
+      },
+      // If there was a 'home' page it would be here.
+      // { path: 'home', ... }
+    ]
+  },
+
+  // 5. Fallback
   {
     path: '**',
     canActivate: [languageRedirectGuard],
-    component: MainLayout,
+    component: RouteRedirectorComponent, // Or just redirectTo '' to let the guard handle it
   },
 ];
