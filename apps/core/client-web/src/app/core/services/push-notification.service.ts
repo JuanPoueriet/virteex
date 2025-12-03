@@ -15,6 +15,10 @@ export class PushNotificationService {
   ) {}
 
   subscribeToNotifications() {
+    if (!this.swPush.isEnabled) {
+      console.warn('Push notifications are not enabled (Service Worker not active).');
+      return;
+    }
     this.swPush.requestSubscription({
       serverPublicKey: this.VAPID_PUBLIC_KEY
     })

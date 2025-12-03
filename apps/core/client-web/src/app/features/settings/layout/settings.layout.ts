@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideAngularModule,
@@ -40,7 +40,8 @@ import { CommonModule } from '@angular/common';
     HasPermissionDirective
   ],
   templateUrl: './settings.layout.html',
-  styleUrls: ['./settings.layout.scss']
+  styleUrls: ['./settings.layout.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsLayout {
   // Categoría: Mi Cuenta
