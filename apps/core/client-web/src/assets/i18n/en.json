@@ -11,6 +11,44 @@
   "NAV": {
     "DASHBOARD": "Dashboard",
     "MY_WORK": "My Work",
-    "APPROVALS": "Approvals"
+    "APPROVALS": "Approvals",
+    "SALES": "Sales",
+    "INVOICES": "Invoices",
+    "INVENTORY": "Inventory",
+    "PURCHASING": "Purchasing",
+    "ACCOUNTING": "Accounting",
+    "REPORTS": "Reports",
+    "CONTACTS": "Contacts",
+    "SETTINGS": "Settings",
+    "NOTIFICATIONS": "Notifications"
+  },
+  "ALT": {
+    "COMPANY_LOGO": "Company Logo"
+  },
+  "SEARCH": {
+    "MAIN_PLACEHOLDER": "Search...",
+    "ARIA_GLOBAL": "Global Search"
+  },
+  "ACTIONS": {
+    "CREATE_NEW": "Create New",
+    "NEW_INVOICE": "New Invoice",
+    "NEW_QUOTE": "New Quote",
+    "NEW_CUSTOMER": "New Customer",
+    "NEW_PRODUCT": "New Product"
+  },
+  "NOTIFICATIONS": {
+    "MARK_ALL_AS_READ": "Mark all as read",
+    "NO_NOTIFICATIONS": "No notifications",
+    "VIEW_ALL": "View all"
+  },
+  "USER": {
+    "ROLE": {
+      "NO_ROLE": "No Role",
+      "ADMIN": "Admin"
+    },
+    "MY_PROFILE": "My Profile"
+  },
+  "AUTH": {
+    "SIGN_OUT": "Sign Out"
   }
 }

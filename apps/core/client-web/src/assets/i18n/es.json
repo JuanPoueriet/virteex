@@ -11,6 +11,44 @@
   "NAV": {
     "DASHBOARD": "Dashboard",
     "MY_WORK": "Mi Trabajo",
-    "APPROVALS": "Aprobaciones"
+    "APPROVALS": "Aprobaciones",
+    "SALES": "Ventas",
+    "INVOICES": "Facturas",
+    "INVENTORY": "Inventario",
+    "PURCHASING": "Compras",
+    "ACCOUNTING": "Contabilidad",
+    "REPORTS": "Reportes",
+    "CONTACTS": "Contactos",
+    "SETTINGS": "Configuración",
+    "NOTIFICATIONS": "Notificaciones"
+  },
+  "ALT": {
+    "COMPANY_LOGO": "Logo de la Empresa"
+  },
+  "SEARCH": {
+    "MAIN_PLACEHOLDER": "Buscar...",
+    "ARIA_GLOBAL": "Búsqueda Global"
+  },
+  "ACTIONS": {
+    "CREATE_NEW": "Crear Nuevo",
+    "NEW_INVOICE": "Nueva Factura",
+    "NEW_QUOTE": "Nueva Cotización",
+    "NEW_CUSTOMER": "Nuevo Cliente",
+    "NEW_PRODUCT": "Nuevo Producto"
+  },
+  "NOTIFICATIONS": {
+    "MARK_ALL_AS_READ": "Marcar todo como leído",
+    "NO_NOTIFICATIONS": "No tienes notificaciones",
+    "VIEW_ALL": "Ver todas"
+  },
+  "USER": {
+    "ROLE": {
+      "NO_ROLE": "Sin Rol",
+      "ADMIN": "Administrador"
+    },
+    "MY_PROFILE": "Mi Perfil"
+  },
+  "AUTH": {
+    "SIGN_OUT": "Cerrar Sesión"
   }
 }

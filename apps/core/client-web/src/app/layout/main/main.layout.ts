@@ -1,6 +1,6 @@
 // ../app/layout/main/main.layout.ts
 
-import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild } from '@angular/core';
+import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
@@ -30,17 +30,16 @@ import {
   User as UserIcon2,
   Box,
   FileSearch,
-  UserPlus, // ✅ Icono añadido
-  Package as PackageIcon // ✅ Icono añadido
+  UserPlus
 } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { Sidebar } from '../sidebar/sidebar';
-import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive'; // ✅ Directiva añadida
+import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective], // ✅ Directiva añadida a los imports
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective],
   templateUrl: './main.layout.html',
   styleUrls: ['./main.layout.scss'],
 })
@@ -146,8 +145,8 @@ export class MainLayout implements OnInit {
   protected readonly UserIcon2 = UserIcon2;
   protected readonly BoxIcon = Box;
   protected readonly FileSearchIcon = FileSearch;
-  protected readonly ReceiptIcon = Receipt; // ✅ Icono añadido
-  protected readonly UserPlusIcon = UserPlus; // ✅ Icono añadido
+  protected readonly ReceiptIcon = Receipt;
+  protected readonly UserPlusIcon = UserPlus;
 
   toggleUserMenu(): void {
     this.isUserMenuOpen.update(isOpen => !isOpen);
@@ -191,12 +190,14 @@ export class MainLayout implements OnInit {
     this.isSearchOpen.set(false);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getIconForType(type: string): any {
     if (!type) {
       return this.FileSearchIcon;
     }
 
     const lowerCaseType = type.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const iconMap: { [key: string]: any } = {
       'customers': this.UserIcon2,
       'products': this.BoxIcon,

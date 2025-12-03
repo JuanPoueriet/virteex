@@ -66,6 +66,15 @@
       <a routerLink="/app/inventory" routerLinkActive="active" class="nav-link">
         {{ "NAV.INVENTORY" | translate }}
       </a>
+      <a routerLink="/app/purchasing" routerLinkActive="active" class="nav-link">
+        {{ "NAV.PURCHASING" | translate }}
+      </a>
+      <a routerLink="/app/accounting" routerLinkActive="active" class="nav-link">
+        {{ "NAV.ACCOUNTING" | translate }}
+      </a>
+      <a routerLink="/app/reports" routerLinkActive="active" class="nav-link">
+        {{ "NAV.REPORTS" | translate }}
+      </a>
       <a routerLink="/app/contacts" routerLinkActive="active" class="nav-link">
         {{ "NAV.CONTACTS" | translate }}
       </a>
@@ -128,7 +137,9 @@
                   <a
                     [routerLink]="item.link"
                     (click)="closeSearch()"
+                    (keyup.enter)="closeSearch()"
                     class="result-link"
+                    tabindex="0"
                   >
                     <div class="item-icon-container">
                       <lucide-icon [img]="groupIcon" size="18"></lucide-icon>
@@ -156,7 +167,9 @@
           <div class="results-footer">
             <a
               (click)="navigateToSearch(searchInput.value); closeSearch()"
+              (keyup.enter)="navigateToSearch(searchInput.value); closeSearch()"
               class="view-all-link"
+              tabindex="0"
             >
               <span>Ver todos los resultados</span>
               <lucide-icon [img]="ArrowRightIcon" size="16"></lucide-icon>
@@ -188,7 +201,9 @@
               <a
                 routerLink="/app/invoices/new"
                 (click)="closeQuickCreateModal()"
+                (keyup.enter)="closeQuickCreateModal()"
                 class="quick-action-item"
+                tabindex="0"
               >
                 <lucide-icon [img]="FileTextIcon" size="20"></lucide-icon>
                 <span>{{ 'ACTIONS.NEW_INVOICE' | translate }}</span>
@@ -196,7 +211,9 @@
               <a
                 routerLink="/app/quotes/new"
                 (click)="closeQuickCreateModal()"
+                (keyup.enter)="closeQuickCreateModal()"
                 class="quick-action-item"
+                tabindex="0"
               >
                 <lucide-icon [img]="ReceiptIcon" size="20"></lucide-icon>
                 <span>{{ 'ACTIONS.NEW_QUOTE' | translate }}</span>
@@ -204,7 +221,9 @@
               <a
                 routerLink="/app/customers/new"
                 (click)="closeQuickCreateModal()"
+                (keyup.enter)="closeQuickCreateModal()"
                 class="quick-action-item"
+                tabindex="0"
               >
                 <lucide-icon [img]="UserPlusIcon" size="20"></lucide-icon>
                 <span>{{ 'ACTIONS.NEW_CUSTOMER' | translate }}</span>
@@ -212,7 +231,9 @@
               <a
                 routerLink="/app/products/new"
                 (click)="closeQuickCreateModal()"
+                (keyup.enter)="closeQuickCreateModal()"
                 class="quick-action-item"
+                tabindex="0"
               >
                 <lucide-icon [img]="PackageIcon" size="20"></lucide-icon>
                 <span>{{ 'ACTIONS.NEW_PRODUCT' | translate }}</span>
@@ -258,7 +279,7 @@
               </div>
               @if(notificationCenter.notifications().length > 0) {
                 <div class="dropdown-footer">
-                  <a routerLink="/app/notifications" (click)="closeNotificationMenu()">{{ 'NOTIFICATIONS.VIEW_ALL' | translate }}</a>
+                  <a routerLink="/app/notifications" (click)="closeNotificationMenu()" (keyup.enter)="closeNotificationMenu()" tabindex="0">{{ 'NOTIFICATIONS.VIEW_ALL' | translate }}</a>
                 </div>
               }
             </div>
@@ -314,6 +335,8 @@
               routerLink="/app/settings/profile"
               class="dropdown-item"
               (click)="closeUserMenu()"
+              (keyup.enter)="closeUserMenu()"
+              tabindex="0"
             >
               <lucide-icon [img]="UserIcon" size="16"></lucide-icon>
               <span>{{ "USER.MY_PROFILE" | translate }}</span>
@@ -323,6 +346,8 @@
               routerLink="/app/settings"
               class="dropdown-item"
               (click)="closeUserMenu()"
+              (keyup.enter)="closeUserMenu()"
+              tabindex="0"
             >
               <lucide-icon [img]="SettingsIcon" size="16"></lucide-icon>
               <span>{{ "NAV.SETTINGS" | translate }}</span>
