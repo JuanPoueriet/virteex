@@ -1,5 +1,9 @@
 <router-outlet />
 
+@if (isLoading()) {
+  <app-loader></app-loader>
+}
+
 @if (modalService.isOpen() && modalService.options(); as options) {
   <app-modal 
     [options]="options"
