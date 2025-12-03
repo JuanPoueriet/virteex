@@ -31,7 +31,7 @@ export interface CreateVendorBillDto {
   notes?: string;
 }
 
-export interface UpdateVendorBillDto extends Partial<CreateVendorBillDto> {}
+export type UpdateVendorBillDto = Partial<CreateVendorBillDto>
 
 @Injectable({ providedIn: 'root' })
 export class AccountsPayableService {

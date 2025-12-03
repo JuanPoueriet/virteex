@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 // import { JournalsService } from '@app/core/api/journals.service';
 // import { Journal } from '@app/core/models/journal.model';
 import { RouterLink } from '@angular/router';
@@ -12,7 +12,7 @@ import { Journal } from '../../../core/models/journal.model';
   templateUrl: './journal-list.page.html',
   styleUrls: ['./journal-list.page.scss']
 })
-export class JournalListPage {
+export class JournalListPage implements OnInit {
   private journalsService = inject(JournalsService);
 
   journals = signal<Journal[]>([]);

@@ -19,7 +19,7 @@ import Exporting from 'highcharts/modules/exporting';
 })
 export class ComparisonChart {
   @Input({ required: true }) widget!: DashboardWidget;
-  @Input() isEditMode: boolean = false;
+  @Input() isEditMode = false;
 
   private dashboardService = inject(DashboardService);
 

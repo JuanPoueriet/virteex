@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
+import { publicGuard } from './core/guards/public.guard';
 import { MainLayout } from './layout/main/main.layout';
 import { languageRedirectGuard } from './core/guards/language.guard';
 import { CountryGuard } from './core/guards/country.guard';
@@ -16,6 +17,40 @@ export const APP_ROUTES: Routes = [
         path: 'cancel',
         loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
       }
+    ]
+  },
+  // Global Auth Routes (Language only)
+  {
+    path: ':lang/auth',
+    children: [
+      {
+        path: 'login',
+        title: 'Iniciar Sesión | FacturaPRO',
+        canActivate: [publicGuard],
+        loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
+      },
+      {
+        path: 'forgot-password',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
+            (m) => m.ForgotPasswordPage
+          ),
+      },
+      {
+        path: 'reset-password',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
+            (m) => m.ResetPasswordPage
+          ),
+      },
+      {
+        path: 'set-password',
+        title: 'Configurar Contraseña',
+        loadComponent: () =>
+          import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
+      },
     ]
   },
   // New Country/Lang aware routing

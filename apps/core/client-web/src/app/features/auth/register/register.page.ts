@@ -40,7 +40,6 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     RecaptchaV3Module,
     GeoMismatchModalComponent
   ],
-  
   providers: [
     ReCaptchaV3Service,
     { provide: RECAPTCHA_V3_SITE_KEY, useValue: environment.recaptcha.siteKey }
@@ -68,16 +67,14 @@ export class RegisterPage implements OnInit {
   protected readonly ArrowLeftIcon = ArrowLeft;
   protected readonly ArrowRightIcon = ArrowRight;
   protected readonly RocketIcon = Rocket;
-    protected readonly AlertCircleIcon = AlertCircle; // Nuevo icono para errores
+  protected readonly AlertCircleIcon = AlertCircle;
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private recaptchaV3Service = inject(ReCaptchaV3Service);
   public countryService = inject(CountryService);
-
-    public languageService = inject(LanguageService); // FIX: Inyectar y hacer público el servicio
-
+  public languageService = inject(LanguageService);
 
   currentStep = signal(1);
   registerForm!: FormGroup;
@@ -85,11 +82,36 @@ export class RegisterPage implements OnInit {
   isRegistering = signal(false);
   stepsCompleted = signal<boolean[]>(new Array(4).fill(false));
 
+  // --- Select Data ---
+  industries = [
+    { id: 'tech', label: 'Tecnología y Software' },
+    { id: 'retail', label: 'Comercio Minorista (Retail)' },
+    { id: 'services', label: 'Servicios Profesionales' },
+    { id: 'construction', label: 'Construcción e Inmobiliaria' },
+    { id: 'health', label: 'Salud y Medicina' },
+    { id: 'manufacturing', label: 'Manufactura' },
+    { id: 'education', label: 'Educación' },
+    { id: 'other', label: 'Otro' }
+  ];
+
+  companySizes = [
+    { id: '1-10', label: '1 - 10 empleados' },
+    { id: '11-50', label: '11 - 50 empleados' },
+    { id: '51-200', label: '51 - 200 empleados' },
+    { id: '201+', label: 'Más de 200 empleados' }
+  ];
+
   ngOnInit(): void {
+    const currentCountry = this.countryService.currentCountry();
+    const defaultCurrency = currentCountry?.currencyCode || 'DOP';
+    const defaultCountryCode = currentCountry?.code || 'DO';
+
     this.registerForm = this.fb.group({
       accountInfo: this.fb.group({
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
+        // Added back optional fields for form group structure compatibility with child component,
+        // even if not strictly required by validation, the child template binds to them.
         jobTitle: [''],
         phone: [''],
         avatarUrl: [null],
@@ -105,23 +127,26 @@ export class RegisterPage implements OnInit {
       }),
       business: this.fb.group({
         companyName: ['', [Validators.required]],
-        fiscalRegionId: ['', [Validators.required]],
         industry: ['', [Validators.required]],
-        legalForm: [''],
-        numberOfEmployees: [''],
+        numberOfEmployees: ['', [Validators.required]],
         website: [''],
-        logoFile: [null],
+        logoFile: [null], // Added back for structure
       }),
       configuration: this.fb.group({
-        address: [''], city: [''], stateOrProvince: [''], postalCode: [''],
-        country: [this.countryService.currentCountry()?.code || 'DO', [Validators.required]],
+        taxId: ['', [Validators.required]],
         companyPhone: ['', [Validators.required]],
-        taxId: ['', [Validators.required]], // Will get custom validators in ngOnInit
+        country: [defaultCountryCode, [Validators.required]],
+        currency: [defaultCurrency, [Validators.required]],
+        timezone: ['America/Santo_Domingo', [Validators.required]],
+        fiscalRegionId: ['', [Validators.required]],
+        // Optional fields present in child templates
+        address: [''],
+        city: [''],
+        stateOrProvince: [''],
+        postalCode: [''],
         naicsCode: [''],
-        currency: [this.countryService.currentCountry()?.currencyCode || 'DOP', [Validators.required]],
         defaultTaxRate: [0],
         fiscalYearStart: ['01-01'],
-        timezone: ['America/Santo_Domingo', [Validators.required]],
       }),
       plan: this.fb.group({
         planId: ['trial', [Validators.required]],
@@ -131,11 +156,10 @@ export class RegisterPage implements OnInit {
     });
 
     // Apply Dynamic Validators based on Country Config
-    const countryConfig = this.countryService.currentCountry();
-    if (countryConfig && countryConfig.formSchema?.taxId) {
+    if (currentCountry && currentCountry.formSchema?.taxId) {
        const taxIdControl = this.registerForm.get('configuration.taxId');
        if (taxIdControl) {
-         taxIdControl.addValidators(Validators.pattern(countryConfig.formSchema.taxId.pattern));
+         taxIdControl.addValidators(Validators.pattern(currentCountry.formSchema.taxId.pattern));
          taxIdControl.updateValueAndValidity();
        }
     }
@@ -217,19 +241,16 @@ export class RegisterPage implements OnInit {
                 email: formValue.accountInfo.email,
                 password: formValue.accountInfo.passwordGroup.password,
                 organizationName: formValue.business.companyName,
-                fiscalRegionId: formValue.business.fiscalRegionId,
+                fiscalRegionId: formValue.configuration.fiscalRegionId,
                 rnc: formValue.configuration.taxId,
                 recaptchaToken
             };
 
+            payload.fiscalRegionId = formValue.configuration.fiscalRegionId;
+
             this.authService.register(payload).subscribe({
                 next: (response: any) => {
                     this.isRegistering.set(false);
-                    // Automatically login after register if the backend returns token, or prompt user to login.
-                    // Assuming for "robustness" we want to reduce friction.
-                    // If the backend auto-logs in, we might have tokens in cookies.
-
-                    // Navigate to Plan Selection
                     this.router.navigate(['/auth/plan-selection']);
                 },
                 error: (err) => {

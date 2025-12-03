@@ -5,7 +5,7 @@ import {
   OnInit,
   ViewChild,
   inject,
-  signal,
+  signal, OnDestroy,
 } from '@angular/core';
 import {
   AbstractControl,
@@ -49,7 +49,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   ],
   providers: [ReCaptchaV3Service],
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
   // --- Iconos para la UI ---
   MailIcon = Mail;
   LockIcon = Lock;
