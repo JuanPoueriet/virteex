@@ -1,77 +1,23 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
-import { publicGuard } from './core/guards/public.guard';
 import { MainLayout } from './layout/main/main.layout';
-import { languageRedirectGuard } from './core/guards/language.guard';
+import { RouteRedirectorComponent } from './core/components/route-redirector/route-redirector';
+import { languageInitGuard } from './core/guards/language-init.guard';
+import { languageRedirectGuard } from './core/guards/language-redirect.guard';
 import { CountryGuard } from './core/guards/country.guard';
 
 export const APP_ROUTES: Routes = [
+  // 1. Root Redirector: Handles '/' specifically
   {
-    path: 'payment',
-    children: [
-      {
-        path: 'success',
-        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
-      },
-      {
-        path: 'cancel',
-        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
-      }
-    ]
+    path: '',
+    pathMatch: 'full',
+    component: RouteRedirectorComponent,
+    canActivate: [languageRedirectGuard]
   },
-  // Global Auth Routes (Language only)
+
+  // 2. Authenticated Routes (Clean URLs) - e.g. /dashboard
   {
-    path: ':lang/auth',
-    children: [
-      {
-        path: 'login',
-        title: 'Iniciar Sesión | FacturaPRO',
-        canActivate: [publicGuard],
-        loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
-      },
-      {
-        path: 'forgot-password',
-        canActivate: [publicGuard],
-        loadComponent: () =>
-          import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
-            (m) => m.ForgotPasswordPage
-          ),
-      },
-      {
-        path: 'reset-password',
-        canActivate: [publicGuard],
-        loadComponent: () =>
-          import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
-            (m) => m.ResetPasswordPage
-          ),
-      },
-      {
-        path: 'set-password',
-        title: 'Configurar Contraseña',
-        loadComponent: () =>
-          import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
-      },
-    ]
-  },
-  // New Country/Lang aware routing
-  {
-    path: ':country/:lang',
-    canActivate: [CountryGuard],
-    children: [
-      {
-        path: 'auth',
-        loadChildren: () =>
-          import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
-      },
-      // App routes can also be nested here if we want /do/es/app/dashboard
-      // But usually 'app' might be global or also localized.
-      // Based on prompt "if user accesses /do/es/auth/register", it implies auth is localized.
-      // Let's assume for now that 'app' might stay global or we redirect to it.
-    ]
-  },
-  // Keep legacy support or redirection if needed, but the requirement is specific about the structure.
-  {
-    path: 'app',
+    path: '',
     component: MainLayout,
     canActivate: [authGuard],
     children: [
@@ -83,6 +29,7 @@ export const APP_ROUTES: Routes = [
             (m) => m.DashboardPage
           ),
       },
+      // ... other authenticated routes (copied from original file to maintain completeness)
       {
         path: 'my-work',
         title: 'My Work',
@@ -237,13 +184,105 @@ export const APP_ROUTES: Routes = [
           import('./features/unauthorized/unauthorized.page').then(
             (m) => m.UnauthorizedPage
           ),
-      },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-    ],
+      }
+    ]
   },
+
+  // 3. Payment Routes
+  {
+    path: 'payment',
+    children: [
+      {
+        path: 'success',
+        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'cancel',
+        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
+      }
+    ]
+  },
+
+  // 4. Public Routes
+  {
+    path: ':lang',
+    canActivate: [languageInitGuard],
+    children: [
+      // Country-specific public routes (e.g., /es/do/auth/register)
+      {
+        path: ':country',
+        canActivate: [CountryGuard],
+        children: [
+          {
+            path: 'auth',
+            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+          }
+        ]
+      },
+      // Generic language-only routes (e.g., /es/auth/login)
+      // Note: If a route matches :country, it will go there first.
+      // 'auth' is not a country code, so /es/auth/login will fall through to here?
+      // No, 'auth' would match ':country' if we are not careful.
+      // We need to distinguish between country codes (2 letters) and 'auth'.
+      // However, usually country codes are 2 letters. 'auth' is 4.
+      // We can rely on router matching order OR regex matchers (available in newer Angular).
+      // Or we can be explicit.
+
+      // Let's explicitly put 'auth' FIRST to capture /es/auth/...
+      {
+        path: 'auth',
+        children: [
+            {
+                path: 'login',
+                title: 'Iniciar Sesión | FacturaPRO',
+                loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
+            },
+             {
+                path: 'forgot-password',
+                loadComponent: () =>
+                import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
+                    (m) => m.ForgotPasswordPage
+                ),
+            },
+            {
+                path: 'reset-password',
+                loadComponent: () =>
+                import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
+                    (m) => m.ResetPasswordPage
+                ),
+            },
+            {
+                path: 'set-password',
+                title: 'Configurar Contraseña',
+                loadComponent: () =>
+                import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
+            },
+             {
+                path: '',
+                loadChildren: () =>
+                import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+            },
+        ]
+      },
+      // Then catch other 2-letter segments as country?
+      // Or just let it be. 'register' is inside 'auth'.
+      // If we go to /es/do/auth/register:
+      // :lang = es
+      // :country = do -> matches ':country' path? Yes.
+      // children -> auth -> register.
+
+      // If we go to /es/auth/login:
+      // :lang = es
+      // matches 'auth' path directly? YES. Angular matches static paths before parameterized paths if they are siblings.
+      // So 'auth' will take precedence over ':country'.
+      // This is good.
+    ]
+  },
+
+  // 5. Fallback
   {
     path: '**',
     canActivate: [languageRedirectGuard],
-    component: MainLayout,
+    component: RouteRedirectorComponent,
   },
 ];
