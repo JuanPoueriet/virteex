@@ -51,6 +51,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PushNotificationsModule } from './push-notifications/push-notifications.module';
 import { BiModule } from './bi/bi.module';
 import { PaymentModule } from './payment/payment.module';
+import { CountryModule } from '../../../../../libs/api/country/src/lib/country.module';
 
 const envValidation = Joi.object({
   NODE_ENV: Joi.string()
@@ -154,6 +155,7 @@ const envValidation = Joi.object({
     PushNotificationsModule,
     BiModule,
     PaymentModule,
+    CountryModule,
   ],
   providers: [
     {
