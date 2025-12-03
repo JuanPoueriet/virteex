@@ -37,6 +37,15 @@ export class Organization {
   @Column({ name: 'fiscal_region_id', nullable: true })
   fiscalRegionId: string;
 
+  @Column({ name: 'stripe_customer_id', nullable: true })
+  stripeCustomerId: string;
+
+  @Column({ name: 'stripe_subscription_id', nullable: true })
+  stripeSubscriptionId: string;
+
+  @Column({ name: 'subscription_status', nullable: true })
+  subscriptionStatus: string;
+
   @OneToMany(() => OrganizationSubsidiary, sub => sub.parent)
   subsidiaries: OrganizationSubsidiary[];
 

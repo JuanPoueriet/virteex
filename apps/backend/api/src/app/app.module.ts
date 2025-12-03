@@ -50,7 +50,7 @@ import { UnitsOfMeasureModule } from './units-of-measure/units-of-measure.module
 import { NotificationsModule } from './notifications/notifications.module';
 import { PushNotificationsModule } from './push-notifications/push-notifications.module';
 import { BiModule } from './bi/bi.module';
-
+import { PaymentModule } from './payment/payment.module';
 
 const envValidation = Joi.object({
   NODE_ENV: Joi.string()
@@ -75,6 +75,8 @@ const envValidation = Joi.object({
   AWS_ACCESS_KEY_ID: Joi.string().required(),
   AWS_SECRET_ACCESS_KEY: Joi.string().required(),
 
+  STRIPE_SECRET_KEY: Joi.string().required(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().required(),
 });
 
 @Module({
@@ -150,7 +152,8 @@ const envValidation = Joi.object({
     UnitsOfMeasureModule,
     NotificationsModule,
     PushNotificationsModule,
-    BiModule
+    BiModule,
+    PaymentModule,
   ],
   providers: [
     {

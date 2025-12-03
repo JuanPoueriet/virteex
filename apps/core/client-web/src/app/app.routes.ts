@@ -5,6 +5,19 @@ import { languageRedirectGuard } from './core/guards/language.guard';
 
 export const APP_ROUTES: Routes = [
   {
+    path: 'payment',
+    children: [
+      {
+        path: 'success',
+        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'cancel',
+        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
+      }
+    ]
+  },
+  {
     path: ':lang',
     children: [
       {
