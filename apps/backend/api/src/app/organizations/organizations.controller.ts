@@ -5,7 +5,9 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { CreateSubsidiaryDto } from './dto/create-subsidiary.dto';
 import { Organization } from './entities/organization.entity';
+import { Post } from '@nestjs/common';
 
 @Controller('organizations')
 @UseGuards(JwtAuthGuard)
@@ -23,5 +25,18 @@ export class OrganizationsController {
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
     return this.organizationsService.update(user.organizationId, updateOrganizationDto);
+  }
+
+  @Get('subsidiaries')
+  async getSubsidiaries(@CurrentUser() user: User) {
+    return this.organizationsService.getSubsidiaries(user.organizationId);
+  }
+
+  @Post('subsidiaries')
+  async createSubsidiary(
+    @CurrentUser() user: User,
+    @Body() createSubsidiaryDto: CreateSubsidiaryDto,
+  ) {
+    return this.organizationsService.createSubsidiary(user.organizationId, createSubsidiaryDto);
   }
 }
