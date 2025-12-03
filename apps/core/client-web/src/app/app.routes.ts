@@ -4,34 +4,85 @@ import { publicGuard } from './core/guards/public.guard';
 import { MainLayout } from './layout/main/main.layout';
 import { languageRedirectGuard } from './core/guards/language.guard';
 import { CountryGuard } from './core/guards/country.guard';
-import { LanguageGuard } from './core/guards/language.guard'; // Use the class-based one if available or alias
 
 export const APP_ROUTES: Routes = [
-  // Dashboard at root (Authenticated)
   {
-    path: 'dashboard',
+    path: 'payment',
+    children: [
+      {
+        path: 'success',
+        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
+      },
+      {
+        path: 'cancel',
+        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
+      }
+    ]
+  },
+  // Global Auth Routes (Language only)
+  {
+    path: ':lang/auth',
+    children: [
+      {
+        path: 'login',
+        title: 'Iniciar Sesión | FacturaPRO',
+        canActivate: [publicGuard],
+        loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
+      },
+      {
+        path: 'forgot-password',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
+            (m) => m.ForgotPasswordPage
+          ),
+      },
+      {
+        path: 'reset-password',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
+            (m) => m.ResetPasswordPage
+          ),
+      },
+      {
+        path: 'set-password',
+        title: 'Configurar Contraseña',
+        loadComponent: () =>
+          import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
+      },
+    ]
+  },
+  // New Country/Lang aware routing
+  {
+    path: ':country/:lang',
+    canActivate: [CountryGuard],
+    children: [
+      {
+        path: 'auth',
+        loadChildren: () =>
+          import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
+      },
+      // App routes can also be nested here if we want /do/es/app/dashboard
+      // But usually 'app' might be global or also localized.
+      // Based on prompt "if user accesses /do/es/auth/register", it implies auth is localized.
+      // Let's assume for now that 'app' might stay global or we redirect to it.
+    ]
+  },
+  // Keep legacy support or redirection if needed, but the requirement is specific about the structure.
+  {
+    path: 'app',
     component: MainLayout,
     canActivate: [authGuard],
     children: [
       {
-        path: '',
+        path: 'dashboard',
         title: 'Dashboard',
         loadComponent: () =>
           import('./features/dashboard/dashboard.page').then(
             (m) => m.DashboardPage
           ),
-      }
-    ]
-  },
-  // Other app features at root (wrapped in MainLayout implicitly or explicitly if needed)
-  // Since user asked specifically for localhost:4200/dashboard, the above handles it.
-  // We need to keep other app routes accessible.
-  // The original config had 'app' as a prefix. If we want to move them to root:
-  {
-    path: '',
-    component: MainLayout,
-    canActivate: [authGuard],
-    children: [
+      },
       {
         path: 'my-work',
         title: 'My Work',
@@ -117,6 +168,13 @@ export const APP_ROUTES: Routes = [
           ),
       },
       {
+        path: 'documents',
+        loadChildren: () =>
+          import('./features/documents/documents.routes').then(
+            (m) => m.DOCUMENTS_ROUTES
+          ),
+      },
+      {
         path: 'contacts',
         title: 'Contactos',
         loadChildren: () =>
@@ -180,78 +238,12 @@ export const APP_ROUTES: Routes = [
             (m) => m.UnauthorizedPage
           ),
       },
-    ]
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
-
-  // Payment routes (Global)
-  {
-    path: 'payment',
-    children: [
-      {
-        path: 'success',
-        loadComponent: () => import('./features/payment/components/payment-success/payment-success.component').then(m => m.PaymentSuccessComponent)
-      },
-      {
-        path: 'cancel',
-        loadComponent: () => import('./features/payment/components/payment-cancel/payment-cancel.component').then(m => m.PaymentCancelComponent)
-      }
-    ]
-  },
-
-  // Login: /:lang/auth/login (Language only)
-  {
-    path: ':lang/auth/login',
-    title: 'Iniciar Sesión | FacturaPRO',
-    canActivate: [publicGuard, languageRedirectGuard], // Ensure language is set
-    loadComponent: () => import('./features/auth/login/login.page').then((m) => m.LoginPage),
-  },
-
-  // Register: /:lang/:country/auth/register (Language + Country)
-  {
-    path: ':lang/:country/auth/register',
-    title: 'Registro | FacturaPRO',
-    canActivate: [publicGuard, CountryGuard], // CountryGuard validates country & lang
-    loadComponent: () => import('./features/auth/register/register.page').then((m) => m.RegisterPage),
-  },
-
-  // Other Auth Routes (Language only usually, or follow login pattern)
-  {
-    path: ':lang/auth',
-    canActivate: [publicGuard, languageRedirectGuard],
-    children: [
-      {
-        path: 'forgot-password',
-        loadComponent: () =>
-          import('./features/auth/forgot-password/forgot-password/forgot-password.page').then(
-            (m) => m.ForgotPasswordPage
-          ),
-      },
-      {
-        path: 'reset-password',
-        loadComponent: () =>
-          import('./features/auth/reset-password/reset-password.page/reset-password.page').then(
-            (m) => m.ResetPasswordPage
-          ),
-      },
-      {
-        path: 'set-password',
-        title: 'Configurar Contraseña',
-        loadComponent: () =>
-          import('./features/auth/set-password/set-password.page').then((m) => m.SetPasswordPage),
-      },
-      {
-        path: 'plan-selection',
-        loadComponent: () => import('./features/auth/register/steps/step-plan/step-plan').then(m => m.StepPlan) // Or wherever plan selection is if it's a page
-        // Wait, step plan is a component. If plan selection is a page, we need to find it.
-        // Assuming user just wanted Register for now.
-      }
-    ]
-  },
-
-  // Default redirect
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   {
     path: '**',
-    redirectTo: 'dashboard'
+    canActivate: [languageRedirectGuard],
+    component: MainLayout,
   },
 ];

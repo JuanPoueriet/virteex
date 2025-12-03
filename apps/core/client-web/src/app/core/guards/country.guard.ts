@@ -19,12 +19,11 @@ export class CountryGuard implements CanActivate {
     const countryCode = route.paramMap.get('country');
     const langCode = route.paramMap.get('lang');
 
-    // Default fallback
-    const fallbackUrl = ['/es/do/auth/register']; // Or login depending on context, but this guard is mostly for register now
-
     // Basic validation
     if (!countryCode || !langCode) {
-       return this.router.createUrlTree(fallbackUrl);
+       // Should probably redirect to a default or detect IP
+       // For now, redirect to /do/es/login if missing
+       return this.router.createUrlTree(['/do/es/auth/login']);
     }
 
     // Set language
@@ -34,11 +33,8 @@ export class CountryGuard implements CanActivate {
     return this.countryService.getCountryConfig(countryCode).pipe(
       map(() => true),
       catchError(() => {
-        // If country not found, redirect to a valid path
-        // We can keep the language if it's valid, but safe to fallback to default
-        // Construct a safe URL. If lang is valid, use it?
-        // Let's force default for robustness as requested
-        return of(this.router.createUrlTree(['/', langCode, 'do', 'auth', 'register']));
+        // If country not found, redirect to default or 404
+        return of(this.router.createUrlTree(['/do/es/auth/login']));
       })
     );
   }

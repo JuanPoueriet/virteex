@@ -45,7 +45,7 @@ describe('CountryGuard', () => {
 
     guard.canActivate(route, state);
 
-    expect(routerSpy).toHaveBeenCalledWith(['/es/do/auth/register']);
+    expect(routerSpy).toHaveBeenCalledWith(['/do/es/auth/login']);
   });
 
   it('should set language and fetch config when params exist', (done) => {
