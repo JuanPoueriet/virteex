@@ -3,8 +3,10 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHighcharts } from 'highcharts-angular';
-import { provideTranslateService } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
+// import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { CustomTranslateLoader } from './core/i18n/custom-translate-loader';
+
 // import { RECAPTCHA_V3_SITE_KEY, RecaptchaV3Module } from 'ng-recaptcha';
 // import { environment } from './environments/environment';
 
@@ -44,13 +46,12 @@ const CHARTS_PROVIDERS = [
 
 const I18N_PROVIDERS = [
   provideTranslateService({
-    loader: provideTranslateHttpLoader({
-      prefix: 'i18n/',
-      suffix: '.json',
-      useHttpBackend: true,
-    }),
+    loader: {
+      provide: TranslateLoader,
+      useClass: CustomTranslateLoader
+    },
     fallbackLang: 'es',
-    lang: 'es',
+    defaultLanguage: 'es',
   }),
 ];
 
