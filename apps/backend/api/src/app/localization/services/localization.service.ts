@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { FiscalRegion } from '../entities/fiscal-region.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { ChartOfAccountsService } from '../../chart-of-accounts/chart-of-accounts.service';
@@ -60,7 +60,7 @@ export class LocalizationService implements OnModuleInit {
     }
   }
 
-  async applyFiscalPackage(organization: Organization) {
+  async applyFiscalPackage(organization: Organization, manager?: EntityManager) {
     if (!organization.fiscalRegionId) {
       this.logger.warn(
         `La organización ${organization.id} no tiene una región fiscal asignada. Omitiendo la aplicación del paquete fiscal.`,
@@ -68,9 +68,11 @@ export class LocalizationService implements OnModuleInit {
       return;
     }
 
-    const region = await this.fiscalRegionRepository.findOneBy({
+    const regionRepo = manager ? manager.getRepository(FiscalRegion) : this.fiscalRegionRepository;
+    const region = await regionRepo.findOneBy({
       id: organization.fiscalRegionId,
     });
+
     if (!region) {
       throw new NotFoundException(
         `Región fiscal con ID "${organization.fiscalRegionId}" no encontrada.`,
@@ -83,10 +85,10 @@ export class LocalizationService implements OnModuleInit {
 
     switch (region.countryCode) {
       case 'PA':
-        await this.applyPanamaPackage(organization.id);
+        await this.applyPanamaPackage(organization.id, manager);
         break;
       case 'US':
-        await this.applyGenericCoaTemplate(organization.id, usGaapCoaTemplate.accounts);
+        await this.applyGenericCoaTemplate(organization.id, usGaapCoaTemplate.accounts, manager);
 
         break;
 
@@ -97,24 +99,20 @@ export class LocalizationService implements OnModuleInit {
     }
   }
 
-  private async applyPanamaPackage(organizationId: string) {
-
-
-
-
+  private async applyPanamaPackage(organizationId: string, manager?: EntityManager) {
     this.logger.log(
       `Aplicando impuestos de Panamá para la organización ${organizationId}...`,
     );
     for (const tax of panamaTaxTemplate.taxes) {
-      await this.taxesService.create(tax, organizationId);
+      await this.taxesService.create(tax, organizationId, manager);
     }
   }
 
-  private async applyGenericCoaTemplate(organizationId: string, accounts: AccountTemplateDto[]) {
+  private async applyGenericCoaTemplate(organizationId: string, accounts: AccountTemplateDto[], manager?: EntityManager) {
     this.logger.log(`Aplicando plantilla de plan de cuentas para la organización ${organizationId}...`);
     for (const account of accounts) {
 
-      await this.createAccountFromTemplate(account, organizationId, null);
+      await this.createAccountFromTemplate(account, organizationId, null, manager);
     }
   }
 
@@ -122,6 +120,7 @@ export class LocalizationService implements OnModuleInit {
     accountDto: AccountTemplateDto,
     organizationId: string,
     parentId: string | null,
+    manager?: EntityManager
   ) {
 
     const { children, ...createAccountDto } = accountDto;
@@ -133,6 +132,7 @@ export class LocalizationService implements OnModuleInit {
         parentId,
       },
       organizationId,
+      manager
     );
 
 
@@ -142,6 +142,7 @@ export class LocalizationService implements OnModuleInit {
           child,
           organizationId,
           createdAccount.id,
+          manager
         );
       }
     }
