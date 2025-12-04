@@ -214,7 +214,11 @@ export class AuthService {
    */
   logout(): void {
     const url = `${this.apiUrl}/logout`;
-    this.http.post(url, {}, { withCredentials: true }).subscribe({
+    // Pass IS_PUBLIC_API to prevent interceptor from trying to refresh token if logout fails (e.g. 401)
+    this.http.post(url, {}, {
+      withCredentials: true,
+      context: new HttpContext().set(IS_PUBLIC_API, true)
+    }).subscribe({
       // Se ejecuta siempre, sin importar si el backend responde con éxito o error,
       // para asegurar que el usuario es deslogueado del lado del cliente.
       complete: () => {

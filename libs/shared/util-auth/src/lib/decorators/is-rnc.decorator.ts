@@ -1,4 +1,3 @@
-
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
 export function IsRNC(validationOptions?: ValidationOptions) {
@@ -18,10 +17,6 @@ export function IsRNC(validationOptions?: ValidationOptions) {
              return false;
           }
 
-          // Implement Modulo 11 algorithm if desired, or keep length check.
-          // For now, length check is "better than nothing" and matches the regex but cleaner.
-          // Real Modulo 11 Implementation for Dominican RNC:
-
           return validateRNC(rnc);
         },
         defaultMessage(args: ValidationArguments) {
@@ -34,23 +29,32 @@ export function IsRNC(validationOptions?: ValidationOptions) {
 
 function validateRNC(rnc: string): boolean {
     const weight = [7, 9, 8, 6, 5, 4, 3, 2];
-    const weight11 = [6, 5, 4, 3, 2, 7, 9, 8, 6, 5, 4, 3, 2]; // Not standard, usually Cédula is 11
 
     if (rnc.length === 9) {
         let sum = 0;
         for (let i = 0; i < 8; i++) {
             sum += parseInt(rnc.charAt(i)) * weight[i];
         }
-        let division = Math.floor(sum / 11);
-        let remainder = sum - (division * 11);
+        // Modulo 11 Algorithm (DGII - Dominican Republic)
+        // 1. Sum = Sum(digit * weight)
+        // 2. Remainder = Sum % 11
+        // 3. Digit:
+        //    If Remainder = 0 -> Digit = 2
+        //    If Remainder = 1 -> Digit = 1
+        //    Else -> Digit = 11 - Remainder
+        let remainder = sum % 11;
         let digit = 0;
-        if (remainder === 0) digit = 2;
-        else if (remainder === 1) digit = 1;
-        else digit = 11 - remainder;
+
+        if (remainder === 0) {
+            digit = 2;
+        } else if (remainder === 1) {
+            digit = 1;
+        } else {
+            digit = 11 - remainder;
+        }
 
         return digit === parseInt(rnc.charAt(8));
     } else if (rnc.length === 11) {
-        // Cedula logic
         return validateCedula(rnc);
     }
     return false;
@@ -62,7 +66,6 @@ function validateCedula(ced: string): boolean {
     let cedula = c.substring(0, 10);
     let verificador = c.substring(10, 11);
     let suma = 0;
-    let unoDos = 0;
 
     for (let i = 0; i < cedula.length; i++) {
         let mod = "";

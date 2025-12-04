@@ -1,7 +1,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Organization } from './entities/organization.entity';
 import { OrganizationSubsidiary } from './entities/organization-subsidiary.entity';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -55,5 +55,11 @@ export class OrganizationsService {
     });
 
     return this.subsidiaryRepository.save(subsidiary);
+  }
+
+  async create(createOrganizationDto: Partial<Organization>, manager?: EntityManager): Promise<Organization> {
+    const repo = manager ? manager.getRepository(Organization) : this.organizationRepository;
+    const org = repo.create(createOrganizationDto);
+    return repo.save(org);
   }
 }

@@ -1,7 +1,7 @@
 
 
 
-import { IsRNC } from '../decorators/is-rnc.decorator';
+import { IsRNC } from '@virteex/shared/util-auth';
 import {
     IsString,
     IsNotEmpty,

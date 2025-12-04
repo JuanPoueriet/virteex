@@ -35,7 +35,6 @@ export const AuthConfig = {
   get LOCKOUT_DURATION() { return parseDuration(process.env.AUTH_LOCKOUT_DURATION || '15m'); },
 
   // Security
-  get SALT_ROUNDS() { return parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10); },
-  get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$2b$10$zRb.LZNDX8J0OedTJXoM4OGKsGdy/vjeeYbNgHnQPxec8qok0mcea'; },
+  get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$argon2id$v=19$m=65536,t=3,p=4$nQX58JdpAHj04FlImXHVGg$KqRBXlHTOlTtTorAd6friuDAvPPmpa+0E7cDUf/5p9I'; },
   get SIMULATED_DELAY_MS() { return parseInt(process.env.AUTH_SIMULATED_DELAY_MS || '500', 10); },
 };
