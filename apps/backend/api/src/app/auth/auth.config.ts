@@ -36,4 +36,6 @@ export const AuthConfig = {
 
   // Security
   get SALT_ROUNDS() { return parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10); },
+  get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$2b$10$zRb.LZNDX8J0OedTJXoM4OGKsGdy/vjeeYbNgHnQPxec8qok0mcea'; },
+  get SIMULATED_DELAY_MS() { return parseInt(process.env.AUTH_SIMULATED_DELAY_MS || '500', 10); },
 };
