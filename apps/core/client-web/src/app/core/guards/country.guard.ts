@@ -53,6 +53,7 @@ export class CountryGuard implements CanActivate {
         // Si coinciden, permitimos la navegación
         return true;
       }),
+      tap(() => this.geoService.checkAndNotifyMismatch(countryCode)),
       catchError(() => {
         // En caso de error crítico (API caída), intentar redirigir a 'do' preservando la ruta
         const fallbackCountry = 'do';

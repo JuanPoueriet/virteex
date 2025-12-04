@@ -211,7 +211,7 @@
               [routerLink]="[
                 '/',
                 languageService.currentLang(),
-                countryService.currentCountry().code,
+                countryService.currentCountry()?.code || 'do',
                 'auth',
                 'register'
               ]"
