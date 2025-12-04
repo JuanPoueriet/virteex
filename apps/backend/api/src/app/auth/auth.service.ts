@@ -12,12 +12,13 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThan, Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
 import { authenticator } from 'otplib';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -88,7 +89,28 @@ export class AuthService {
         where: { email },
       });
       if (existingUser) {
-        throw new ConflictException('El correo electrónico ya está registrado');
+        // Prevent User Enumeration: Return success even if user exists.
+        // In a real scenario, we would send an email saying "Someone tried to register...".
+        // But we stop the process here.
+        await this.simulateDelay(); // Simulate work to match successful registration time roughly?
+        // Actually, just throwing a generic error or returning success is fine.
+        // Returning success implies we need to return dummy tokens? No.
+        // The safest way is to throw a Generic Error or Success Message.
+        // "Si el usuario ya existe, se ha enviado un correo".
+        // For API strictness, we might want to just return success but no tokens?
+        // But the frontend expects tokens to auto-login.
+        // So we probably should throw an error that doesn't reveal explicitly,
+        // OR we just stick to the ConflictException but modify the message to be generic?
+        // "Error en el registro. Verifique sus datos."
+        // But the AI suggested "Si el correo no existe, se ha enviado un enlace...".
+        // Since we Auto-Login, we MUST return tokens if successful.
+        // If user exists, we CANNOT return tokens (security risk).
+        // So we must error out.
+        // We will throw a generic BadRequest or Conflict but with a less specific message?
+        // Actually, for B2B, "Email already exists" is standard.
+        // The AI said: "Although it is annoying for UX... ideal is...".
+        // I will implement the "safe" way: Throw a generic error.
+        throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
       }
       if (rnc) {
         // Validation format is handled by DTO @IsRNC
@@ -97,7 +119,7 @@ export class AuthService {
           where: { taxId: rnc },
         });
         if (existingOrg) {
-          throw new ConflictException('El RNC ya está registrado');
+          throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
         }
       }
 
@@ -150,7 +172,11 @@ export class AuthService {
       user.organization = organization;
       user.roles = [adminRole];
 
-      const authResponse = await this.generateAuthResponse(user);
+      const authResponse = await this.generateAuthResponse(user); // No IP/UA for registration initially? Or pass null?
+      // Ideally we capture it in controller and pass it here.
+      // But for now, let's leave it as is (null IP/UA) or update later if needed.
+      // The update plan says "Modify login...". Registration also creates tokens.
+      // I should allow passing ip/ua here too. But I'll stick to login/refresh for now as requested.
 
       return {
         user: authResponse.user,
@@ -172,7 +198,7 @@ export class AuthService {
   }
 
 
-  async login(loginUserDto: LoginUserDto & { twoFactorCode?: string }) {
+  async login(loginUserDto: LoginUserDto & { twoFactorCode?: string }, ipAddress?: string, userAgent?: string) {
     const { email, password, twoFactorCode } = loginUserDto;
 
     const user = await this.findUserForLogin(email);
@@ -266,11 +292,11 @@ export class AuthService {
         'User',
         user.id,
         ActionType.LOGIN,
-        { email: user.email },
+        { email: user.email, ipAddress, userAgent },
         undefined,
     );
 
-    return await this.generateAuthResponse(user);
+    return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
   }
 
 
@@ -498,7 +524,7 @@ export class AuthService {
   }
 
 
-  async refreshAccessToken(token: string) {
+  async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
     try {
       const payload = this.jwtService.verify<JwtPayload & { jti?: string }>(token, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
@@ -539,6 +565,23 @@ export class AuthService {
              throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
          }
 
+         // Fingerprint Validation
+         if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
+             this.logger.warn(`[SECURITY] User Agent mismatch. Token created with ${refreshTokenEntity.userAgent}, used with ${userAgent}. Revoking.`);
+             // Revoke this token, but maybe not the whole family unless suspicious?
+             // Safer to revoke.
+             refreshTokenEntity.isRevoked = true;
+             refreshTokenEntity.revokedAt = new Date();
+             await this.refreshTokenRepository.save(refreshTokenEntity);
+             throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
+         }
+
+         // IP Validation (Optional: Just log or use GeoIP in future)
+         if (refreshTokenEntity.ipAddress && ipAddress && refreshTokenEntity.ipAddress !== ipAddress) {
+             this.logger.log(`[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`);
+             // We allow IP changes (mobile networks), but we log it.
+         }
+
          // Revoke the current token (Rotation)
          refreshTokenEntity.isRevoked = true;
          refreshTokenEntity.revokedAt = new Date();
@@ -548,14 +591,14 @@ export class AuthService {
       }
 
       // 3. Issue new pair
-      const authResponse = await this.generateAuthResponse(user);
+      const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
 
       await this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.REFRESH,
-        { email: user.email },
+        { email: user.email, ipAddress, userAgent },
       );
 
       return {
@@ -570,6 +613,26 @@ export class AuthService {
       );
       throw new UnauthorizedException('Refresh token inválido o expirado');
     }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleTokenCleanup() {
+    this.logger.log('Starting expired refresh token cleanup...');
+    const retentionPeriod = 30; // days
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
+
+    const result = await this.refreshTokenRepository.delete({
+       expiresAt: LessThan(expirationDate)
+    });
+
+    // Also delete revoked tokens older than 30 days
+    const resultRevoked = await this.refreshTokenRepository.delete({
+        isRevoked: true,
+        revokedAt: LessThan(expirationDate)
+    });
+
+    this.logger.log(`Cleanup complete. Deleted ${result.affected} expired tokens and ${resultRevoked.affected} revoked tokens.`);
   }
 
 
@@ -763,6 +826,8 @@ export class AuthService {
   private async generateAuthResponse(
     user: User,
     extraPayload: Partial<JwtPayload> = {},
+    ipAddress?: string,
+    userAgent?: string
   ) {
     const payload = this.buildPayload(user, extraPayload);
     const safeUser = this.buildSafeUser(user);
@@ -781,7 +846,9 @@ export class AuthService {
         user: user,
         userId: user.id,
         isRevoked: false,
-        expiresAt: expirationDate
+        expiresAt: expirationDate,
+        ipAddress,
+        userAgent
     });
 
     await this.refreshTokenRepository.save(refreshTokenRecord);
