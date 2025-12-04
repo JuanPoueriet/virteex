@@ -21,11 +21,13 @@ import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 
 @Module({
   imports: [
     ConfigModule,
     AuditModule,
+    OrganizationsModule,
     // Cache configuration: Redis if available, Memory fallback
     CacheModule.registerAsync({
         imports: [ConfigModule],

@@ -14,7 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThan, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import * as ms from 'ms';
 import { authenticator } from 'otplib';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -62,7 +62,8 @@ export class AuthService {
     private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly cryptoUtil: CryptoUtil
+    private readonly cryptoUtil: CryptoUtil,
+    private readonly organizationsService: OrganizationsService
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
@@ -101,12 +102,11 @@ export class AuthService {
       }
 
 
-      organization = queryRunner.manager.create(Organization, {
+      organization = await this.organizationsService.create({
         legalName: organizationName,
         taxId: rnc || null,
         fiscalRegionId: fiscalRegionId,
-      });
-      await queryRunner.manager.save(organization);
+      }, queryRunner.manager);
 
 
       const defaultRoles = this.getDefaultRolesForOrganization(organization.id);
@@ -123,7 +123,7 @@ export class AuthService {
       }
 
 
-      const passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
+      const passwordHash = await argon2.hash(password);
       const user = queryRunner.manager.create(User, {
         firstName,
         lastName,
@@ -188,14 +188,18 @@ export class AuthService {
 
     // Timing attack mitigation: verify password even if user not found (with dummy hash)
     // or if user found but wrong password.
-    // If user is null, we simulate bcrypt time.
+    // If user is null, we simulate argon2 time.
     let isPasswordValid = false;
     if (user && user.passwordHash) {
-        isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+        isPasswordValid = await argon2.verify(user.passwordHash, password);
     } else {
         // Dummy comparison to simulate time (using a fixed dummy hash)
         // This prevents timing leaks revealing if email exists
-        await bcrypt.compare(password, AuthConfig.DUMMY_PASSWORD_HASH);
+        try {
+            await argon2.verify(AuthConfig.DUMMY_PASSWORD_HASH, password);
+        } catch (e) {
+            // Ignore error
+        }
         isPasswordValid = false;
     }
 
@@ -418,14 +422,14 @@ export class AuthService {
       );
     }
 
-    const isSamePassword = await bcrypt.compare(password, user.passwordHash);
+    const isSamePassword = await argon2.verify(user.passwordHash, password);
     if (isSamePassword) {
       throw new BadRequestException(
         'La nueva contraseña no puede ser igual a la anterior',
       );
     }
 
-    user.passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
+    user.passwordHash = await argon2.hash(password);
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
 
@@ -483,7 +487,7 @@ export class AuthService {
       );
     }
 
-    user.passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
+    user.passwordHash = await argon2.hash(password);
     user.status = UserStatus.ACTIVE;
     user.invitationToken = undefined;
     user.invitationTokenExpires = undefined;
@@ -743,12 +747,14 @@ export class AuthService {
     user: User,
     extra: Partial<JwtPayload> = {},
   ): JwtPayload {
+    // Optimized: Permissions removed from JWT payload to reduce size.
+    // Frontend should use permissions from the User object in the response or API calls,
+    // not by decoding the token.
     return {
       id: user.id,
       email: user.email,
       organizationId: user.organizationId,
       roles: user.roles.map((r) => r.name),
-      permissions: [...new Set(user.roles.flatMap((r) => r.permissions))],
       tokenVersion: user.tokenVersion,
       ...extra,
     };

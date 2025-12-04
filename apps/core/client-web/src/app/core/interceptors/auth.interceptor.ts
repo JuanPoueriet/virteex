@@ -56,6 +56,10 @@ export const authInterceptor: HttpInterceptorFn = (
                             isRefreshing = false;
                             console.error('[Interceptor] Fallo al refrescar el token. Deslogueando usuario.', refreshError);
                             refreshTokenSubject.next(false); // Emitir false para indicar fallo
+
+                            // Prevent logout loop if the error comes from a critical or already failing state
+                            // But usually, logout() handles redirect to login, which is public.
+                            // Ensure logout doesn't trigger interceptor failure loops.
                             authService.logout();
                             return throwError(() => refreshError);
                         })
