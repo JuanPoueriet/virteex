@@ -30,10 +30,12 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { MailService } from '../mail/mail.service';
 import { LocalizationService } from '../localization/services/localization.service';
 import { DEFAULT_ROLES } from '../config/roles.config';
+import { RoleEnum } from '../roles/enums/role.enum';
 import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
+import { hasPermission } from '@virteex/shared/util-auth';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -107,7 +109,7 @@ export class AuthService {
       );
       await queryRunner.manager.save(roleEntities);
 
-      const adminRole = roleEntities.find((r) => r.name === 'ADMINISTRATOR');
+      const adminRole = roleEntities.find((r) => r.name === RoleEnum.ADMINISTRATOR);
       if (!adminRole) {
         throw new InternalServerErrorException(
           'No se pudo encontrar el rol de administrador predeterminado.',
@@ -579,12 +581,8 @@ export class AuthService {
 
 
   async impersonate(adminUser: User, targetUserId: string) {
-    const hasPermission = adminUser.roles.some(
-      (role) =>
-        role.permissions.includes('*') ||
-        role.permissions.includes('users:impersonate'),
-    );
-    if (!hasPermission) {
+    const permissions = [...new Set(adminUser.roles.flatMap((role) => role.permissions))];
+    if (!hasPermission(permissions, ['users:impersonate'])) {
       throw new ForbiddenException(
         'No tienes permisos para suplantar usuarios.',
       );

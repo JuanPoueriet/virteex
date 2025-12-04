@@ -23,6 +23,7 @@ import { NotificationService } from './notification';
 import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
+import { hasPermission } from '@virteex/shared/util-auth';
 
 interface LoginResponse {
   user: User;
@@ -97,20 +98,7 @@ export class AuthService {
    */
   hasPermissions(requiredPermissions: string[]): boolean {
     const user = this.currentUser();
-    if (!user || !user.permissions) {
-      return false;
-    }
-    // Si el usuario tiene el permiso '*', tiene acceso a todo.
-    if (user.permissions.includes('*')) {
-      return true;
-    }
-    // Verifica que cada permiso requerido esté presente en los permisos del usuario.
-    // Soporta wildcards simples (ej. 'module.*')
-    return requiredPermissions.every((req) =>
-      user.permissions?.some(userPerm =>
-        userPerm === req || (userPerm.endsWith('*') && req.startsWith(userPerm.slice(0, -1)))
-      )
-    );
+    return hasPermission(user?.permissions, requiredPermissions);
   }
 
   /**

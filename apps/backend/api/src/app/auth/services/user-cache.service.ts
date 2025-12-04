@@ -8,7 +8,16 @@ export class UserCacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   async clearUserSession(userId: string): Promise<void> {
+    // We clear the session used by JwtStrategy
     await this.cacheManager.del(`user_session:${userId}`);
+  }
+
+  /**
+   * Invalidates the user cache explicitly.
+   * Call this whenever critical user data (roles, status) changes.
+   */
+  async invalidate(userId: string): Promise<void> {
+    return this.clearUserSession(userId);
   }
 
   async clearUserSessionByEmail(email: string): Promise<void> {

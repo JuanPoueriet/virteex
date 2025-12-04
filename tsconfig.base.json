@@ -16,6 +16,9 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@virteex/source"]
+    "customConditions": ["@virteex/source"],
+    "paths": {
+      "@virteex/shared/util-auth": ["libs/shared/util-auth/src/index.ts"]
+    }
   }
 }
