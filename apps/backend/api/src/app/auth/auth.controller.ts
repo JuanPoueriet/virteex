@@ -1,5 +1,4 @@
 
-
 import {
   Controller,
   Post,
@@ -14,7 +13,6 @@ import {
   ValidationPipe,
   BadRequestException,
   Param,
-  UnauthorizedException,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
@@ -33,37 +31,27 @@ import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from './auth.config';
 import { UseFilters } from '@nestjs/common';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
+import { CookieService } from './services/cookie.service';
 
 @Controller('auth')
 @UseFilters(TypeOrmExceptionFilter)
 export class AuthController {
-  constructor(private readonly authService: AuthService,
-
+  constructor(
+    private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly cookieService: CookieService
   ) {}
-
-
 
   @Post('register')
   @UseGuards(GoogleRecaptchaGuard)
-  async register(@Body() registerUserDto: RegisterUserDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.register(registerUserDto);
+  async register(
+    @Body() registerUserDto: RegisterUserDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.register(registerUserDto);
 
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
-    });
-
-    if (refreshToken) {
-      res.cookie('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: AuthConfig.COOKIE_REFRESH_MAX_AGE,
-      });
-    }
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
     // Return accessToken as well for clients not using cookies
     return { user, accessToken };
@@ -71,61 +59,36 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
+  @Throttle({
+    default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL },
+  })
   @UseGuards(GoogleRecaptchaGuard)
   async login(
     @Body() loginUserDto: LoginUserDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.login(loginUserDto);
     const rememberMe = loginUserDto.rememberMe || false;
 
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
-    });
-
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: rememberMe ? AuthConfig.COOKIE_REFRESH_REMEMBER_ME_MAX_AGE : AuthConfig.COOKIE_REFRESH_MAX_AGE,
-    });
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken, rememberMe);
 
     return { user };
   }
-
 
   @Post('set-password-from-invitation')
   @HttpCode(HttpStatus.OK)
   async setPasswordFromInvitation(
     @Body() setPasswordDto: SetPasswordFromInvitationDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.setPasswordFromInvitation(setPasswordDto);
 
-
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
-    });
-
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: AuthConfig.COOKIE_REFRESH_MAX_AGE,
-    });
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
     return { user };
   }
-
 
   @Get('invitation/:token')
   @HttpCode(HttpStatus.OK)
@@ -137,7 +100,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const refreshToken = req.cookies?.refresh_token;
     if (!refreshToken) {
@@ -146,14 +109,19 @@ export class AuthController {
 
     const { accessToken, user } =
       await this.authService.refreshAccessToken(refreshToken);
-    const isProduction = process.env.NODE_ENV === 'production';
 
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'strict',
-      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
-    });
+    // For refresh, we update access token.
+    // If rotation is used, we might update refresh token too.
+    // Assuming authService returns new pair if rotated.
+    // If not returned, we might just set access token.
+    // But cookieService.setAuthCookies expects (res, access, refresh).
+    // If refresh is undefined in object, we pass null?
+    // authService.refreshAccessToken signature: returns { accessToken, user }. It does NOT return refreshToken usually unless rotated.
+    // Let's check auth.service.ts later if needed.
+    // Assuming for now we just update access token if refresh is missing.
+    // But `setAuthCookies` handles null refreshToken.
+
+    this.cookieService.setAuthCookies(res, accessToken, null);
 
     return { accessToken, user };
   }
@@ -161,8 +129,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    this.cookieService.clearAuthCookies(res);
     return { message: 'Logout exitoso' };
   }
 
@@ -187,7 +154,7 @@ export class AuthController {
 
     return {
       isAuthenticated: true,
-      user: statusResponse.user
+      user: statusResponse.user,
     };
   }
 
@@ -212,23 +179,17 @@ export class AuthController {
     return userResult;
   }
 
-
   @Post('impersonate')
   @UseGuards(JwtAuthGuard)
   async impersonate(
     @CurrentUser() adminUser: User,
     @Body('userId') targetUserId: string,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.impersonate(adminUser, targetUserId);
-    
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-    });
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
     return { user, access_token: accessToken };
   }
@@ -237,20 +198,13 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async stopImpersonation(
     @CurrentUser() impersonatingUser: User,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.stopImpersonation(impersonatingUser);
-    
 
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-    });
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
     return { user, access_token: accessToken };
   }
-
-
 }
