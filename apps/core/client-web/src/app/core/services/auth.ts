@@ -8,10 +8,11 @@ import {
   tap,
   throwError,
   of,
-  BehaviorSubject,
   take,
 } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
+import { environment } from '../../../environments/environment';
 import { RegisterPayload } from '../../shared/interfaces/register-payload.interface';
 import { User } from '../../shared/interfaces/user.interface';
 import { LoginCredentials } from '../../shared/interfaces/login-credentials.interface';
@@ -21,7 +22,6 @@ import { UserPayload } from '../../shared/interfaces/user-payload.interface';
 import { NotificationService } from './notification';
 import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
-// import { ModalService } from '../../shared/services/modal.service';
 
 interface LoginResponse {
   user: User;
@@ -35,8 +35,8 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  // URL base de tu API de autenticación. Ajústala si es necesario.
-  private readonly apiUrl = 'http://localhost:3000/api/v1/auth';
+  // URL base de tu API de autenticación.
+  private readonly apiUrl = `${environment.apiUrl || 'http://localhost:3000/api/v1'}/auth`;
 
   // --- Estado Reactivo con Signals ---
 
@@ -56,16 +56,9 @@ export class AuthService {
     () => this._authStatus() === AuthStatus.authenticated
   );
 
-  /**
-   * El constructor se ejecuta cuando se instancia el servicio.
-   * Llama a checkAuthStatus para verificar si ya existe una sesión válida en el backend.
-   */
-
-  private _isAuthenticated = new BehaviorSubject<boolean>(false);
-  public isAuthenticated$ = this._isAuthenticated.asObservable();
-
-  private _user = new BehaviorSubject<User | null>(null);
-  public user$ = this._user.asObservable();
+  // Compatibilidad con código legado usando Observables derivados de Signals
+  public isAuthenticated$ = toObservable(this.isAuthenticated);
+  public user$ = toObservable(this.currentUser);
 
   constructor(private modalService: ModalService) {
     this.listenForForcedLogout();
@@ -119,21 +112,17 @@ export class AuthService {
    * @returns Un observable que, al completarse, actualiza el estado de autenticación.
    */
   refreshAccessToken(): Observable<LoginResponse> {
-    // --- CORRECCIÓN ---
-    // Cambiado de post a get y eliminado el cuerpo vacío `{}`
     return this.http
       .get<LoginResponse>(`${this.apiUrl}/refresh`, { withCredentials: true })
-      .pipe()
       .pipe(
         tap((response) => {
           if (response && response.user && response.accessToken) {
-            this._isAuthenticated.next(true);
-            this._user.next(response.user);
+            this._currentUser.set(response.user);
+            this._authStatus.set(AuthStatus.authenticated);
             console.log('[AuthService] Token refrescado exitosamente');
           }
         })
       );
-    // --- FIN DE LA CORRECCIÓN ---
   }
 
   /**
@@ -152,9 +141,6 @@ export class AuthService {
         tap((response) => {
           this._currentUser.set(response.user);
           this._authStatus.set(AuthStatus.authenticated);
-          // 🔥 Actualizar BehaviorSubjects
-          this._user.next(response.user);
-          this._isAuthenticated.next(true);
 
           this.webSocketService.connect();
           this.webSocketService.emit('user-status', { isOnline: true });
@@ -173,9 +159,6 @@ export class AuthService {
         if (res.isAuthenticated && res.user) {
           this._currentUser.set(res.user);
           this._authStatus.set(AuthStatus.authenticated);
-          // 🔥 Actualizar BehaviorSubjects
-          this._user.next(res.user);
-          this._isAuthenticated.next(true);
           this.webSocketService.connect();
           this.webSocketService.emit('user-status', { isOnline: true });
           this.listenForForcedLogout();
@@ -184,10 +167,6 @@ export class AuthService {
           this._currentUser.set(null);
           this._authStatus.set(AuthStatus.unauthenticated);
           this.webSocketService.disconnect();
-
-          // 🔥 Actualizar BehaviorSubjects
-          this._user.next(null);
-          this._isAuthenticated.next(false);
           return false;
         }
       }),
@@ -196,10 +175,6 @@ export class AuthService {
         this._currentUser.set(null);
         this._authStatus.set(AuthStatus.unauthenticated);
         this.webSocketService.disconnect();
-
-        // 🔥 Actualizar BehaviorSubjects
-        this._user.next(null);
-        this._isAuthenticated.next(false);
         return of(false);
       })
     );
@@ -207,7 +182,7 @@ export class AuthService {
 
   // 🔥 Añadir método para obtener permisos como observable
   getPermissions$(): Observable<string[]> {
-    return this._user.pipe(map((user) => user?.permissions || []));
+    return this.user$.pipe(map((user) => user?.permissions || []));
   }
 
   /**
@@ -303,8 +278,6 @@ export class AuthService {
           // Al establecer la contraseña, también iniciamos sesión
           this._currentUser.set(response.user);
           this._authStatus.set(AuthStatus.authenticated);
-          this._user.next(response.user);
-          this._isAuthenticated.next(true);
         }),
         catchError((err) => this.handleError('setPasswordFromInvitation', err))
       );
@@ -408,13 +381,13 @@ export class AuthService {
         tap((response) => {
           this._currentUser.set(response.user);
           this._authStatus.set(AuthStatus.authenticated);
-          this._user.next(response.user);
-          this._isAuthenticated.next(true);
           this.notificationService.showSuccess(
             `Ahora estás viendo como ${response.user.firstName}`
           );
-          // Forzar la recarga de la página para que todo el estado de la aplicación se actualice
-          window.location.href = '/app/dashboard';
+          // Usar Router en lugar de recarga forzada
+          this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(['/app/dashboard']);
+          });
         }),
         map((response) => response.user),
         catchError((err) => this.handleError('impersonate', err))
@@ -432,12 +405,13 @@ export class AuthService {
         tap((response) => {
           this._currentUser.set(response.user);
           this._authStatus.set(AuthStatus.authenticated);
-          this._user.next(response.user);
-          this._isAuthenticated.next(true);
           this.notificationService.showSuccess(
             'Has vuelto a tu cuenta original.'
           );
-          window.location.href = '/app/dashboard';
+          // Usar Router en lugar de recarga forzada
+          this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(['/app/dashboard']);
+          });
         }),
         map((response) => response.user),
         catchError((err) => this.handleError('stopImpersonation', err))
