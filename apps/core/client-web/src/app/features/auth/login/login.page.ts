@@ -166,6 +166,9 @@ export class LoginPage implements OnInit {
   @ViewChild('formElement') formElement!: ElementRef<HTMLFormElement>;
 
   ngOnInit() {
+    // IMPORTANTE: Detectamos el país para que los enlaces de registro sean correctos
+    this.countryService.detectAndSetCountry();
+
     this.route.paramMap.subscribe(params => {
       const lang = params.get('lang');
       if (lang) {

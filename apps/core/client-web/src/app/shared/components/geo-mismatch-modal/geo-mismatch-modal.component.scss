@@ -15,7 +15,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.6); // Un poco más oscuro para mejor contraste
+  // Use a slight overlay color, but let backdrop-filter do the work for glass effect if desired
+  background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   animation: backdropFade 0.3s ease-out forwards;
 }
@@ -28,7 +29,7 @@
   width: 90%;
   max-width: 440px;
   
-  // USA LAS VARIABLES DEL TEMA PARA EL FONDO
+  // Use global theme variables
   background-color: var(--bg-card); 
   border: 1px solid var(--border-color);
   
@@ -37,7 +38,6 @@
   padding: 2rem;
   animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   
-  // Color de texto base
   color: var(--text-secondary);
 }
 
@@ -51,8 +51,9 @@
     justify-content: center;
     width: 64px;
     height: 64px;
-    background: var(--primary-light); // Variable del tema
-    color: var(--primary);            // Variable del tema
+    // Ensure these variables exist or fallback to primary-light/primary
+    background: var(--primary-light);
+    color: var(--primary);
     border-radius: 50%;
     margin-bottom: 1.25rem;
 
@@ -65,20 +66,20 @@
   h2 {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--text-primary); // Variable del tema
+    color: var(--text-primary);
     margin: 0;
   }
 }
 
 .modal-body {
   text-align: center;
-  color: var(--text-secondary); // Variable del tema
+  color: var(--text-secondary);
   margin-bottom: 2rem;
   font-size: 0.95rem;
   line-height: 1.6;
 
   strong {
-    color: var(--text-primary); // Variable del tema
+    color: var(--text-primary);
     font-weight: 600;
   }
 }
@@ -100,7 +101,7 @@
 
     &.btn-primary {
       background: var(--primary);
-      color: var(--accent-text); // Texto sobre color primario
+      color: var(--accent-text);
       box-shadow: var(--shadow-sm);
 
       &:hover {
