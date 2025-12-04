@@ -32,7 +32,9 @@ import { AuthConfig } from './auth.config';
 import { UseFilters } from '@nestjs/common';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { CookieService } from './services/cookie.service';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 @UseFilters(TypeOrmExceptionFilter)
 export class AuthController {
@@ -43,6 +45,8 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @ApiOperation({ summary: 'Register a new user and organization' })
+  @ApiResponse({ status: 201, description: 'User successfully registered.' })
   @UseGuards(GoogleRecaptchaGuard)
   async register(
     @Body() registerUserDto: RegisterUserDto,
@@ -58,6 +62,8 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
   @HttpCode(HttpStatus.OK)
   @Throttle({
     default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL },

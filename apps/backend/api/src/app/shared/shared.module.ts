@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DocumentSequence } from './document-sequences/entities/document-sequence.entity';
 import { DocumentSequencesService } from './document-sequences/document-sequences.service';
 import { OrganizationSubscriber } from './subscribers/organization.subscriber';
+import { CryptoUtil } from './utils/crypto.util';
 
 @Global()
 @Module({
@@ -18,11 +19,13 @@ import { OrganizationSubscriber } from './subscribers/organization.subscriber';
   ], 
   providers: [
     DocumentSequencesService,
-    OrganizationSubscriber
+    OrganizationSubscriber,
+    CryptoUtil
   ],
   exports: [
     DocumentSequencesService,
-    OrganizationSubscriber
+    OrganizationSubscriber,
+    CryptoUtil
   ],
 })
 export class SharedModule {}

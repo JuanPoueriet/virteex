@@ -8,6 +8,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
@@ -16,6 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as ms from 'ms';
 import { authenticator } from 'otplib';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -28,7 +30,6 @@ import { Role } from '../roles/entities/role.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { MailService } from '../mail/mail.service';
-import { LocalizationService } from '../localization/services/localization.service';
 import { DEFAULT_ROLES } from '../config/roles.config';
 import { RoleEnum } from '../roles/enums/role.enum';
 import { AuthConfig } from './auth.config';
@@ -36,6 +37,8 @@ import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { hasPermission } from '@virteex/shared/util-auth';
+import { UserRegisteredEvent } from './events/user-registered.event';
+import { CryptoUtil } from '../shared/utils/crypto.util';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -44,6 +47,8 @@ interface PasswordResetJwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Organization)
@@ -54,9 +59,10 @@ export class AuthService {
     private readonly configService: ConfigService,
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly mailService: MailService,
-    private readonly localizationService: LocalizationService,
     private readonly auditService: AuditTrailService,
-    private readonly userCacheService: UserCacheService
+    private readonly userCacheService: UserCacheService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly cryptoUtil: CryptoUtil
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
@@ -132,8 +138,11 @@ export class AuthService {
       });
       await queryRunner.manager.save(user);
 
-      // Apply Fiscal Package INSIDE the transaction
-      await this.localizationService.applyFiscalPackage(organization, queryRunner.manager);
+      // Apply Fiscal Package INSIDE the transaction via Event Emitter
+      await this.eventEmitter.emitAsync(
+        'user.registered',
+        new UserRegisteredEvent(user, organization, queryRunner.manager)
+      );
 
       await queryRunner.commitTransaction();
 
@@ -153,7 +162,7 @@ export class AuthService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      console.error('Error en el registro:', error);
+      this.logger.error('Error en el registro:', error);
       throw new InternalServerErrorException(
         'Error inesperado, por favor revise los logs del servidor.',
       );
@@ -226,9 +235,11 @@ export class AuthService {
         throw new ForbiddenException('Se requiere código de autenticación de dos factores (2FA).');
       }
 
+      // Decrypt Secret before verify
+      const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
       const isValid2FA = authenticator.verify({
         token: twoFactorCode,
-        secret: user.twoFactorSecret
+        secret: decryptedSecret
       });
 
       if (!isValid2FA) {
@@ -508,16 +519,16 @@ export class AuthService {
 
          // Reuse Detection
          if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
-             // Grace Period Check (e.g. 45 seconds)
+             // Grace Period Check (e.g. 10 seconds)
              // If the token was revoked very recently, it might be a race condition (frontend retry).
              // In this case, we deny the request but DO NOT invalidate the user session.
-             const GRACE_PERIOD = 45 * 1000;
+             const GRACE_PERIOD = 10 * 1000;
              if (refreshTokenEntity?.revokedAt && (Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD)) {
-                 console.warn(`[SECURITY] Refresh token reused within grace period. Denying request without invalidation.`);
+                 this.logger.warn(`[SECURITY] Refresh token reused within grace period. Denying request without invalidation.`);
                  throw new UnauthorizedException('Token inválido (rotación en progreso)');
              }
 
-             console.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
+             this.logger.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
              user.tokenVersion = (user.tokenVersion || 0) + 1;
              await this.userRepository.save(user);
              await this.userCacheService.clearUserSession(user.id);
@@ -549,7 +560,7 @@ export class AuthService {
         refreshToken: authResponse.refreshToken, // New Refresh Token
       };
     } catch (error) {
-      console.error(
+      this.logger.error(
         'Error al verificar el refresh token:',
         (error as Error).message,
       );
@@ -648,8 +659,10 @@ export class AuthService {
     const secret = authenticator.generateSecret();
     const otpauthUrl = authenticator.keyuri(user.email, 'Virteex ERP', secret);
 
+    // Encrypt secret before saving
+    const encryptedSecret = this.cryptoUtil.encrypt(secret);
     // We save the secret but DO NOT enable it yet. User must verify first.
-    await this.userRepository.update(user.id, { twoFactorSecret: secret });
+    await this.userRepository.update(user.id, { twoFactorSecret: encryptedSecret });
 
     return { secret, otpauthUrl };
   }
@@ -661,7 +674,10 @@ export class AuthService {
          throw new BadRequestException('2FA configuration not initiated. Please generate secret first.');
     }
 
-    const isValid = authenticator.verify({ token, secret: freshUser.twoFactorSecret });
+    // Decrypt secret
+    const decryptedSecret = this.cryptoUtil.decrypt(freshUser.twoFactorSecret);
+
+    const isValid = authenticator.verify({ token, secret: decryptedSecret });
     if (!isValid) {
         throw new UnauthorizedException('Invalid 2FA token');
     }

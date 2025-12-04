@@ -12,7 +12,7 @@ import {
 } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { environment } from '../../../environments/environment';
+import { API_URL } from '../tokens/api-url.token';
 import { RegisterPayload } from '../../shared/interfaces/register-payload.interface';
 import { User } from '../../shared/interfaces/user.interface';
 import { LoginCredentials } from '../../shared/interfaces/login-credentials.interface';
@@ -38,9 +38,10 @@ export class AuthService {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private webSocketService = inject(WebSocketService);
+  private readonly baseUrl = inject(API_URL);
 
   // URL base de tu API de autenticación.
-  private readonly apiUrl = `${environment.apiUrl || 'http://localhost:3000/api/v1'}/auth`;
+  private readonly apiUrl = `${this.baseUrl}/auth`;
 
   // --- Estado Reactivo con Signals ---
 
