@@ -14,7 +14,7 @@ import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
 // Mutex para evitar la condición de carrera "Thundering Herd"
 let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<any>(null);
+const refreshTokenSubject = new BehaviorSubject<boolean | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (
     req: HttpRequest<unknown>,
@@ -44,7 +44,7 @@ export const authInterceptor: HttpInterceptorFn = (
                         switchMap((response) => {
                             isRefreshing = false;
                             console.log('[Interceptor] Token refrescado exitosamente.');
-                            refreshTokenSubject.next(response); // Emitir valor para liberar la cola
+                            refreshTokenSubject.next(true); // Emitir valor para liberar la cola
 
                             // Clonar la petición original con el nuevo token si estuviera disponible en la respuesta
                             // Nota: Al usar cookies HttpOnly, el navegador adjunta automáticamente la cookie en la nueva petición.

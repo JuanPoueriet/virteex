@@ -1,19 +1,20 @@
+import { RoleEnum } from '../roles/enums/role.enum';
 
 export const DEFAULT_ROLES = [
     {
-      name: 'ADMINISTRATOR',
+      name: RoleEnum.ADMINISTRATOR,
       description: 'USER.ROLE.ADMINISTRATOR_DESC',
       permissions: ['*'],
       isSystemRole: true,
     },
     {
-      name: 'MEMBER',
+      name: RoleEnum.MEMBER,
       description: 'USER.ROLE.MEMBER_DESC',
       permissions: ['invoices:view', 'products:view'],
       isSystemRole: true,
     },
     {
-      name: 'SELLER',
+      name: RoleEnum.SELLER,
       description: 'USER.ROLE.SELLER_DESC',
       permissions: [
         'dashboard:view',
@@ -29,7 +30,7 @@ export const DEFAULT_ROLES = [
       isSystemRole: true,
     },
     {
-      name: 'ACCOUNTANT',
+      name: RoleEnum.ACCOUNTANT,
       description: 'USER.ROLE.ACCOUNTANT_DESC',
       permissions: [
         'dashboard:view',
