@@ -10,11 +10,9 @@ export class LoginUserDto {
   @IsNotEmpty({ message: 'La contraseña no puede estar vacía.' })
   password: string;
 
-
   @IsBoolean()
   @IsOptional()
   rememberMe?: boolean;
-  
 
   @IsString()
   @IsNotEmpty({ message: 'El token de reCAPTCHA es obligatorio.' })

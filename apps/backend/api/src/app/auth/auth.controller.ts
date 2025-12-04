@@ -31,8 +31,11 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from './auth.config';
+import { UseFilters } from '@nestjs/common';
+import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 
 @Controller('auth')
+@UseFilters(TypeOrmExceptionFilter)
 export class AuthController {
   constructor(private readonly authService: AuthService,
 
@@ -76,7 +79,7 @@ export class AuthController {
   ) {
     const { user, accessToken, refreshToken } =
       await this.authService.login(loginUserDto);
-    const rememberMe = (loginUserDto as any).rememberMe || false;
+    const rememberMe = loginUserDto.rememberMe || false;
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,

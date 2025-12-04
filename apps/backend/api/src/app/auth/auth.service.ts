@@ -184,7 +184,7 @@ export class AuthService {
     } else {
         // Dummy comparison to simulate time (using a fixed dummy hash)
         // This prevents timing leaks revealing if email exists
-        await bcrypt.compare(password, '$2b$10$zRb.LZNDX8J0OedTJXoM4OGKsGdy/vjeeYbNgHnQPxec8qok0mcea');
+        await bcrypt.compare(password, AuthConfig.DUMMY_PASSWORD_HASH);
         isPasswordValid = false;
     }
 
@@ -321,8 +321,8 @@ export class AuthService {
   }
 
   private async simulateDelay() {
-    // Retardo fijo de 500ms para mitigar timing attacks de forma segura y predecible
-    return new Promise((resolve) => setTimeout(resolve, 500));
+    // Retardo fijo de 500ms (configurable) para mitigar timing attacks de forma segura y predecible
+    return new Promise((resolve) => setTimeout(resolve, AuthConfig.SIMULATED_DELAY_MS));
   }
 
   private async findUserForLogin(email: string): Promise<User | null> {
@@ -353,7 +353,7 @@ export class AuthService {
         'organization.id',
         'organization.legalName',
         'organization.taxId',
-        'organization.logoUrl',
+        // 'organization.logoUrl', // Optimized: Logo not needed for auth payload
       ])
       .getOne();
   }
@@ -504,8 +504,17 @@ export class AuthService {
       if (payload.jti) {
          const refreshTokenEntity = await this.refreshTokenRepository.findOneBy({ id: payload.jti });
 
-         // Reuse Detection: If token is revoked but used, invalidate ALL user sessions
+         // Reuse Detection
          if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
+             // Grace Period Check (e.g. 45 seconds)
+             // If the token was revoked very recently, it might be a race condition (frontend retry).
+             // In this case, we deny the request but DO NOT invalidate the user session.
+             const GRACE_PERIOD = 45 * 1000;
+             if (refreshTokenEntity?.revokedAt && (Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD)) {
+                 console.warn(`[SECURITY] Refresh token reused within grace period. Denying request without invalidation.`);
+                 throw new UnauthorizedException('Token inválido (rotación en progreso)');
+             }
+
              console.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
              user.tokenVersion = (user.tokenVersion || 0) + 1;
              await this.userRepository.save(user);
@@ -515,6 +524,7 @@ export class AuthService {
 
          // Revoke the current token (Rotation)
          refreshTokenEntity.isRevoked = true;
+         refreshTokenEntity.revokedAt = new Date();
          // Store which token replaced it (optional, for audit)
          // refreshTokenEntity.replacedByToken = newJti; // Can be implemented if needed
          await this.refreshTokenRepository.save(refreshTokenEntity);
