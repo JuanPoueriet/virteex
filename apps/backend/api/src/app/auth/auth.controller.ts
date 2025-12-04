@@ -13,6 +13,8 @@ import {
   ValidationPipe,
   BadRequestException,
   Param,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
@@ -33,6 +35,7 @@ import { UseFilters } from '@nestjs/common';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { AuthResponseDto } from './dto/auth-response.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -51,7 +54,7 @@ export class AuthController {
   async register(
     @Body() registerUserDto: RegisterUserDto,
     @Res({ passthrough: true }) res: Response
-  ) {
+  ): Promise<{ user: any; accessToken: string }> {
     const { user, accessToken, refreshToken } =
       await this.authService.register(registerUserDto);
 
@@ -71,10 +74,12 @@ export class AuthController {
   @UseGuards(GoogleRecaptchaGuard)
   async login(
     @Body() loginUserDto: LoginUserDto,
-    @Res({ passthrough: true }) res: Response
-  ) {
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string
+  ): Promise<{ user: any }> {
     const { user, accessToken, refreshToken } =
-      await this.authService.login(loginUserDto);
+      await this.authService.login(loginUserDto, ip, userAgent);
     const rememberMe = loginUserDto.rememberMe || false;
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken, rememberMe);
@@ -106,30 +111,37 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ) {
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string
+  ): Promise<{ accessToken: string; user: any }> {
     const refreshToken = req.cookies?.refresh_token;
     if (!refreshToken) {
       throw new BadRequestException('Refresh token no encontrado en cookies');
     }
 
     const { accessToken, user } =
-      await this.authService.refreshAccessToken(refreshToken);
+      await this.authService.refreshAccessToken(refreshToken, ip, userAgent);
 
     // For refresh, we update access token.
-    // If rotation is used, we might update refresh token too.
-    // Assuming authService returns new pair if rotated.
-    // If not returned, we might just set access token.
-    // But cookieService.setAuthCookies expects (res, access, refresh).
-    // If refresh is undefined in object, we pass null?
-    // authService.refreshAccessToken signature: returns { accessToken, user }. It does NOT return refreshToken usually unless rotated.
-    // Let's check auth.service.ts later if needed.
-    // Assuming for now we just update access token if refresh is missing.
-    // But `setAuthCookies` handles null refreshToken.
+    // The service now returns new tokens if rotated, but let's assume it returns accessToken and user at minimum.
+    // If authService returns refreshToken too (it does), we should update cookie.
 
-    this.cookieService.setAuthCookies(res, accessToken, null);
+    // Actually authService returns { accessToken, refreshToken, user } now.
+    // Let's typecast safely or update logic.
+    // Wait, in previous step I updated refreshAccessToken to return { user, accessToken, refreshToken }.
+    // So I can just use it.
 
-    return { accessToken, user };
+    // Wait, the destructuring was: `const { accessToken, user } = ...`. I should add refreshToken.
+    // However, the original code had `const { accessToken, user }` only. I must check what I changed in AuthService.
+    // In AuthService: `return { user: authResponse.user, accessToken: ..., refreshToken: ... };`
+    // So I can get refreshToken.
+
+    const result = await this.authService.refreshAccessToken(refreshToken, ip, userAgent);
+
+    this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
+
+    return { accessToken: result.accessToken, user: result.user };
   }
 
   @Post('logout')

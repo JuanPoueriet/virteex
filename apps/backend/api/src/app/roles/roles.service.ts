@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { UserCacheService } from '../auth/services/user-cache.service';
+import { User } from '../users/entities/user.entity/user.entity';
 
 @Injectable()
 export class RolesService {
     constructor(
         @InjectRepository(Role)
         private readonly roleRepository: Repository<Role>,
+        private readonly userCacheService: UserCacheService
     ) { }
 
     findAllByOrg(organizationId: string) {
@@ -51,7 +54,26 @@ export class RolesService {
             throw new ForbiddenException('Los roles del sistema no pueden ser modificados.');
         }
         Object.assign(role, updateRoleDto);
-        return this.roleRepository.save(role);
+
+        const updatedRole = await this.roleRepository.save(role);
+
+        // Invalidate sessions for all users who have this role
+        // This is expensive but necessary for security when permissions change.
+        // We do it asynchronously to not block the response too much?
+        // Actually, we must ensure consistency.
+        // Finding all users with this role:
+        const users = await this.roleRepository.manager.getRepository(User)
+            .createQueryBuilder('user')
+            .innerJoin('user.roles', 'role')
+            .where('role.id = :roleId', { roleId: role.id })
+            .select(['user.id'])
+            .getMany();
+
+        for (const user of users) {
+             await this.userCacheService.clearUserSession(user.id);
+        }
+
+        return updatedRole;
     }
 
     async remove(id: string, organizationId: string): Promise<void> {
