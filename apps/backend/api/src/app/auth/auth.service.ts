@@ -22,9 +22,11 @@ import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation
 import { User, UserStatus } from '../users/entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { Role } from '../roles/entities/role.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { MailService } from '../mail/mail.service';
 import { LocalizationService } from '../localization/services/localization.service';
+import { DEFAULT_ROLES } from '../config/roles.config';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -43,17 +45,14 @@ export class AuthService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly mailService: MailService,
     private readonly localizationService: LocalizationService,
   ) {}
-
-
-
-
-
 
   async register(registerUserDto: RegisterUserDto) {
     const {
@@ -80,6 +79,12 @@ export class AuthService {
         throw new ConflictException('El correo electrónico ya está registrado');
       }
       if (rnc) {
+        // Validación básica de formato RNC (Ejemplo RD: 9 o 11 dígitos)
+        // Se puede mejorar con algoritmo de Módulo 11 real para mayor rigurosidad
+        if (!/^\d{9,11}$/.test(rnc)) {
+             throw new BadRequestException('Formato de RNC inválido (debe contener 9 u 11 dígitos)');
+        }
+
         const existingOrg = await queryRunner.manager.findOne(Organization, {
           where: { taxId: rnc },
         });
@@ -132,11 +137,12 @@ export class AuthService {
       user.organization = organization;
       user.roles = [adminRole];
 
-      const authResponse = this.generateAuthResponse(user);
+      const authResponse = await this.generateAuthResponse(user);
 
       return {
         user: authResponse.user,
         accessToken: authResponse.accessToken,
+        refreshToken: authResponse.refreshToken,
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -219,7 +225,7 @@ export class AuthService {
 
     await this.resetLoginAttempts(user);
 
-    return this.generateAuthResponse(user);
+    return await this.generateAuthResponse(user);
   }
 
 
@@ -350,6 +356,8 @@ export class AuthService {
     user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
+    // Invalidate all existing sessions on password change
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
 
     const updatedUser = await this.userRepository.save(user);
     const {
@@ -406,16 +414,17 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    return this.generateAuthResponse(user);
+    return await this.generateAuthResponse(user);
   }
 
 
   async refreshAccessToken(token: string) {
     try {
-      const payload = this.jwtService.verify<JwtPayload>(token, {
+      const payload = this.jwtService.verify<JwtPayload & { jti?: string }>(token, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
+      // 1. Check if user exists and is valid
       const user = await this.userRepository.findOne({
         where: { id: payload.id },
         relations: ['roles', 'organization'],
@@ -428,12 +437,32 @@ export class AuthService {
         throw new UnauthorizedException('El usuario del token está inactivo.');
       }
 
+      // 2. Refresh Token Rotation Logic
+      if (payload.jti) {
+         const refreshTokenEntity = await this.refreshTokenRepository.findOneBy({ id: payload.jti });
+
+         // Reuse Detection: If token is revoked but used, invalidate ALL user sessions
+         if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
+             console.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
+             user.tokenVersion = (user.tokenVersion || 0) + 1;
+             await this.userRepository.save(user);
+             throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
+         }
+
+         // Revoke the current token (Rotation)
+         refreshTokenEntity.isRevoked = true;
+         // Store which token replaced it (optional, for audit)
+         // refreshTokenEntity.replacedByToken = newJti; // Can be implemented if needed
+         await this.refreshTokenRepository.save(refreshTokenEntity);
+      }
+
+      // 3. Issue new pair
+      const authResponse = await this.generateAuthResponse(user);
+
       return {
-        user: this.buildSafeUser(user),
-        accessToken: this.getJwtToken(
-          this.buildPayload(user),
-          DEFAULT_ACCESS_EXPIRATION_SHORT,
-        ),
+        user: authResponse.user,
+        accessToken: authResponse.accessToken,
+        refreshToken: authResponse.refreshToken, // New Refresh Token
       };
     } catch (error) {
       console.error(
@@ -489,7 +518,7 @@ export class AuthService {
       );
     }
 
-    return this.generateAuthResponse(targetUser, {
+    return await this.generateAuthResponse(targetUser, {
       isImpersonating: true,
       originalUserId: adminUser.id,
     });
@@ -521,67 +550,15 @@ export class AuthService {
       );
     }
 
-    return this.generateAuthResponse(adminUser);
+    return await this.generateAuthResponse(adminUser);
   }
 
 
-
-
-
   private getDefaultRolesForOrganization(organizationId: string) {
-
-    return [
-      {
-        name: 'ADMINISTRATOR',
-        description: 'USER.ROLE.ADMINISTRATOR_DESC',
-        permissions: ['*'],
-        isSystemRole: true,
-        organizationId,
-      },
-      {
-        name: 'MEMBER',
-        description: 'USER.ROLE.MEMBER_DESC',
-        permissions: ['invoices:view', 'products:view'],
-        isSystemRole: true,
-        organizationId,
-      },
-      {
-        name: 'SELLER',
-        description: 'USER.ROLE.SELLER_DESC',
-        permissions: [
-          'dashboard:view',
-          'customers:view',
-          'customers:create',
-          'customers:edit',
-          'products:view',
-          'sales:create',
-          'invoices:view',
-          'invoices:create',
-          'invoices:edit',
-        ],
-        isSystemRole: true,
-        organizationId,
-      },
-      {
-        name: 'ACCOUNTANT',
-        description: 'USER.ROLE.ACCOUNTANT_DESC',
-        permissions: [
-          'dashboard:view',
-          'accounting:view',
-          'reports:view',
-          'customers:view',
-          'suppliers:view',
-          'invoices:view',
-          'bills:view',
-          'journal-entries:create',
-          'journal-entries:view',
-          'chart-of-accounts:view',
-          'chart-of-accounts:edit',
-        ],
-        isSystemRole: true,
-        organizationId,
-      },
-    ];
+    return DEFAULT_ROLES.map(role => ({
+        ...role,
+        organizationId
+    }));
   }
 
   private async handleFailedLoginAttempt(user: User) {
@@ -634,13 +611,12 @@ export class AuthService {
     };
   }
 
-  private generateAuthResponse(
+  private async generateAuthResponse(
     user: User,
     extraPayload: Partial<JwtPayload> = {},
   ) {
     const payload = this.buildPayload(user, extraPayload);
     const safeUser = this.buildSafeUser(user);
-
 
     const userWithImpersonationStatus = {
       ...safeUser,
@@ -648,14 +624,34 @@ export class AuthService {
       originalUserId: payload.originalUserId || undefined,
     };
 
+    // Create Refresh Token Record
+    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION_TIME') || DEFAULT_REFRESH_EXPIRATION;
+    const expirationDate = new Date(Date.now() + this.convertToMs(refreshExpiration));
+
+    const refreshTokenRecord = this.refreshTokenRepository.create({
+        user: user,
+        userId: user.id,
+        isRevoked: false,
+        expiresAt: expirationDate
+    });
+
+    await this.refreshTokenRepository.save(refreshTokenRecord);
+
+    // Sign Access Token
+    const accessToken = this.getJwtToken(payload, DEFAULT_ACCESS_EXPIRATION_SHORT);
+
+    // Sign Refresh Token including the JTI (JWT ID) referring to the DB record
+    const refreshTokenPayload = { ...payload, jti: refreshTokenRecord.id };
+    const refreshToken = this.getJwtToken(
+        refreshTokenPayload,
+        refreshExpiration,
+        this.configService.get('JWT_REFRESH_SECRET'),
+    );
+
     return {
       user: userWithImpersonationStatus,
-      accessToken: this.getJwtToken(payload, DEFAULT_ACCESS_EXPIRATION_SHORT),
-      refreshToken: this.getJwtToken(
-        payload,
-        DEFAULT_REFRESH_EXPIRATION,
-        this.configService.get('JWT_REFRESH_SECRET'),
-      ),
+      accessToken,
+      refreshToken,
     };
   }
 

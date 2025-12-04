@@ -95,7 +95,7 @@ export class User {
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;
 
-  @ManyToMany(() => Role, { eager: true })
+  @ManyToMany(() => Role, { eager: false })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },

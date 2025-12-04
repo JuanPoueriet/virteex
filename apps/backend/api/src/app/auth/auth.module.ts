@@ -15,6 +15,7 @@ import { UserCacheService } from './services/user-cache.service';
 
 
 import { User } from '../users/entities/user.entity/user.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
@@ -23,7 +24,7 @@ import { LocalizationModule } from '../localization/localization.module';
   imports: [
     ConfigModule,
 
-    TypeOrmModule.forFeature([User, Organization]),
+    TypeOrmModule.forFeature([User, RefreshToken, Organization]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
