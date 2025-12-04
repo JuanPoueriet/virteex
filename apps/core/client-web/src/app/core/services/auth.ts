@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpContext } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   Observable,
@@ -22,6 +22,7 @@ import { UserPayload } from '../../shared/interfaces/user-payload.interface';
 import { NotificationService } from './notification';
 import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
+import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
 interface LoginResponse {
   user: User;
@@ -34,6 +35,8 @@ interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private notificationService = inject(NotificationService);
+  private webSocketService = inject(WebSocketService);
 
   // URL base de tu API de autenticación.
   private readonly apiUrl = `${environment.apiUrl || 'http://localhost:3000/api/v1'}/auth`;
@@ -64,9 +67,6 @@ export class AuthService {
     this.listenForForcedLogout();
   }
 
-  // private modalService = inject(ModalService); // <- por tu nuevo servicio
-  private webSocketService = inject(WebSocketService);
-
   private listenForForcedLogout(): void {
     // Espera a que la conexión esté lista
     this.webSocketService.connectionReady$.pipe(take(1)).subscribe(() => {
@@ -91,6 +91,7 @@ export class AuthService {
 
   /**
    * ✅ NUEVO Y CORREGIDO: Verifica si el usuario actual tiene un conjunto de permisos.
+   * Soporta wildcards (ej: 'sales.*' permite 'sales.create').
    * @param requiredPermissions Los permisos requeridos para realizar una acción.
    * @returns `true` si el usuario tiene todos los permisos, `false` de lo contrario.
    */
@@ -104,7 +105,12 @@ export class AuthService {
       return true;
     }
     // Verifica que cada permiso requerido esté presente en los permisos del usuario.
-    return requiredPermissions.every((p) => user.permissions.includes(p));
+    // Soporta wildcards simples (ej. 'module.*')
+    return requiredPermissions.every((req) =>
+      user.permissions?.some(userPerm =>
+        userPerm === req || (userPerm.endsWith('*') && req.startsWith(userPerm.slice(0, -1)))
+      )
+    );
   }
 
   /**
@@ -113,7 +119,10 @@ export class AuthService {
    */
   refreshAccessToken(): Observable<LoginResponse> {
     return this.http
-      .get<LoginResponse>(`${this.apiUrl}/refresh`, { withCredentials: true })
+      .get<LoginResponse>(`${this.apiUrl}/refresh`, {
+        withCredentials: true,
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(
         tap((response) => {
           if (response && response.user && response.accessToken) {
@@ -130,12 +139,12 @@ export class AuthService {
    * @param credentials Objeto con email, password y recaptchaToken.
    * @returns Un observable que emite el objeto User en caso de éxito.
    */
-
   login(credentials: LoginCredentials): Observable<User> {
     const url = `${this.apiUrl}/login`;
     return this.http
       .post<{ user: User }>(url, credentials, {
         withCredentials: true,
+        context: new HttpContext().set(IS_PUBLIC_API, true)
       })
       .pipe(
         tap((response) => {
@@ -154,7 +163,10 @@ export class AuthService {
   checkAuthStatus(): Observable<boolean> {
     const url = `${this.apiUrl}/status`;
     this._authStatus.set(AuthStatus.pending);
-    return this.http.get<{ isAuthenticated: boolean; user: User | null }>(url, { withCredentials: true }).pipe(
+    return this.http.get<{ isAuthenticated: boolean; user: User | null }>(url, {
+      withCredentials: true,
+      context: new HttpContext().set(IS_PUBLIC_API, true)
+    }).pipe(
       map((res) => {
         if (res.isAuthenticated && res.user) {
           this._currentUser.set(res.user);
@@ -193,7 +205,10 @@ export class AuthService {
   register(payload: RegisterPayload): Observable<User> {
     const url = `${this.apiUrl}/register`;
     return this.http
-      .post<{ user: User }>(url, payload, { withCredentials: true })
+      .post<{ user: User }>(url, payload, {
+        withCredentials: true,
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(
         map((response) => response.user),
         tap((user) => {
@@ -225,11 +240,6 @@ export class AuthService {
   }
 
   /**
-   * Verifica el estado de la sesión contra el backend (usualmente con una cookie).
-   * @returns Un observable que emite `true` si la sesión es válida, `false` si no lo es.
-   */
-
-  /**
    * Inicia el flujo de recuperación de contraseña.
    * @param email El correo electrónico del usuario.
    * @returns Un observable que emite un mensaje de confirmación del backend.
@@ -239,9 +249,10 @@ export class AuthService {
     recaptchaToken: string
   ): Observable<{ message: string }> {
     const url = `${this.apiUrl}/forgot-password`;
-    // Añade el recaptchaToken al cuerpo de la solicitud
     return this.http
-      .post<{ message: string }>(url, { email, recaptchaToken })
+      .post<{ message: string }>(url, { email, recaptchaToken }, {
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(catchError((err) => this.handleError('forgotPassword', err)));
   }
 
@@ -254,16 +265,11 @@ export class AuthService {
   resetPassword(token: string, password: string): Observable<User> {
     const url = `${this.apiUrl}/reset-password`;
     return this.http
-      .post<User>(url, { token, password })
+      .post<User>(url, { token, password }, {
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(catchError((err) => this.handleError('resetPassword', err)));
   }
-
-  /**
-   * Manejador de errores centralizado para las llamadas HTTP.
-   * @param operation El nombre de la operación que falló (ej. 'login').
-   * @param error El objeto HttpErrorResponse.
-   * @returns Un observable que emite un error estructurado para el componente.
-   */
 
   // **** ✅ NUEVO MÉTODO AÑADIDO ****
   setPasswordFromInvitation(
@@ -272,7 +278,10 @@ export class AuthService {
   ): Observable<LoginResponse> {
     const url = `${this.apiUrl}/set-password-from-invitation`;
     return this.http
-      .post<LoginResponse>(url, { token, password }, { withCredentials: true })
+      .post<LoginResponse>(url, { token, password }, {
+        withCredentials: true,
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(
         tap((response) => {
           // Al establecer la contraseña, también iniciamos sesión
@@ -322,15 +331,11 @@ export class AuthService {
   getInvitationDetails(token: string): Observable<{ firstName: string }> {
     const url = `${this.apiUrl}/invitation/${token}`;
     return this.http
-      .get<{ firstName: string }>(url)
+      .get<{ firstName: string }>(url, {
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      })
       .pipe(catchError((err) => this.handleError('getInvitationDetails', err)));
   }
-
-  /**
-   * Obtiene los detalles de un usuario invitado a partir del token.
-   * @param token El token de invitación.
-   * @returns Un observable que emite el nombre del usuario.
-   */
 
   // --- NUEVOS MÉTODOS ---
 
@@ -357,17 +362,11 @@ export class AuthService {
   }
 
   /**
-   * Envía una solicitud para resetear la contraseña de un usuario.
-   */
-
-  /**
    * Elimina permanentemente a un usuario del sistema.
    */
   deleteUser(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
-
-  private notificationService = inject(NotificationService);
 
   // --- NUEVOS MÉTODOS PARA SUPLANTACIÓN ---
   impersonate(userId: string): Observable<User> {

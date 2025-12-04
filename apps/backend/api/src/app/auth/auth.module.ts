@@ -1,5 +1,4 @@
 
-
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
@@ -7,12 +6,14 @@ import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { GoogleRecaptchaModule, GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-redis-store';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
-
+import { CookieService } from './services/cookie.service';
 
 import { User } from '../users/entities/user.entity/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -20,13 +21,30 @@ import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
-import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     ConfigModule,
     AuditModule,
-    CacheModule.register(),
+    // Cache configuration: Redis if available, Memory fallback
+    CacheModule.registerAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: async (configService: ConfigService) => {
+            const redisHost = configService.get<string>('REDIS_HOST');
+            if (redisHost) {
+                return {
+                    store: redisStore,
+                    host: redisHost,
+                    port: configService.get<number>('REDIS_PORT', 6379),
+                    ttl: 600,
+                };
+            }
+            return {
+                ttl: 600,
+            };
+        },
+    }),
     TypeOrmModule.forFeature([User, RefreshToken, Organization]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -63,7 +81,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     LocalizationModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UserCacheService, GoogleRecaptchaGuard],
-  exports: [AuthService, PassportModule, JwtModule, JwtStrategy],
+  providers: [AuthService, JwtStrategy, UserCacheService, CookieService, GoogleRecaptchaGuard],
+  exports: [AuthService, PassportModule, JwtModule, JwtStrategy, CookieService],
 })
 export class AuthModule {}

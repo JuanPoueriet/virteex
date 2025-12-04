@@ -9,7 +9,8 @@ import {
 import { inject } from '@angular/core';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, switchMap, filter, take } from 'rxjs/operators';
-import { AuthService } from '../services/auth';
+import { AuthService } from '../../shared/services/auth.service';
+import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
 // Mutex para evitar la condición de carrera "Thundering Herd"
 let isRefreshing = false;
@@ -29,17 +30,9 @@ export const authInterceptor: HttpInterceptorFn = (
         catchError((error: HttpErrorResponse) => {
             const isUnauthorized = error.status === 401;
             
-            // Lista de rutas de autenticación públicas que no deben disparar el refresco de token
-            const publicAuthApiPaths = [
-                '/auth/login',
-                '/auth/register',
-                '/auth/refresh',
-                '/auth/status',
-                '/auth/forgot-password',
-                '/auth/reset-password'
-            ];
-            
-            const isPublicAuthApiRoute = publicAuthApiPaths.some(path => authReq.url.includes(path));
+            // Verificamos si la ruta es pública usando el HttpContextToken
+            // Esto evita problemas de hardcoding de URLs y es más robusto.
+            const isPublicAuthApiRoute = req.context.get(IS_PUBLIC_API);
 
             if (isUnauthorized && !isPublicAuthApiRoute) {
                 if (!isRefreshing) {

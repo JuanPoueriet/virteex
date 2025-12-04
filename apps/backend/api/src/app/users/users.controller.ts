@@ -21,11 +21,15 @@ import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserCacheService } from '../auth/services/user-cache.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userCacheService: UserCacheService
+  ) {}
 
   @Get('profile')
   getProfile(@CurrentUser() user: User) {
@@ -63,19 +67,23 @@ export class UsersController {
 
 
   @Patch(':id')
-  updateUser(
+  async updateUser(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: User,
   ) {
-
-    return this.usersService.updateUser(id, updateUserDto, user.organizationId);
+    const result = await this.usersService.updateUser(id, updateUserDto, user.organizationId);
+    // Invalidate user cache as roles/permissions might have changed
+    await this.userCacheService.clearUserSession(id);
+    return result;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
-    return this.usersService.remove(id, user.organizationId);
+  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+    const result = await this.usersService.remove(id, user.organizationId);
+    await this.userCacheService.clearUserSession(id);
+    return result;
   }
 
   @Post('invite')
@@ -83,9 +91,6 @@ export class UsersController {
     @Body() inviteUserDto: InviteUserDto,
     @CurrentUser() user: User,
   ): Promise<User> {
-
-
-
     const organizationId = user.organizationId;
     return this.usersService.inviteUser(inviteUserDto, organizationId);
   }
@@ -103,14 +108,18 @@ export class UsersController {
    @Post(':id/force-logout')
   @HttpCode(HttpStatus.OK)
   async forceLogout(@Param('id') id: string, @CurrentUser() admin: User) {
-
-    return this.usersService.forceLogout(id);
+    // forceLogout usually clears cache/tokens inside service, but we can ensure it here.
+    const result = await this.usersService.forceLogout(id);
+    await this.userCacheService.clearUserSession(id);
+    return result;
   }
 
   @Post(':id/block-and-logout')
   @HttpCode(HttpStatus.OK)
   async blockAndLogout(@Param('id') id: string, @CurrentUser() admin: User) {
-    return this.usersService.blockAndLogout(id);
+    const result = await this.usersService.blockAndLogout(id);
+    await this.userCacheService.clearUserSession(id);
+    return result;
   }
   
   @Put(':id/status')
