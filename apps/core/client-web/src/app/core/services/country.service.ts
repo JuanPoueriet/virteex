@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 // import { map, Observable, of, tap } from 'rxjs';
 import { catchError, map, Observable, of, tap } from 'rxjs';
+import { GeoLocationService } from './geo-location.service';
 
 export interface CountryConfig {
   code: string;
@@ -19,9 +20,22 @@ export interface CountryConfig {
 })
 export class CountryService {
   private http = inject(HttpClient);
+  private geoLocation = inject(GeoLocationService);
 
   // Signal to hold the current configuration
   currentCountry = signal<CountryConfig | null>(null);
+
+  /**
+   * Detects the user's country from the backend and sets it as the current country.
+   * Useful when no country code is provided in the URL (e.g. Login page).
+   */
+  detectAndSetCountry(): void {
+    this.geoLocation.getGeoLocation().subscribe((res) => {
+      if (res.country) {
+        this.getCountryConfig(res.country).subscribe();
+      }
+    });
+  }
 
   getCountryConfig(code: string): Observable<CountryConfig> {
     const cached = this.currentCountry();
