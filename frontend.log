@@ -1,0 +1,199 @@
+
+> nx run client-web:serve:development --port 4200
+
+[33m❯[39m Building...
+[32m✔[39m Building...
+[37m[1mInitial chunk files[22m[2m | [22m[1mNames[22m                  [2m | [22m [1mRaw size[22m[39m
+[37m[32mmain.js[39m[37m            [2m | [22m[2mmain[22m                   [2m | [22m[36m216.34 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-VWYJWPSN.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m [36m30.74 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-ERUADP2E.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m [36m11.16 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-PGDNUSQR.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m7.13 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-E2AKELJY.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m6.29 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-AN7JX625.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m4.72 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-KU3DMMVU.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m4.37 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-2WT3BZZ4.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m3.11 kB[39m[37m[2m | [22m[39m
+[37m[32mstyles.css[39m[37m         [2m | [22m[2mstyles[22m                 [2m | [22m  [36m3.00 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-A3UEBYVC.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m2.60 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-FHOR4FOP.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m2.30 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-653SOEEV.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.51 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-L5NJ76MK.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.02 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-WGHN6JCH.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.02 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-P6GSDH53.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m[36m402 bytes[39m[37m[2m | [22m[39m
+[37m[39m
+[37m[1m [22m                  [2m | [22m[1mInitial total[22m          [2m | [22m[1m295.70 kB[22m[39m
+[37m[39m
+[37m[1mLazy chunk files[22m   [2m | [[39m[37m22m[1mNames[22m                  [2m | [22m [1mRaw size[22m[39m
+[37m[32mchunk-7OFY2QZL.js[39m[37m  [2m | [22m[2mdashboard-page[22m         [2m | [22m[36m453.48 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-KYKHSWWY.js[39m[37m  [2m | [22m[2mregister-page[22m          [2m | [22m[36m158.16 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-73BMZ7BF.js[39m[37m  [2m | [22m[2muser-management-page[22m   [2m | [22m [36m91.15 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-P6SNSXWA.js[39m[37m  [2m | [22m[2mlogin-page[22m             [2m | [22m [36m62.56 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-EQ3A6LJN.js[39m[37m  [2m | [22m[2mbranding-page[22m          [2m | [22m [36m51.70 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-2YZRWCCB.js[39m[37m  [2m | [22m[2mjournal-entry-form-page[22m[2m | [22m [36m49.03 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-UMONQR3U.js[39m[37m  [2m | [22m[2maccount-form-page[22m      [2m | [22m [36m48.58 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-QDJHRGEQ.js[39m[37m  [2m | [22m[2mchart-of-accounts-page[22m [2m | [22m [36m44.88 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-LUHXQNG7.js[39m[37m  [2m | [22m[2mnew-page[22m               [2m | [22m [36m42.12 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-UF6WXP62.js[39m[37m  [2m | [22m[2mreset-password-page[22m    [2m | [22m [36m40.64 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-IWV5CPP7.js[39m[37m  [2m | [22m[2mset-password-page[22m      [2m | [22m [36m39.90 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-3VQU2UTD.js[39m[37m  [2m | [22m[2mpos-page[22m               [2m | [22m [36m36.09 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-D4UBKRHC.js[39m[37m  [2m | [22m[2mdata-imports-page[22m      [2m | [22m [36m35.38 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-HA2ZANQO.js[39m[37m  [2m | [22m[2mforgot-password-page[22m   [2m | [22m [36m33.74 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-D6ZHVR3S.js[39m[37m  [2m | [22m[2mproduct-form-page[22m      [2m | [22m [36m33.45 kB[39m[37m[2m | [22m[39m
+[37m[2m...and 106 more lazy chunks files. Use "--verbose" to show all the files.[22m[39m
+[37m[39m
+[37mApplication bundle generation complete. [16.624 seconds] - 2025-12-04T00:05:59.774Z[39m
+[37m[39m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/app.ts:15:56:[39m[22m
+[1m[33m[37m      15 │ ...omponent, CommonModule, [32mLoaderComponent[37m, GeoMismatchModalCompon...[39m[22m
+[1m[33m         ╵                            [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of AccountFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/accounting/account-form/account-form.page.ts:15:47:[39m[22m
+[1m[33m[37m      15 │ ...mmonModule, ReactiveFormsModule, [32mRouterLink[37m, LucideAngularModule],[39m[22m
+[1m[33m         ╵                                     [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of ProductFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/inventory/product-form/product-form.page.ts:14:80:[39m[22m
+[1m[33m[37m      14 │ ...ReactiveFormsModule, LucideAngularModule, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/invoices/detail/detail.page.ts:12:47:[39m[22m
+[1m[33m[37m      12 │   imports: [CommonModule, LucideAngularModule, [32mRouterLink[37m],[39m[22m
+[1m[33m         ╵                                                [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of TaxesPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/masters/taxes/taxes.page.ts:13:59:[39m[22m
+[1m[33m[37m      13 │ ...nModule, LucideAngularModule, RouterLink, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m       [39m[22m[1m[33m  ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of SettingsLayout[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/settings/layout/settings.layout.ts:40:4:[39m[22m
+[1m[33m[37m      40 │     [32mLoaderComponent[37m[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[37mWatch mode enabled. Watching for file changes...[39m
+[37mNOTE: Raw file sizes do not reflect development server per-request transformations.[39m
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[37m[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[39m
+[37m[32mmain.js[39m[37m            [2m | [22m[2mmain[22m         [2m | [22m[36m216.34 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-UFIVHNYU.js[39m[37m  [2m | [22m[2m-[22m            [2m | [22m [36m10.98 kB[39m[37m[2m | [22m[39m
+[37m[39m
+[37m[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[39m
+[37m[32mchunk-FV22VMV6.js[39m[37m  [2m | [22m[2mregister-page[22m[2m | [22m[36m158.16 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-WTTQVJGG.js[39m[37m  [2m | [22m[2mauth-routes[22m  [2m | [22m  [36m2.24 kB[39m[37m[2m | [22m[39m
+[37m[39m
+[37mApplication bundle generation complete. [4.623 seconds] - 2025-12-04T00:07:27.559Z[39m
+[37m[39m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/app.ts:15:56:[39m[22m
+[1m[33m[37m      15 │ ...omponent, CommonModule, [32mLoaderComponent[37m, GeoMismatchModalCompon...[39m[22m
+[1m[33m         ╵                            [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of AccountFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/accounting/account-form/account-form.page.ts:15:47:[39m[22m
+[1m[33m[37m      15 │ ...mmonModule, ReactiveFormsModule, [32mRouterLink[37m, LucideAngularModule],[39m[22m
+[1m[33m         ╵                                     [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of ProductFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/inventory/product-form/product-form.page.ts:14:80:[39m[22m
+[1m[33m[37m      14 │ ...ReactiveFormsModule, LucideAngularModule, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/invoices/detail/detail.page.ts:12:47:[39m[22m
+[1m[33m[37m      12 │   imports: [CommonModule, LucideAngularModule, [32mRouterLink[37m],[39m[22m
+[1m[33m         ╵                                                [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of TaxesPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/masters/taxes/taxes.page.ts:13:59:[39m[22m
+[1m[33m[37m      13 │ ...nModule, LucideAngularModule, RouterLink, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m       [39m[22m[1m[33m  ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of SettingsLayout[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/settings/layout/settings.layout.ts:40:4:[39m[22m
+[1m[33m[37m      40 │     [32mLoaderComponent[37m[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[37mPage reload sent to client(s).[39m
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[37m[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[39m
+[37m[32mmain.js[39m[37m            [2m | [22m[2mmain[22m         [2m | [22m[36m216.34 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-ERUADP2E.js[39m[37m  [2m | [22m[2m-[22m            [2m | [22m [36m11.16 kB[39m[37m[2m | [22m[39m
+[37m[39m
+[37m[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m[39m
+[37m[32mchunk-KYKHSWWY.js[39m[37m  [2m | [22m[2mregister-page[22m[2m | [22m[36m158.16 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-JAKQSM3W.js[39m[37m  [2m | [22m[2mauth-routes[22m  [2m | [22m  [36m2.24 kB[39m[37m[2m | [22m[39m
+[37m[39m
+[37mApplication bundle generation complete. [0.844 seconds] - 2025-12-04T00:08:14.901Z[39m
+[37m[39m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/app.ts:15:56:[39m[22m
+[1m[33m[37m      15 │ ...omponent, CommonModule, [32mLoaderComponent[37m, GeoMismatchModalCompon...[39m[22m
+[1m[33m         ╵                            [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of AccountFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/accounting/account-form/account-form.page.ts:15:47:[39m[22m
+[1m[33m[37m      15 │ ...mmonModule, ReactiveFormsModule, [32mRouterLink[37m, LucideAngularModule],[39m[22m
+[1m[33m         ╵                                     [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of ProductFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/inventory/product-form/product-form.page.ts:14:80:[39m[22m
+[1m[33m[37m      14 │ ...ReactiveFormsModule, LucideAngularModule, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/invoices/detail/detail.page.ts:12:47:[39m[22m
+[1m[33m[37m      12 │   imports: [CommonModule, LucideAngularModule, [32mRouterLink[37m],[39m[22m
+[1m[33m         ╵                                                [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of TaxesPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/masters/taxes/taxes.page.ts:13:59:[39m[22m
+[1m[33m[37m      13 │ ...nModule, LucideAngularModule, RouterLink, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m       [39m[22m[1m[33m  ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of SettingsLayout[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/settings/layout/settings.layout.ts:40:4:[39m[22m
+[1m[33m[37m      40 │     [32mLoaderComponent[37m[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[37mPage reload sent to client(s).[39m

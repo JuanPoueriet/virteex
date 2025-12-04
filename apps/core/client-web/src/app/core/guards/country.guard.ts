@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { CountryService } from '../services/country.service';
 import { LanguageService } from '../services/language';
+import { GeoLocationService } from '../services/geo-location.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { LanguageService } from '../services/language';
 export class CountryGuard implements CanActivate {
   private countryService = inject(CountryService);
   private languageService = inject(LanguageService);
+  private geoService = inject(GeoLocationService);
   private router = inject(Router);
 
   canActivate(
@@ -31,6 +33,11 @@ export class CountryGuard implements CanActivate {
 
     // Fetch Country Config
     return this.countryService.getCountryConfig(countryCode).pipe(
+      tap(() => {
+        // Triggers the Geo Mismatch check asynchronously
+        // We don't block navigation, just check and notify if needed
+        this.geoService.checkAndNotifyMismatch(countryCode);
+      }),
       map(() => true),
       catchError(() => {
         // If country not found, redirect to default or 404
