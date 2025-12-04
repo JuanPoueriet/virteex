@@ -11,6 +11,7 @@ import { GoogleRecaptchaModule, GoogleRecaptchaGuard } from '@nestlab/google-rec
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
+import { UserCacheService } from './services/user-cache.service';
 
 
 import { User } from '../users/entities/user.entity/user.entity';
@@ -58,7 +59,7 @@ import { LocalizationModule } from '../localization/localization.module';
     LocalizationModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleRecaptchaGuard],
+  providers: [AuthService, JwtStrategy, UserCacheService, GoogleRecaptchaGuard],
   exports: [AuthService, PassportModule, JwtModule, JwtStrategy],
 })
 export class AuthModule {}

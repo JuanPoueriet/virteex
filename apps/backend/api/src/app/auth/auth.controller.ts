@@ -30,6 +30,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { ConfigService } from '@nestjs/config';
+import { AuthConfig } from './auth.config';
 
 @Controller('auth')
 export class AuthController {
@@ -49,7 +50,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
     });
 
     if (refreshToken) {
@@ -57,7 +58,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: AuthConfig.COOKIE_REFRESH_MAX_AGE,
       });
     }
 
@@ -67,7 +68,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   @UseGuards(GoogleRecaptchaGuard)
   async login(
     @Body() loginUserDto: LoginUserDto,
@@ -81,14 +82,14 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: (rememberMe ? 30 : 1) * 24 * 60 * 60 * 1000,
+      maxAge: rememberMe ? AuthConfig.COOKIE_REFRESH_REMEMBER_ME_MAX_AGE : AuthConfig.COOKIE_REFRESH_MAX_AGE,
     });
 
     return { user };
@@ -109,14 +110,14 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: AuthConfig.COOKIE_REFRESH_MAX_AGE,
     });
 
     return { user };
@@ -148,7 +149,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
     });
 
     return { accessToken, user };
