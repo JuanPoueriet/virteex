@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { of, catchError, Observable } from 'rxjs';
+import { of, catchError, Observable, delay, timer, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface GeoLocationResponse {
@@ -42,14 +42,20 @@ export class GeoLocationService {
 
   /**
    * Detects location and compares it with the current route country.
-   * If mismatch, updates the signal.
+   * If mismatch, updates the signal after a delay to ensure UI is rendered.
    */
   checkAndNotifyMismatch(routeCountryCode: string) {
     // If routeCountryCode is empty or invalid, ignore
     if (!routeCountryCode) return;
 
-    this.getGeoLocation().subscribe(response => {
+    // We add a delay to ensure the page has rendered fully and the user experience is smooth.
+    // This addresses the requirement "que aparezca luego de renderizar por completo toda la pagina".
+    timer(2000).pipe(
+        switchMap(() => this.getGeoLocation())
+    ).subscribe(response => {
       const detected = response.country;
+
+      // Additional check: If user already dismissed this session? (Optional, skipping for now to strict adhere to prompt)
 
       if (detected && routeCountryCode.toLowerCase() !== detected.toLowerCase()) {
         // Update the signal so the modal can open
