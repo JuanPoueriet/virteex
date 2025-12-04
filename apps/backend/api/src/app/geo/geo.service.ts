@@ -8,7 +8,7 @@ export class GeoService {
   // Set this to a country code (e.g., 'CO', 'DO', 'US') to globally simulate
   // that country for all requests in dev mode. Set to null to use real detection.
   // The user requested to "change it via code".
-  private readonly DEBUG_COUNTRY_OVERRIDE: string | null = 'CO';
+  private readonly DEBUG_COUNTRY_OVERRIDE: string | null = 'US';
 
   getLocation(ip: string): { country: string | null; ip: string } {
 

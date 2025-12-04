@@ -1,8 +1,7 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-// import { map, Observable, of, tap } from 'rxjs';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 import { GeoLocationService } from './geo-location.service';
 
 export interface CountryConfig {
@@ -22,16 +21,20 @@ export class CountryService {
   private http = inject(HttpClient);
   private geoLocation = inject(GeoLocationService);
 
-  // Signal to hold the current configuration
+  // Signal que mantiene la configuración actual
   currentCountry = signal<CountryConfig | null>(null);
+  
+  // Computed para obtener solo el código de manera segura (fallback a 'do' si aún carga)
+  currentCountryCode = computed(() => this.currentCountry()?.code.toLowerCase() || 'do');
 
   /**
-   * Detects the user's country from the backend and sets it as the current country.
-   * Useful when no country code is provided in the URL (e.g. Login page).
+   * Detecta el país desde el backend y actualiza la señal.
+   * Debe llamarse al iniciar componentes críticos como el Login.
    */
   detectAndSetCountry(): void {
     this.geoLocation.getGeoLocation().subscribe((res) => {
       if (res.country) {
+        // Obtenemos la configuración completa basada en el código detectado por el backend
         this.getCountryConfig(res.country).subscribe();
       }
     });
@@ -39,6 +42,7 @@ export class CountryService {
 
   getCountryConfig(code: string): Observable<CountryConfig> {
     const cached = this.currentCountry();
+    // Si ya tenemos ese país cargado, no hacemos fetch
     if (cached && cached.code.toLowerCase() === code.toLowerCase()) {
       return of(cached);
     }
@@ -46,63 +50,23 @@ export class CountryService {
     return this.http.get<CountryConfig>(`${environment.apiUrl}/countries/${code}`).pipe(
       tap(config => this.currentCountry.set(config)),
       catchError(() => {
-        // Fallback for verification when backend is down
-        console.warn('Backend not reachable, using mock config');
+        console.warn('Backend inalcanzable, usando mock local para:', code);
+        
+        // Mock básico para fallback
+        let mock: CountryConfig = {
+            code: 'do',
+            name: 'República Dominicana',
+            currencyCode: 'DOP',
+            currencySymbol: 'RD$',
+            locale: 'es-DO',
+            phoneCode: '+1',
+            formSchema: {}
+        };
 
-        let mock: CountryConfig;
-
-        if (code.toLowerCase() === 'do') {
-            mock = {
-                code: 'do',
-                name: 'República Dominicana',
-                currencyCode: 'DOP',
-                currencySymbol: 'RD$',
-                locale: 'es-DO',
-                phoneCode: '+1',
-                formSchema: {
-                    taxId: {
-                        label: 'RNC / Cédula',
-                        pattern: '^[0-9]+$',
-                        errorMessage: 'El RNC es inválido',
-                        required: true
-                    }
-                }
-            };
-        } else if (code.toLowerCase() === 'co') {
-             mock = {
-                code: 'co',
-                name: 'Colombia',
-                currencyCode: 'COP',
-                currencySymbol: '$',
-                locale: 'es-CO',
-                phoneCode: '+57',
-                formSchema: {
-                    taxId: {
-                        label: 'NIT',
-                        pattern: '^[0-9]+$',
-                        errorMessage: 'El NIT es inválido',
-                        required: true
-                    }
-                }
-            };
-        } else {
-             // Default / US
-             mock = {
-                code: 'us',
-                name: 'United States',
-                currencyCode: 'USD',
-                currencySymbol: '$',
-                locale: 'en-US',
-                phoneCode: '+1',
-                formSchema: {
-                    taxId: {
-                        label: 'EIN / SSN',
-                        pattern: '^[0-9]+$',
-                        errorMessage: 'Invalid ID',
-                        required: true
-                    }
-                }
-            };
+        if (code.toLowerCase() === 'co') {
+             mock = { ...mock, code: 'co', name: 'Colombia', currencyCode: 'COP', currencySymbol: '$', phoneCode: '+57' };
+        } else if (code.toLowerCase() === 'us') {
+             mock = { ...mock, code: 'us', name: 'United States', currencyCode: 'USD', currencySymbol: '$', phoneCode: '+1', locale: 'en-US' };
         }
 
         this.currentCountry.set(mock);

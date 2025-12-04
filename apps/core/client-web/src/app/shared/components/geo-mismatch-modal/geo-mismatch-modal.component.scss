@@ -1,33 +1,23 @@
 @keyframes slideUpFade {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -40%) scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes backdropFade {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9999; /* Very high z-index */
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  animation: backdropFade 0.5s ease-out forwards;
+  background-color: rgba(0, 0, 0, 0.6); // Un poco más oscuro para mejor contraste
+  backdrop-filter: blur(4px);
+  animation: backdropFade 0.3s ease-out forwards;
 }
 
 .modal-content {
@@ -36,20 +26,19 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.85); /* Glass effect light */
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 24px; /* --border-radius-xl equivalent */
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* --shadow-xl */
+  max-width: 440px;
+  
+  // USA LAS VARIABLES DEL TEMA PARA EL FONDO
+  background-color: var(--bg-card); 
+  border: 1px solid var(--border-color);
+  
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   padding: 2rem;
-  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-  /* Dark mode support logic typically handled via .dark class on body/parent */
-  :host-context(.dark) & {
-    background: rgba(15, 23, 42, 0.75); /* Slate 900 with opacity */
-    border-color: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  
+  // Color de texto base
+  color: var(--text-secondary);
 }
 
 .modal-header {
@@ -62,15 +51,10 @@
     justify-content: center;
     width: 64px;
     height: 64px;
-    background: rgba(59, 130, 246, 0.1); /* Blue-100/10 */
+    background: var(--primary-light); // Variable del tema
+    color: var(--primary);            // Variable del tema
     border-radius: 50%;
-    margin-bottom: 1rem;
-    color: #2563eb; /* Blue-600 */
-
-    :host-context(.dark) & {
-       background: rgba(59, 130, 246, 0.2);
-       color: #60a5fa; /* Blue-400 */
-    }
+    margin-bottom: 1.25rem;
 
     svg {
       width: 32px;
@@ -79,33 +63,23 @@
   }
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #1e293b; /* Slate-800 */
+    color: var(--text-primary); // Variable del tema
     margin: 0;
-
-    :host-context(.dark) & {
-        color: #f1f5f9; /* Slate-100 */
-    }
   }
 }
 
 .modal-body {
   text-align: center;
-  color: #475569; /* Slate-600 */
+  color: var(--text-secondary); // Variable del tema
   margin-bottom: 2rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.6;
 
-  :host-context(.dark) & {
-    color: #94a3b8; /* Slate-400 */
-  }
-
   strong {
-    color: #0f172a; /* Slate-900 */
-     :host-context(.dark) & {
-        color: white;
-    }
+    color: var(--text-primary); // Variable del tema
+    font-weight: 600;
   }
 }
 
@@ -116,46 +90,33 @@
 
   button {
     width: 100%;
-    padding: 0.875rem 1.5rem;
-    border-radius: 12px; /* Large pill */
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
     font-weight: 600;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
+    font-size: 0.9rem;
     cursor: pointer;
-    border: none;
-    outline: none;
+    transition: var(--transition);
+    border: 1px solid transparent;
 
     &.btn-primary {
-      background: #2563eb; /* Blue-600 */
-      color: white;
-      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+      background: var(--primary);
+      color: var(--accent-text); // Texto sobre color primario
+      box-shadow: var(--shadow-sm);
 
       &:hover {
-        background: #1d4ed8; /* Blue-700 */
+        background: var(--primary-hover);
         transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.4);
-      }
-
-      &:active {
-        transform: translateY(0);
       }
     }
 
     &.btn-secondary {
       background: transparent;
-      color: #64748b; /* Slate-500 */
+      color: var(--text-secondary);
+      border-color: var(--border-color);
 
       &:hover {
-        background: rgba(0, 0, 0, 0.05);
-        color: #334155; /* Slate-700 */
-      }
-
-      :host-context(.dark) & {
-         color: #94a3b8;
-         &:hover {
-             background: rgba(255, 255, 255, 0.05);
-             color: #e2e8f0;
-         }
+        background: var(--bg-hover);
+        color: var(--text-primary);
       }
     }
   }

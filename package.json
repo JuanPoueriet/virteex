@@ -33,6 +33,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
+    "@types/geoip-lite": "^1.4.4",
     "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
     "@types/node": "20.19.9",

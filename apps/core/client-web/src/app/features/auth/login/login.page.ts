@@ -50,7 +50,7 @@ import { CountryService } from '../../../core/services/country.service';
   ],
   providers: [ReCaptchaV3Service],
 })
-export class LoginPage implements OnInit, OnDestroy {
+export class LoginPage implements OnInit {
   // --- Iconos para la UI ---
   MailIcon = Mail;
   LockIcon = Lock;
@@ -78,15 +78,21 @@ export class LoginPage implements OnInit, OnDestroy {
     }
   }
 
-  constructor(
-    public languageService: LanguageService,
-    private translate: TranslateService,
-    public countryService: CountryService
-  ) {}
 
-  ngOnDestroy(): void {
-    // Lógica de limpieza si es necesaria
-  }
+  // Inyectamos los servicios públicos para usarlos en el HTML
+  public countryService = inject(CountryService);
+  public languageService = inject(LanguageService);
+
+  public translate: TranslateService = inject(TranslateService);
+
+  // constructor(
+  //   // public languageService: LanguageService,
+  //   // public countryService: CountryService
+  // ) {}
+
+  // ngOnDestroy(): void {
+  //   // Lógica de limpieza si es necesaria
+  // }
 
   toggleDropdown(event: Event, selector: 'top' | 'footer'): void {
     event.stopPropagation();
