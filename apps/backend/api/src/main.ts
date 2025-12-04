@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { JsonLogger } from './app/common/loggers/json.logger';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
@@ -35,6 +36,17 @@ async function bootstrap() {
 
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   app.setGlobalPrefix(apiPrefix);
+
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Virteex ERP API')
+      .setDescription('Enterprise Resource Planning API')
+      .setVersion('1.0')
+      .addTag('Auth')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);

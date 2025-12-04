@@ -16,8 +16,10 @@ import { environment } from '../environments/environment';
 import { ThemeService } from './core/services/theme';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
+import { API_URL } from './core/tokens/api-url.token';
 
 const CORE_PROVIDERS = [
+  { provide: API_URL, useValue: environment.apiUrl || 'http://localhost:3000/api/v1' },
   provideBrowserGlobalErrorListeners(),
   provideZonelessChangeDetection(),
   provideRouter(

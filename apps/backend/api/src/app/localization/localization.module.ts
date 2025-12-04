@@ -17,6 +17,7 @@ import { TaxGroup } from './entities/tax-group.entity';
 import { ReportDefinition } from './entities/report-definition.entity';
 import { EInvoiceProviderConfig } from './entities/einvoice-provider-config.entity';
 import { LocalizationController } from './controllers/localization.controller';
+import { LocalizationListener } from './listeners/localization.listener';
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { LocalizationController } from './controllers/localization.controller';
     TaxesModule,
     SharedModule,
   ],
-  providers: [LocalizationService, LocalizationConsumer],
+  providers: [LocalizationService, LocalizationConsumer, LocalizationListener],
   controllers: [LocalizationAdminController, LocalizationController],
   exports: [LocalizationService],
 })
