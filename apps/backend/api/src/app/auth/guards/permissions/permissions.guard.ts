@@ -1,8 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { PERMISSIONS_KEY } from '../../../auth/decorators/permissions.decorator';
 import { Permission } from '../../../shared/permissions';
+import { AuthenticatedRequest } from '@virteex/shared/util-auth';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -18,7 +18,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest<{ user: JwtPayload }>();
+    const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     if (!user || !user.permissions) {
         throw new ForbiddenException('No tienes permisos para realizar esta acción.');

@@ -40,6 +40,7 @@ import { UserCacheService } from './services/user-cache.service';
 import { hasPermission } from '@virteex/shared/util-auth';
 import { UserRegisteredEvent } from './events/user-registered.event';
 import { CryptoUtil } from '../shared/utils/crypto.util';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -89,27 +90,24 @@ export class AuthService {
         where: { email },
       });
       if (existingUser) {
-        // Prevent User Enumeration: Return success even if user exists.
-        // In a real scenario, we would send an email saying "Someone tried to register...".
-        // But we stop the process here.
-        await this.simulateDelay(); // Simulate work to match successful registration time roughly?
-        // Actually, just throwing a generic error or returning success is fine.
-        // Returning success implies we need to return dummy tokens? No.
-        // The safest way is to throw a Generic Error or Success Message.
-        // "Si el usuario ya existe, se ha enviado un correo".
-        // For API strictness, we might want to just return success but no tokens?
-        // But the frontend expects tokens to auto-login.
-        // So we probably should throw an error that doesn't reveal explicitly,
-        // OR we just stick to the ConflictException but modify the message to be generic?
-        // "Error en el registro. Verifique sus datos."
-        // But the AI suggested "Si el correo no existe, se ha enviado un enlace...".
-        // Since we Auto-Login, we MUST return tokens if successful.
-        // If user exists, we CANNOT return tokens (security risk).
-        // So we must error out.
-        // We will throw a generic BadRequest or Conflict but with a less specific message?
-        // Actually, for B2B, "Email already exists" is standard.
-        // The AI said: "Although it is annoying for UX... ideal is...".
-        // I will implement the "safe" way: Throw a generic error.
+        // Prevent User Enumeration Strategy:
+        // 1. Simulate Delay (Timing Attack Mitigation)
+        // 2. Send "Duplicate Registration" Email (if configured)
+        // 3. Throw a generic error or 'ConflictException' but masked if desired.
+        // The AI suggests "Return 200 OK", but that breaks auto-login flow which expects tokens.
+        // We will stick to ConflictException but we ensure the user gets an email,
+        // so if it was a valid user, they know.
+
+        // Note: Sending email inside transaction? No, better outside or just fire and forget.
+        // But we are in a transaction block. We can use mailService directly (it's not transactional usually).
+        try {
+            await this.mailService.sendDuplicateRegistrationEmail(email, existingUser.firstName);
+        } catch (e) {
+            this.logger.error('Failed to send duplicate registration email', e);
+        }
+
+        await this.simulateDelay();
+
         throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
       }
       if (rnc) {
@@ -576,10 +574,11 @@ export class AuthService {
              throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
          }
 
-         // IP Validation (Optional: Just log or use GeoIP in future)
+         // IP Validation
+         // We do NOT revoke tokens on IP change to support mobile users switching networks (WiFi <-> 4G).
+         // We only log it for audit purposes.
          if (refreshTokenEntity.ipAddress && ipAddress && refreshTokenEntity.ipAddress !== ipAddress) {
              this.logger.log(`[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`);
-             // We allow IP changes (mobile networks), but we log it.
          }
 
          // Revoke the current token (Rotation)
