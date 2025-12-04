@@ -7,9 +7,13 @@ import {
     HttpErrorResponse
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { catchError, switchMap, filter, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth';
+
+// Mutex para evitar la condición de carrera "Thundering Herd"
+let isRefreshing = false;
+const refreshTokenSubject = new BehaviorSubject<any>(null);
 
 export const authInterceptor: HttpInterceptorFn = (
     req: HttpRequest<unknown>,
@@ -38,22 +42,49 @@ export const authInterceptor: HttpInterceptorFn = (
             const isPublicAuthApiRoute = publicAuthApiPaths.some(path => authReq.url.includes(path));
 
             if (isUnauthorized && !isPublicAuthApiRoute) {
-                console.log('[Interceptor] Token expirado detectado. Intentando refrescar...');
-                return authService.refreshAccessToken().pipe(
-                    switchMap(() => {
-                        console.log('[Interceptor] Token refrescado. Reintentando la solicitud original.');
-                        // Reintenta la solicitud original con las credenciales actualizadas
-                        return next(authReq);
-                    }),
-                    catchError((refreshError) => {
-                        console.error('[Interceptor] Fallo al refrescar el token. Deslogueando usuario.', refreshError);
-                        authService.logout(); // Si el refresco falla, se desloguea al usuario
-                        return throwError(() => refreshError);
-                    })
-                );
+                if (!isRefreshing) {
+                    isRefreshing = true;
+                    refreshTokenSubject.next(null);
+                    console.log('[Interceptor] Token expirado detectado. Iniciando refresco único...');
+
+                    return authService.refreshAccessToken().pipe(
+                        switchMap((response) => {
+                            isRefreshing = false;
+                            console.log('[Interceptor] Token refrescado exitosamente.');
+                            refreshTokenSubject.next(response); // Emitir valor para liberar la cola
+
+                            // Clonar la petición original con el nuevo token si estuviera disponible en la respuesta
+                            // Nota: Al usar cookies HttpOnly, el navegador adjunta automáticamente la cookie en la nueva petición.
+                            // Sin embargo, si se usaran headers Authorization, aquí se debería actualizar.
+                            // Dado que la arquitectura usa cookies, next(authReq) funciona porque el navegador envía la cookie nueva.
+                            return next(authReq);
+                        }),
+                        catchError((refreshError) => {
+                            isRefreshing = false;
+                            console.error('[Interceptor] Fallo al refrescar el token. Deslogueando usuario.', refreshError);
+                            refreshTokenSubject.next(false); // Emitir false para indicar fallo
+                            authService.logout();
+                            return throwError(() => refreshError);
+                        })
+                    );
+                } else {
+                    console.log('[Interceptor] Refresco en progreso. Poniendo petición en cola...');
+                    // Esperar a que el subject emita un valor que no sea null (null = inicial/en proceso)
+                    return refreshTokenSubject.pipe(
+                        filter(token => token !== null),
+                        take(1),
+                        switchMap((token) => {
+                            // Si el valor es false, significa que el refresco falló
+                            if (token === false) {
+                                return throwError(() => new Error('Token refresh failed'));
+                            }
+                            console.log('[Interceptor] Cola liberada. Reintentando petición.');
+                            return next(authReq);
+                        })
+                    );
+                }
             }
             
-            // Para todos los demás errores, o para errores 401 en rutas públicas, se propaga el error.
             return throwError(() => error);
         })
     );
