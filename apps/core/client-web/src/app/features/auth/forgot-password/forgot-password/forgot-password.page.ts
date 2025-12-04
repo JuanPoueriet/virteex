@@ -8,6 +8,7 @@ import { environment } from '../../../../../environments/environment';
 import { LucideAngularModule, Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-angular';
 // Importa switchMap para encadenar observables
 import { switchMap } from 'rxjs/operators';
+import { LanguageService } from '../../../../core/services/language';
 
 @Component({
   selector: 'app-forgot-password',
@@ -32,6 +33,7 @@ export class ForgotPasswordPage {
   private authService = inject(AuthService);
   private router = inject(Router);
   private recaptchaV3Service = inject(ReCaptchaV3Service);
+  public languageService = inject(LanguageService);
 
   forgotPasswordForm: FormGroup;
   isLoading = false;
