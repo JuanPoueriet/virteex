@@ -14,8 +14,8 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThan, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import * as ms from 'ms';
+import { authenticator } from 'otplib';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -33,7 +33,7 @@ import { DEFAULT_ROLES } from '../config/roles.config';
 import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
-// import { authenticator } from 'otplib'; // TODO: Install otplib for full 2FA
+import { UserCacheService } from './services/user-cache.service';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -54,7 +54,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly localizationService: LocalizationService,
     private readonly auditService: AuditTrailService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    private readonly userCacheService: UserCacheService
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
@@ -168,13 +168,15 @@ export class AuthService {
   }
 
 
-  async login(loginUserDto: LoginUserDto) {
-    const { email, password } = loginUserDto;
+  async login(loginUserDto: LoginUserDto & { twoFactorCode?: string }) {
+    const { email, password, twoFactorCode } = loginUserDto;
 
     const user = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
       .leftJoinAndSelect('user.organization', 'organization')
+      .addSelect('user.twoFactorSecret')
+      .addSelect('user.isTwoFactorEnabled')
       .where('user.email = :email', { email })
       .select([
         'user.id',
@@ -188,6 +190,8 @@ export class AuthService {
         'user.failedLoginAttempts',
         'user.lockoutUntil',
         'user.tokenVersion',
+        'user.twoFactorSecret',
+        'user.isTwoFactorEnabled',
         'role.id',
         'role.name',
         'role.permissions',
@@ -222,11 +226,8 @@ export class AuthService {
             { email: user.email, reason: 'Invalid Credentials' },
             undefined
           );
-      } else {
-        // Log attempt with unknown user (be careful not to log passwords)
-        // Ideally we might want to log the email attempted, but if user doesn't exist, we can't link to a user ID.
-        // For now, we skip or could log to a system log.
       }
+      await this.simulateDelay(); // Safe delay
       throw new UnauthorizedException('Credenciales no válidas');
     }
 
@@ -244,6 +245,30 @@ export class AuthService {
       );
     }
 
+    // 2FA Check
+    if (user.isTwoFactorEnabled) {
+      if (!twoFactorCode) {
+        throw new ForbiddenException('Se requiere código de autenticación de dos factores (2FA).');
+      }
+
+      const isValid2FA = authenticator.verify({
+        token: twoFactorCode,
+        secret: user.twoFactorSecret
+      });
+
+      if (!isValid2FA) {
+         await this.auditService.record(
+            user.id,
+            'User',
+            user.id,
+            ActionType.LOGIN_FAILED,
+            { email: user.email, reason: 'Invalid 2FA Code' },
+            undefined
+         );
+         throw new UnauthorizedException('Código 2FA inválido');
+      }
+    }
+
     await this.resetLoginAttempts(user);
 
     await this.auditService.record(
@@ -253,7 +278,6 @@ export class AuthService {
         ActionType.LOGIN,
         { email: user.email },
         undefined,
-        // Ip address handling would ideally be passed from controller, but keeping it simple for now or adding later
     );
 
     return await this.generateAuthResponse(user);
@@ -324,9 +348,8 @@ export class AuthService {
   }
 
   private async simulateDelay() {
-    // Simula un retardo aleatorio entre 500ms y 1500ms para evitar timing attacks
-    const delay = Math.floor(Math.random() * 1000) + 500;
-    return new Promise((resolve) => setTimeout(resolve, delay));
+    // Retardo fijo de 500ms para mitigar timing attacks de forma segura y predecible
+    return new Promise((resolve) => setTimeout(resolve, 500));
   }
 
 
@@ -354,6 +377,7 @@ export class AuthService {
         'passwordHash',
         'passwordResetToken',
         'passwordResetExpires',
+        'tokenVersion'
       ],
     });
 
@@ -385,11 +409,12 @@ export class AuthService {
     user.passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
+
     // Invalidate all existing sessions on password change
     user.tokenVersion = (user.tokenVersion || 0) + 1;
 
-    // Invalidate cache
-    await this.cacheManager.del(`user_session:${user.id}`);
+    // Invalidate cache explicitly
+    await this.userCacheService.clearUserSession(user.id);
 
     const updatedUser = await this.userRepository.save(user);
     const {
@@ -478,7 +503,7 @@ export class AuthService {
              console.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
              user.tokenVersion = (user.tokenVersion || 0) + 1;
              await this.userRepository.save(user);
-             await this.cacheManager.del(`user_session:${user.id}`);
+             await this.userCacheService.clearUserSession(user.id);
              throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
          }
 
@@ -591,28 +616,56 @@ export class AuthService {
       );
     }
 
+    // Invalidate the impersonation session cache
+    await this.userCacheService.clearUserSession(impersonatingUser.id);
+
     return await this.generateAuthResponse(adminUser);
   }
 
-  // 2FA Methods (Stubs/Structure for Future Implementation)
-  /*
+  async logout(userId: string) {
+    // Just invalidate the cache to ensure next request hits DB (and any token version check therein)
+    // Real logout with JWT is client-side, but if we want to ensure immediate rejection:
+    await this.userCacheService.clearUserSession(userId);
+    return { message: 'Sesión cerrada exitosamente.' };
+  }
+
+  // 2FA Methods Implemented
   async generateTwoFactorSecret(user: User) {
     const secret = authenticator.generateSecret();
     const otpauthUrl = authenticator.keyuri(user.email, 'Virteex ERP', secret);
+
+    // We save the secret but DO NOT enable it yet. User must verify first.
     await this.userRepository.update(user.id, { twoFactorSecret: secret });
+
     return { secret, otpauthUrl };
   }
 
   async enableTwoFactor(user: User, token: string) {
-    const freshUser = await this.userRepository.findOne({ where: { id: user.id }, select: ['twoFactorSecret'] });
-    if (!freshUser.twoFactorSecret) throw new BadRequestException('2FA not initiated');
+    // Need to fetch secret as it might not be in the user object passed in (usually stripped)
+    const freshUser = await this.userRepository.findOne({ where: { id: user.id }, select: ['twoFactorSecret', 'id'] });
+    if (!freshUser?.twoFactorSecret) {
+         throw new BadRequestException('2FA configuration not initiated. Please generate secret first.');
+    }
 
     const isValid = authenticator.verify({ token, secret: freshUser.twoFactorSecret });
-    if (!isValid) throw new UnauthorizedException('Invalid 2FA token');
+    if (!isValid) {
+        throw new UnauthorizedException('Invalid 2FA token');
+    }
 
     await this.userRepository.update(user.id, { isTwoFactorEnabled: true });
+
+    // Invalidate session to force re-login or update user state
+    await this.userCacheService.clearUserSession(user.id);
+
+    return { message: '2FA enabled successfully' };
   }
-  */
+
+  async disableTwoFactor(user: User) {
+      await this.userRepository.update(user.id, { isTwoFactorEnabled: false, twoFactorSecret: null });
+      await this.userCacheService.clearUserSession(user.id);
+      return { message: '2FA disabled successfully' };
+  }
+
 
   private getDefaultRolesForOrganization(organizationId: string) {
     return DEFAULT_ROLES.map(role => ({
@@ -648,7 +701,7 @@ export class AuthService {
     const permissions = [
       ...new Set(user.roles.flatMap((role) => role.permissions)),
     ];
-    const { passwordHash, ...safeUser } = user;
+    const { passwordHash, twoFactorSecret, ...safeUser } = user;
     return {
       ...safeUser,
       permissions,
@@ -760,23 +813,6 @@ export class AuthService {
   }
 
   private convertToMs(time: string): number {
-
-    const match = /^(\d+)([mhd])$/i.exec(time);
-    if (!match) {
-      return 15 * 60 * 1000;
-    }
-    const value = parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
-
-    switch (unit) {
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        return 15 * 60 * 1000;
-    }
+    return ms(time) as number;
   }
 }

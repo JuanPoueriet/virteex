@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Inject
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,6 +17,7 @@ import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
 import { EventsGateway } from '../websockets/events.gateway';
+import { UserCacheService } from '../auth/services/user-cache.service';
 
 @Injectable()
 export class UsersService {
@@ -25,11 +27,15 @@ export class UsersService {
     private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
+    private readonly userCacheService: UserCacheService
   ) {}
 
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<User> {
     const user = await this.findOne(id);
     Object.assign(user, updateProfileDto);
+    // Profile update might change name, but usually doesn't affect auth/roles.
+    // If it did, we should invalidate cache. Safe to invalidate anyway.
+    await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);
   }
 
@@ -120,6 +126,11 @@ export class UsersService {
         throw new NotFoundException(`Rol con ID ${roleId} no encontrado.`);
       }
       user.roles = [role];
+      // Critical: Role change implies permission change. Must invalidate cache.
+      await this.userCacheService.clearUserSession(id);
+    } else {
+      // Even if role didn't change, other data might (status?). Invalidate to be safe.
+      await this.userCacheService.clearUserSession(id);
     }
 
     return this.userRepository.save(user);
@@ -144,6 +155,7 @@ export class UsersService {
       );
     }
 
+    await this.userCacheService.clearUserSession(id);
     await this.userRepository.remove(user);
   }
 
@@ -182,6 +194,7 @@ export class UsersService {
       throw new NotFoundException(`Usuario no encontrado`);
     }
     user.status = status;
+    await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);
   }
 
@@ -206,6 +219,8 @@ export class UsersService {
     user.passwordResetExpires = new Date(Date.now() + 3600000);
 
     await this.userRepository.save(user);
+    // Invalidate cache
+    await this.userCacheService.clearUserSession(id);
 
 
     try {
@@ -231,12 +246,6 @@ export class UsersService {
 
 
   async getActivityLog(userId: string): Promise<any[]> {
-
-
-
-
-
-
     return [];
   }
 
@@ -305,6 +314,7 @@ export class UsersService {
 
     user.tokenVersion += 1;
     await this.userRepository.save(user);
+    await this.userCacheService.clearUserSession(userId);
 
 
     this.eventsGateway.sendToUser(userId, 'force-logout', {
@@ -323,6 +333,7 @@ export class UsersService {
     user.status = UserStatus.BLOCKED;
     user.tokenVersion += 1;
     await this.userRepository.save(user);
+    await this.userCacheService.clearUserSession(userId);
 
 
     this.eventsGateway.sendToUser(userId, 'force-logout', {
@@ -339,6 +350,8 @@ export class UsersService {
       throw new NotFoundException('Usuario no encontrado');
     }
     user.isOnline = isOnline;
+    // Online status update probably doesn't need to invalidate auth cache,
+    // as it's a transient state not used in auth checks usually.
     const updatedUser = await this.userRepository.save(user);
     this.eventsGateway.server.emit('user-status-update', { userId, isOnline });
     return updatedUser;
