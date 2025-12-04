@@ -64,4 +64,22 @@ export class MailService {
       },
     });
   }
+
+  async sendDuplicateRegistrationEmail(email: string, name: string) {
+    const loginUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/login`;
+    const resetPasswordUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/forgot-password`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Intento de registro detectado',
+      template: './duplicate-registration',
+      context: {
+        name: name || 'Usuario',
+        appName: this.configService.get<string>('APP_NAME', 'Virteex ERP'),
+        loginUrl,
+        resetPasswordUrl,
+        currentYear: new Date().getFullYear(),
+      },
+    });
+  }
 }

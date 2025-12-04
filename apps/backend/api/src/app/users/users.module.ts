@@ -11,6 +11,7 @@ import { MailModule } from '../mail/mail.module';
 import { RolesModule } from '../roles/roles.module';
 import { WebsocketsModule } from '../websockets/websockets.module';
 import { UserCacheService } from '../auth/services/user-cache.service';
+import { UserSubscriber } from './subscribers/user.subscriber';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { UserCacheService } from '../auth/services/user-cache.service';
   ],
 
   controllers: [UsersController],
-  providers: [UsersService, UserCacheService],
+  providers: [UsersService, UserCacheService, UserSubscriber],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}
