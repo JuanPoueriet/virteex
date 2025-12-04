@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { of, catchError, Observable, delay, timer, switchMap, tap } from 'rxjs';
+import { of, catchError, Observable, timer, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface GeoLocationResponse {
@@ -19,13 +19,12 @@ export class GeoLocationService {
   mismatchSignal = signal<{ detected: string, current: string } | null>(null);
 
   // DEBUG / SIMULATION
-  // Uncomment the line below to simulate a specific country code (e.g., 'CO')
-  // This satisfies the user requirement: "poder cambiarlo mediante código"
-  private readonly SIMULATE_COUNTRY_CODE: string | null = null; // 'CO';
+  // Set to null to strictly use backend source of truth
+  private readonly SIMULATE_COUNTRY_CODE: string | null = null;
 
   /**
    * Fetches the real location from the backend.
-   * Applies simulation override if set.
+   * Applies simulation override if set (for dev purposes only).
    */
   getGeoLocation(): Observable<GeoLocationResponse> {
     if (this.SIMULATE_COUNTRY_CODE) {
@@ -49,13 +48,10 @@ export class GeoLocationService {
     if (!routeCountryCode) return;
 
     // We add a delay to ensure the page has rendered fully and the user experience is smooth.
-    // This addresses the requirement "que aparezca luego de renderizar por completo toda la pagina".
     timer(2000).pipe(
         switchMap(() => this.getGeoLocation())
     ).subscribe(response => {
       const detected = response.country;
-
-      // Additional check: If user already dismissed this session? (Optional, skipping for now to strict adhere to prompt)
 
       if (detected && routeCountryCode.toLowerCase() !== detected.toLowerCase()) {
         // Update the signal so the modal can open
