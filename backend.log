@@ -1,0 +1,41 @@
+
+ NX   Running target serve for project api and 1 task it depends on:
+
+
+
+> nx run api:build  [existing outputs match the cache, left as is]
+
+> webpack-cli build --node-env=production
+
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.02 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (bead9c82d6a519fd)
+
+> nx run api:serve:development
+
+[2m> [22m[2mnx run[22m api:build:development
+[2m> [22mwebpack-cli build --node-env=development
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.02 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (df4de160dae02e14)
+[0m[7m[1m[32m NX [39m[22m[27m[0m  [32mSuccessfully ran target [1mbuild[22m for project api[39m
+[1m[31mDebugger listening on ws://localhost:9229/7e4da3db-608c-4485-a553-cb1073e7b61c[39m[22m
+[1m[31mDebugger listening on ws://localhost:9229/7e4da3db-608c-4485-a553-cb1073e7b61c[39m[22m
+[1m[31mFor help, see: https://nodejs.org/en/docs/inspector[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m/app/node_modules/@nestjs/config/dist/config.module.js:96[39m[22m
+[1m[31m                throw new Error(`Config validation error: ${error.message}`);[39m[22m
+[1m[31m                      ^[39m[22m
+[1m[31mError: Config validation error: "DB_HOST" is required. "DB_USERNAME" is required. "DB_PASSWORD" is required. "DB_NAME" is required. "RECAPTCHA_V3_SECRET_KEY" is required. "AWS_S3_BUCKET_NAME" is required. "AWS_REGION" is required. "AWS_ACCESS_KEY_ID" is required. "AWS_SECRET_ACCESS_KEY" is required. "STRIPE_SECRET_KEY" is required. "STRIPE_WEBHOOK_SECRET" is required[39m[22m
+[1m[31m    at Function.forRoot (/app/node_modules/@nestjs/config/dist/config.module.js:96:23)[39m[22m
+[1m[31m    at Array.<anonymous> (/app/apps/backend/api/src/app/app.module.ts:79:1)[39m[22m
+[1m[31m    at __webpack_require__ (/app/dist/apps/backend/api/webpack/bootstrap:19:1)[39m[22m
+[1m[31m    at /app/apps/backend/api/src/main.ts:5:22[39m[22m
+[1m[31m    at /app/dist/apps/backend/api/main.js:22935:3[39m[22m
+[1m[31m    at Object.<anonymous> (/app/dist/apps/backend/api/main.js:22937:12)[39m[22m
+[1m[31m    at Module._compile (node:internal/modules/cjs/loader:1706:14)[39m[22m
+[1m[31m    at Object..js (node:internal/modules/cjs/loader:1839:10)[39m[22m
+[1m[31m    at Module.load (node:internal/modules/cjs/loader:1441:32)[39m[22m
+[1m[31m    at Function.<anonymous> (node:internal/modules/cjs/loader:1263:12)[39m[22m
+[1m[31m[39m[22m
+[7m[1m[36m NX [39m[22m[27m [1mProcess exited with code 1, waiting for changes to restart...[22m
