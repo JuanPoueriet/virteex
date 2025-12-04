@@ -51,7 +51,6 @@ const I18N_PROVIDERS = [
       useClass: CustomTranslateLoader
     },
     fallbackLang: 'es',
-    defaultLanguage: 'es',
   }),
 ];
 
