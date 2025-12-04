@@ -1,12 +1,4 @@
 
-
-
-
-
-
-
-
-
 import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class LoginUserDto {
@@ -27,4 +19,8 @@ export class LoginUserDto {
   @IsString()
   @IsNotEmpty({ message: 'El token de reCAPTCHA es obligatorio.' })
   recaptchaToken: string;
+
+  @IsString()
+  @IsOptional()
+  twoFactorCode?: string;
 }

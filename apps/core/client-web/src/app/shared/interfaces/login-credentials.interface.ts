@@ -15,4 +15,9 @@ export interface LoginCredentials {
      * Token de validación de reCAPTCHA v3 generado en el frontend.
      */
     recaptchaToken: string;
+
+    /**
+     * Código de autenticación de dos factores (2FA), si está habilitado.
+     */
+    twoFactorCode?: string;
 }
