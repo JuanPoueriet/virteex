@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CountryGuard } from './country.guard';
 import { CountryService } from '../services/country.service';
 import { LanguageService } from '../services/language';
+import { GeoLocationService } from '../services/geo-location.service';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -11,6 +12,10 @@ class MockCountryService {
 
 class MockLanguageService {
   setLanguage = jest.fn();
+}
+
+class MockGeoLocationService {
+  checkAndNotifyMismatch = jest.fn();
 }
 
 class MockRouter {
@@ -29,6 +34,7 @@ describe('CountryGuard', () => {
         CountryGuard,
         { provide: CountryService, useClass: MockCountryService },
         { provide: LanguageService, useClass: MockLanguageService },
+        { provide: GeoLocationService, useClass: MockGeoLocationService },
         { provide: Router, useClass: MockRouter }
       ]
     });

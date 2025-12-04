@@ -8,10 +8,11 @@ import { LoaderService } from './shared/service/loader.service';
 import { ModalComponent } from './shared/components/modal/modal.component';
 import { CommonModule } from '@angular/common';
 import { LoaderComponent } from './shared/components/loader/loader.component';
+import { GeoMismatchModalComponent } from './shared/components/geo-mismatch-modal/geo-mismatch-modal.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ModalComponent, CommonModule, LoaderComponent],
+  imports: [RouterOutlet, ModalComponent, CommonModule, LoaderComponent, GeoMismatchModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
