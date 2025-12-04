@@ -111,6 +111,12 @@ export class User {
   @Column({ name: 'preferred_language', length: 5, nullable: true, default: 'es' })
   preferredLanguage?: string;
 
+  @Column({ name: 'is_two_factor_enabled', default: false })
+  isTwoFactorEnabled: boolean;
+
+  @Column({ name: 'two_factor_secret', type: 'varchar', nullable: true, select: false })
+  twoFactorSecret?: string;
+
   @Column({ nullable: true })
   invitationToken?: string;
 

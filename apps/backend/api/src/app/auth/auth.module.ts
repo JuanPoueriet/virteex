@@ -19,11 +19,14 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
+import { AuditModule } from '../audit/audit.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     ConfigModule,
-
+    AuditModule,
+    CacheModule.register(),
     TypeOrmModule.forFeature([User, RefreshToken, Organization]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

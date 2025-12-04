@@ -1,6 +1,7 @@
 
 
 
+import { IsRNC } from '../decorators/is-rnc.decorator';
 import {
     IsString,
     IsNotEmpty,
@@ -26,6 +27,7 @@ export class RegisterUserDto {
 
     @IsString({ message: 'El RNC debe ser un texto.' })
     @IsOptional()
+    @IsRNC({ message: 'El RNC no es válido (verifique los dígitos o el formato).' })
     rnc?: string;
 
 

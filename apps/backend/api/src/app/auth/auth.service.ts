@@ -7,12 +7,15 @@ import {
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThan, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -27,17 +30,15 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { MailService } from '../mail/mail.service';
 import { LocalizationService } from '../localization/services/localization.service';
 import { DEFAULT_ROLES } from '../config/roles.config';
+import { AuthConfig } from './auth.config';
+import { AuditTrailService } from '../audit/audit.service';
+import { ActionType } from '../audit/entities/audit-log.entity';
+// import { authenticator } from 'otplib'; // TODO: Install otplib for full 2FA
 
 interface PasswordResetJwtPayload {
   sub: string;
   email: string;
 }
-
-const SALT_ROUNDS = 10;
-const DEFAULT_RESET_EXPIRATION = '15m';
-const DEFAULT_ACCESS_EXPIRATION = '2h';
-const DEFAULT_ACCESS_EXPIRATION_SHORT = '15m';
-const DEFAULT_REFRESH_EXPIRATION = '7d';
 
 @Injectable()
 export class AuthService {
@@ -52,6 +53,8 @@ export class AuthService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly mailService: MailService,
     private readonly localizationService: LocalizationService,
+    private readonly auditService: AuditTrailService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
@@ -79,12 +82,8 @@ export class AuthService {
         throw new ConflictException('El correo electrónico ya está registrado');
       }
       if (rnc) {
-        // Validación básica de formato RNC (Ejemplo RD: 9 o 11 dígitos)
-        // Se puede mejorar con algoritmo de Módulo 11 real para mayor rigurosidad
-        if (!/^\d{9,11}$/.test(rnc)) {
-             throw new BadRequestException('Formato de RNC inválido (debe contener 9 u 11 dígitos)');
-        }
-
+        // Validation format is handled by DTO @IsRNC
+        // We only check for uniqueness here
         const existingOrg = await queryRunner.manager.findOne(Organization, {
           where: { taxId: rnc },
         });
@@ -116,7 +115,7 @@ export class AuthService {
       }
 
 
-      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+      const passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
       const user = queryRunner.manager.create(User, {
         firstName,
         lastName,
@@ -213,17 +212,49 @@ export class AuthService {
       !user.passwordHash ||
       !(await bcrypt.compare(password, user.passwordHash))
     ) {
-      if (user) await this.handleFailedLoginAttempt(user);
+      if (user) {
+          await this.handleFailedLoginAttempt(user);
+          await this.auditService.record(
+            user.id,
+            'User',
+            user.id,
+            ActionType.LOGIN_FAILED,
+            { email: user.email, reason: 'Invalid Credentials' },
+            undefined
+          );
+      } else {
+        // Log attempt with unknown user (be careful not to log passwords)
+        // Ideally we might want to log the email attempted, but if user doesn't exist, we can't link to a user ID.
+        // For now, we skip or could log to a system log.
+      }
       throw new UnauthorizedException('Credenciales no válidas');
     }
 
     if (user.status !== UserStatus.ACTIVE) {
+       await this.auditService.record(
+            user.id,
+            'User',
+            user.id,
+            ActionType.LOGIN_FAILED,
+            { email: user.email, reason: 'User Inactive/Blocked' },
+            undefined
+       );
       throw new UnauthorizedException(
         'Usuario inactivo o pendiente, por favor contacte al administrador.',
       );
     }
 
     await this.resetLoginAttempts(user);
+
+    await this.auditService.record(
+        user.id,
+        'User',
+        user.id,
+        ActionType.LOGIN,
+        { email: user.email },
+        undefined,
+        // Ip address handling would ideally be passed from controller, but keeping it simple for now or adding later
+    );
 
     return await this.generateAuthResponse(user);
   }
@@ -273,9 +304,7 @@ export class AuthService {
       return { message: genericMessage };
     }
 
-    const expirationTime =
-      this.configService.get<string>('JWT_RESET_PASSWORD_EXPIRATION_TIME') ||
-      DEFAULT_RESET_EXPIRATION;
+    const expirationTime = AuthConfig.JWT_RESET_PASSWORD_EXPIRATION;
 
     const token = await this._generatePasswordResetToken(
       user.id,
@@ -353,11 +382,14 @@ export class AuthService {
       );
     }
 
-    user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    user.passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
     // Invalidate all existing sessions on password change
     user.tokenVersion = (user.tokenVersion || 0) + 1;
+
+    // Invalidate cache
+    await this.cacheManager.del(`user_session:${user.id}`);
 
     const updatedUser = await this.userRepository.save(user);
     const {
@@ -407,7 +439,7 @@ export class AuthService {
       );
     }
 
-    user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    user.passwordHash = await bcrypt.hash(password, AuthConfig.SALT_ROUNDS);
     user.status = UserStatus.ACTIVE;
     user.invitationToken = undefined;
     user.invitationTokenExpires = undefined;
@@ -446,6 +478,7 @@ export class AuthService {
              console.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
              user.tokenVersion = (user.tokenVersion || 0) + 1;
              await this.userRepository.save(user);
+             await this.cacheManager.del(`user_session:${user.id}`);
              throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
          }
 
@@ -458,6 +491,14 @@ export class AuthService {
 
       // 3. Issue new pair
       const authResponse = await this.generateAuthResponse(user);
+
+      await this.auditService.record(
+        user.id,
+        'User',
+        user.id,
+        ActionType.REFRESH,
+        { email: user.email },
+      );
 
       return {
         user: authResponse.user,
@@ -553,6 +594,25 @@ export class AuthService {
     return await this.generateAuthResponse(adminUser);
   }
 
+  // 2FA Methods (Stubs/Structure for Future Implementation)
+  /*
+  async generateTwoFactorSecret(user: User) {
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(user.email, 'Virteex ERP', secret);
+    await this.userRepository.update(user.id, { twoFactorSecret: secret });
+    return { secret, otpauthUrl };
+  }
+
+  async enableTwoFactor(user: User, token: string) {
+    const freshUser = await this.userRepository.findOne({ where: { id: user.id }, select: ['twoFactorSecret'] });
+    if (!freshUser.twoFactorSecret) throw new BadRequestException('2FA not initiated');
+
+    const isValid = authenticator.verify({ token, secret: freshUser.twoFactorSecret });
+    if (!isValid) throw new UnauthorizedException('Invalid 2FA token');
+
+    await this.userRepository.update(user.id, { isTwoFactorEnabled: true });
+  }
+  */
 
   private getDefaultRolesForOrganization(organizationId: string) {
     return DEFAULT_ROLES.map(role => ({
@@ -625,7 +685,7 @@ export class AuthService {
     };
 
     // Create Refresh Token Record
-    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION_TIME') || DEFAULT_REFRESH_EXPIRATION;
+    const refreshExpiration = AuthConfig.JWT_REFRESH_EXPIRATION;
     const expirationDate = new Date(Date.now() + this.convertToMs(refreshExpiration));
 
     const refreshTokenRecord = this.refreshTokenRepository.create({
@@ -638,7 +698,7 @@ export class AuthService {
     await this.refreshTokenRepository.save(refreshTokenRecord);
 
     // Sign Access Token
-    const accessToken = this.getJwtToken(payload, DEFAULT_ACCESS_EXPIRATION_SHORT);
+    const accessToken = this.getJwtToken(payload, AuthConfig.JWT_ACCESS_EXPIRATION);
 
     // Sign Refresh Token including the JTI (JWT ID) referring to the DB record
     const refreshTokenPayload = { ...payload, jti: refreshTokenRecord.id };
@@ -662,7 +722,7 @@ export class AuthService {
   ) {
     return this.jwtService.sign(payload, {
       secret: secret || this.configService.getOrThrow('JWT_SECRET'),
-      expiresIn: expiresIn || DEFAULT_ACCESS_EXPIRATION,
+      expiresIn: expiresIn || AuthConfig.JWT_ACCESS_EXPIRATION,
     });
   }
 
