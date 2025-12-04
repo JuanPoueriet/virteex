@@ -65,26 +65,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
 
     if (user.tokenVersion !== tokenVersion) {
-      // Invalidate cache if token version mismatch found (though we fetched from DB if not in cache,
-      // but if in cache it might be old, so this check is crucial)
-      // Actually, if it was in cache and tokenVersion changed in DB, cache might be stale.
-      // But we rely on tokenVersion in Payload (from JWT) matching User.tokenVersion.
-      // If user changed password, DB tokenVersion increments. JWT payload has old version.
-      // If we cached the OLD user object, it has OLD tokenVersion.
-      // So: CachedUser.tokenVersion == Payload.tokenVersion (Both old). This is a RISK if we don't invalidate cache on logout/change.
-      // HOWEVER: The analysis said "Si invalidas sesión... borra entrada en Redis".
-      // Since I can't guarantee `logout` or `resetPassword` clears this specific cache key easily without injecting CacheManager in AuthService too,
-      // I should ideally check DB if cache says valid? No, that defeats the purpose.
-      // The robust way: Cache the user. If we change tokenVersion in DB, we MUST invalidate cache.
-      // I will add cache invalidation in AuthService later.
-
-      // For now, if versions match, we are good.
-      if (user.tokenVersion !== tokenVersion) {
-         // This happens if the JWT itself is old (revoked), even if the User object is fresh.
-         throw new UnauthorizedException(
-            'La sesión ha sido invalidada. Por favor, inicia sesión de nuevo.',
-         );
-      }
+      // Note: We are strict about token version matching.
+      // Cache invalidation on user/role update is handled by UsersService and AuthService
+      // ensuring that the cache doesn't hold stale user objects with old tokenVersions.
+      throw new UnauthorizedException(
+        'La sesión ha sido invalidada. Por favor, inicia sesión de nuevo.',
+      );
     }
 
     // Double check: If the cached user has a DIFFERENT tokenVersion than the one in DB (e.g. we changed it in DB but cache is stale),

@@ -59,11 +59,12 @@ export class ChartOfAccountsService {
   async create(
     createAccountDto: CreateAccountDto,
     organizationId: string,
+    externalManager?: EntityManager,
   ): Promise<Account> {
     return this.createInTransaction(
       createAccountDto,
       organizationId,
-      this.accountRepository.manager,
+      externalManager || this.accountRepository.manager,
     );
   }
 

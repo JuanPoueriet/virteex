@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Tax } from './entities/tax.entity';
 import { CreateTaxDto } from './dto/create-tax.dto';
 import { UpdateTaxDto } from './dto/update-tax.dto';
@@ -12,7 +12,11 @@ export class TaxesService {
     private readonly taxRepository: Repository<Tax>,
   ) {}
 
-  create(createTaxDto: CreateTaxDto, organizationId: string): Promise<Tax> {
+  create(createTaxDto: CreateTaxDto, organizationId: string, manager?: EntityManager): Promise<Tax> {
+    if (manager) {
+        const tax = manager.create(Tax, { ...createTaxDto, organizationId });
+        return manager.save(tax);
+    }
     const tax = this.taxRepository.create({ ...createTaxDto, organizationId });
     return this.taxRepository.save(tax);
   }

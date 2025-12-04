@@ -130,6 +130,9 @@ export class AuthService {
       });
       await queryRunner.manager.save(user);
 
+      // Apply Fiscal Package INSIDE the transaction
+      await this.localizationService.applyFiscalPackage(organization, queryRunner.manager);
+
       await queryRunner.commitTransaction();
 
 
@@ -154,16 +157,6 @@ export class AuthService {
       );
     } finally {
       await queryRunner.release();
-      if (organization) {
-        this.localizationService
-          .applyFiscalPackage(organization)
-          .catch((err) => {
-            console.error(
-              `Error al aplicar el paquete fiscal para la organización ${organization!.id}:`,
-              err,
-            );
-          });
-      }
     }
   }
 
@@ -171,36 +164,7 @@ export class AuthService {
   async login(loginUserDto: LoginUserDto & { twoFactorCode?: string }) {
     const { email, password, twoFactorCode } = loginUserDto;
 
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'role')
-      .leftJoinAndSelect('user.organization', 'organization')
-      .addSelect('user.twoFactorSecret')
-      .addSelect('user.isTwoFactorEnabled')
-      .where('user.email = :email', { email })
-      .select([
-        'user.id',
-        'user.email',
-        'user.passwordHash',
-        'user.status',
-        'user.organizationId',
-        'user.firstName',
-        'user.lastName',
-        'user.preferredLanguage',
-        'user.failedLoginAttempts',
-        'user.lockoutUntil',
-        'user.tokenVersion',
-        'user.twoFactorSecret',
-        'user.isTwoFactorEnabled',
-        'role.id',
-        'role.name',
-        'role.permissions',
-        'organization.id',
-        'organization.legalName',
-        'organization.taxId',
-        'organization.logoUrl',
-      ])
-      .getOne();
+    const user = await this.findUserForLogin(email);
 
     if (user && user.lockoutUntil && new Date() < user.lockoutUntil) {
       const remainingTime = Math.ceil(
@@ -211,11 +175,20 @@ export class AuthService {
       );
     }
 
-    if (
-      !user ||
-      !user.passwordHash ||
-      !(await bcrypt.compare(password, user.passwordHash))
-    ) {
+    // Timing attack mitigation: verify password even if user not found (with dummy hash)
+    // or if user found but wrong password.
+    // If user is null, we simulate bcrypt time.
+    let isPasswordValid = false;
+    if (user && user.passwordHash) {
+        isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    } else {
+        // Dummy comparison to simulate time (using a fixed dummy hash)
+        // This prevents timing leaks revealing if email exists
+        await bcrypt.compare(password, '$2b$10$zRb.LZNDX8J0OedTJXoM4OGKsGdy/vjeeYbNgHnQPxec8qok0mcea');
+        isPasswordValid = false;
+    }
+
+    if (!user || !isPasswordValid) {
       if (user) {
           await this.handleFailedLoginAttempt(user);
           await this.auditService.record(
@@ -227,7 +200,7 @@ export class AuthService {
             undefined
           );
       }
-      await this.simulateDelay(); // Safe delay
+      await this.simulateDelay(); // Additional Safe delay
       throw new UnauthorizedException('Credenciales no válidas');
     }
 
@@ -350,6 +323,39 @@ export class AuthService {
   private async simulateDelay() {
     // Retardo fijo de 500ms para mitigar timing attacks de forma segura y predecible
     return new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  private async findUserForLogin(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.organization', 'organization')
+      .addSelect('user.twoFactorSecret')
+      .addSelect('user.isTwoFactorEnabled')
+      .where('user.email = :email', { email })
+      .select([
+        'user.id',
+        'user.email',
+        'user.passwordHash',
+        'user.status',
+        'user.organizationId',
+        'user.firstName',
+        'user.lastName',
+        'user.preferredLanguage',
+        'user.failedLoginAttempts',
+        'user.lockoutUntil',
+        'user.tokenVersion',
+        'user.twoFactorSecret',
+        'user.isTwoFactorEnabled',
+        'role.id',
+        'role.name',
+        'role.permissions',
+        'organization.id',
+        'organization.legalName',
+        'organization.taxId',
+        'organization.logoUrl',
+      ])
+      .getOne();
   }
 
 
