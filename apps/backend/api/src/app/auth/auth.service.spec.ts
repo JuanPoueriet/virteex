@@ -14,6 +14,7 @@ import { UserCacheService } from './services/user-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
+import { RegistrationService } from './services/registration.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -44,6 +45,10 @@ describe('AuthService', () => {
       invalidate: jest.fn(),
   };
 
+  const mockRegistrationService = {
+      register: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,6 +65,7 @@ describe('AuthService', () => {
         { provide: EventEmitter2, useValue: { emitAsync: jest.fn() } },
         { provide: CryptoUtil, useValue: { decrypt: jest.fn(), encrypt: jest.fn() } },
         { provide: OrganizationsService, useValue: { create: jest.fn() } },
+        { provide: RegistrationService, useValue: mockRegistrationService },
       ],
     }).compile();
 

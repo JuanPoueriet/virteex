@@ -27,21 +27,17 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { User, UserStatus } from '../users/entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
-import { Role } from '../roles/entities/role.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { MailService } from '../mail/mail.service';
-import { DEFAULT_ROLES } from '../config/roles.config';
-import { RoleEnum } from '../roles/enums/role.enum';
 import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { hasPermission } from '../../../../../../libs/shared/util-auth/src/index';
-import { UserRegisteredEvent } from './events/user-registered.event';
 import { CryptoUtil } from '../shared/utils/crypto.util';
-import { OrganizationsService } from '../organizations/organizations.service';
 import { SocialUser } from './interfaces/social-user.interface';
+import { RegistrationService } from './services/registration.service';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -54,19 +50,15 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Organization)
-    private readonly organizationRepository: Repository<Organization>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @InjectDataSource() private readonly dataSource: DataSource,
     private readonly mailService: MailService,
     private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
-    private readonly eventEmitter: EventEmitter2,
     private readonly cryptoUtil: CryptoUtil,
-    private readonly organizationsService: OrganizationsService
+    private readonly registrationService: RegistrationService
   ) {}
 
   async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
@@ -111,126 +103,14 @@ export class AuthService {
   }
 
   async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
-    const {
-      email,
-      rnc,
-      password,
-      organizationName,
-      firstName,
-      lastName,
-      fiscalRegionId,
-    } = registerUserDto;
+    const user = await this.registrationService.register(registerUserDto);
+    const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
 
-    let organization: Organization | null = null;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-
-      const existingUser = await queryRunner.manager.findOne(User, {
-        where: { email },
-      });
-      if (existingUser) {
-        // Prevent User Enumeration Strategy:
-        // 1. Simulate Delay (Timing Attack Mitigation)
-        // 2. Send "Duplicate Registration" Email (if configured)
-        // 3. Throw a generic error or 'ConflictException' but masked if desired.
-        // The AI suggests "Return 200 OK", but that breaks auto-login flow which expects tokens.
-        // We will stick to ConflictException but we ensure the user gets an email,
-        // so if it was a valid user, they know.
-
-        // Note: Sending email inside transaction? No, better outside or just fire and forget.
-        // But we are in a transaction block. We can use mailService directly (it's not transactional usually).
-        try {
-            await this.mailService.sendDuplicateRegistrationEmail(email, existingUser.firstName);
-        } catch (e) {
-            this.logger.error('Failed to send duplicate registration email', e);
-        }
-
-        await this.simulateDelay();
-
-        throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
-      }
-      if (rnc) {
-        // Validation format is handled by DTO @IsRNC
-        // We only check for uniqueness here
-        const existingOrg = await queryRunner.manager.findOne(Organization, {
-          where: { taxId: rnc },
-        });
-        if (existingOrg) {
-          throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
-        }
-      }
-
-
-      organization = await this.organizationsService.create({
-        legalName: organizationName,
-        taxId: rnc || null,
-        fiscalRegionId: fiscalRegionId,
-      }, queryRunner.manager);
-
-
-      const defaultRoles = this.getDefaultRolesForOrganization(organization.id);
-      const roleEntities = defaultRoles.map((role) =>
-        queryRunner.manager.create(Role, { ...role }),
-      );
-      await queryRunner.manager.save(roleEntities);
-
-      const adminRole = roleEntities.find((r) => r.name === RoleEnum.ADMINISTRATOR);
-      if (!adminRole) {
-        throw new InternalServerErrorException(
-          'No se pudo encontrar el rol de administrador predeterminado.',
-        );
-      }
-
-
-      const passwordHash = await argon2.hash(password);
-      const user = queryRunner.manager.create(User, {
-        firstName,
-        lastName,
-        email,
-        passwordHash,
-        organization,
-        organizationId: organization.id,
-        roles: [adminRole],
-        status: UserStatus.ACTIVE,
-        failedLoginAttempts: 0,
-        lockoutUntil: null,
-      });
-      await queryRunner.manager.save(user);
-
-      // Apply Fiscal Package INSIDE the transaction via Event Emitter
-      await this.eventEmitter.emitAsync(
-        'user.registered',
-        new UserRegisteredEvent(user, organization, queryRunner.manager)
-      );
-
-      await queryRunner.commitTransaction();
-
-
-      user.organization = organization;
-      user.roles = [adminRole];
-
-      const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
-
-      return {
-        user: authResponse.user,
-        accessToken: authResponse.accessToken,
-        refreshToken: authResponse.refreshToken,
-      };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      if (error instanceof ConflictException) {
-        throw error;
-      }
-      this.logger.error('Error en el registro:', error);
-      throw new InternalServerErrorException(
-        'Error inesperado, por favor revise los logs del servidor.',
-      );
-    } finally {
-      await queryRunner.release();
-    }
+    return {
+      user: authResponse.user,
+      accessToken: authResponse.accessToken,
+      refreshToken: authResponse.refreshToken,
+    };
   }
 
 
@@ -587,48 +467,67 @@ export class AuthService {
          if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
              // Grace Period Check (e.g. 10 seconds)
              // If the token was revoked very recently, it might be a race condition (frontend retry).
-             // In this case, we deny the request but DO NOT invalidate the user session.
+             // In this case, we issue a new token instead of invalidating the user.
+             // But we need to ensure we don't break the chain.
              const GRACE_PERIOD = AuthConfig.REFRESH_GRACE_PERIOD;
              if (refreshTokenEntity?.revokedAt && (Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD)) {
-                 this.logger.warn(`[SECURITY] Refresh token reused within grace period. Denying request without invalidation.`);
-                 throw new UnauthorizedException('Token inválido (rotación en progreso)');
+                 this.logger.warn(`[SECURITY] Refresh token reused within grace period. Issuing new token.`);
+
+                 // If we have a replacedByToken, we should revoke IT to maintain a single valid tip.
+                 // This effectively "prunes" the previous branch that caused the race.
+                 if (refreshTokenEntity.replacedByToken) {
+                     await this.refreshTokenRepository.update(refreshTokenEntity.replacedByToken, {
+                         isRevoked: true,
+                         revokedAt: new Date(),
+                     });
+                 }
+
+                 // Fall through to generate new response (we treat this as valid for rotation purpose)
+             } else {
+                 this.logger.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
+                 user.tokenVersion = (user.tokenVersion || 0) + 1;
+                 await this.userRepository.save(user);
+                 await this.userCacheService.clearUserSession(user.id);
+                 throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
              }
+         } else {
+            // Normal Rotation: Revoke the current token
+            // If it was already revoked (grace period case above), we skip this block
 
-             this.logger.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
-             user.tokenVersion = (user.tokenVersion || 0) + 1;
-             await this.userRepository.save(user);
-             await this.userCacheService.clearUserSession(user.id);
-             throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
+            // Fingerprint Validation (only for active tokens)
+            if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
+                this.logger.warn(`[SECURITY] User Agent mismatch. Token created with ${refreshTokenEntity.userAgent}, used with ${userAgent}. Revoking.`);
+                refreshTokenEntity.isRevoked = true;
+                refreshTokenEntity.revokedAt = new Date();
+                await this.refreshTokenRepository.save(refreshTokenEntity);
+                throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
+            }
+
+            // IP Validation
+            if (refreshTokenEntity.ipAddress && ipAddress && refreshTokenEntity.ipAddress !== ipAddress) {
+                this.logger.log(`[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`);
+            }
+
+            // Revoke current token
+            refreshTokenEntity.isRevoked = true;
+            refreshTokenEntity.revokedAt = new Date();
+            // Note: replacedByToken will be updated after new token creation if we had the ID,
+            // but here we just mark it revoked. To link properly, we need the new ID.
+            // We'll update it after generating the new token.
+            await this.refreshTokenRepository.save(refreshTokenEntity);
          }
-
-         // Fingerprint Validation
-         if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
-             this.logger.warn(`[SECURITY] User Agent mismatch. Token created with ${refreshTokenEntity.userAgent}, used with ${userAgent}. Revoking.`);
-             // Revoke this token, but maybe not the whole family unless suspicious?
-             // Safer to revoke.
-             refreshTokenEntity.isRevoked = true;
-             refreshTokenEntity.revokedAt = new Date();
-             await this.refreshTokenRepository.save(refreshTokenEntity);
-             throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
-         }
-
-         // IP Validation
-         // We do NOT revoke tokens on IP change to support mobile users switching networks (WiFi <-> 4G).
-         // We only log it for audit purposes.
-         if (refreshTokenEntity.ipAddress && ipAddress && refreshTokenEntity.ipAddress !== ipAddress) {
-             this.logger.log(`[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`);
-         }
-
-         // Revoke the current token (Rotation)
-         refreshTokenEntity.isRevoked = true;
-         refreshTokenEntity.revokedAt = new Date();
-         // Store which token replaced it (optional, for audit)
-         // refreshTokenEntity.replacedByToken = newJti; // Can be implemented if needed
-         await this.refreshTokenRepository.save(refreshTokenEntity);
       }
 
       // 3. Issue new pair
       const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+
+      // 4. Update replacedByToken for the old token to link the chain
+      if (payload.jti) {
+          // We can just update it blindly even if it was already updated (in race condition, last one wins)
+          await this.refreshTokenRepository.update(payload.jti, {
+              replacedByToken: authResponse.refreshTokenId // We need to expose this from generateAuthResponse
+          });
+      }
 
       await this.auditService.record(
         user.id,
@@ -641,13 +540,16 @@ export class AuthService {
       return {
         user: authResponse.user,
         accessToken: authResponse.accessToken,
-        refreshToken: authResponse.refreshToken, // New Refresh Token
+        refreshToken: authResponse.refreshToken,
       };
     } catch (error) {
       this.logger.error(
         'Error al verificar el refresh token:',
         (error as Error).message,
       );
+      if (error instanceof UnauthorizedException) {
+          throw error;
+      }
       throw new UnauthorizedException('Refresh token inválido o expirado');
     }
   }
@@ -801,13 +703,6 @@ export class AuthService {
   }
 
 
-  private getDefaultRolesForOrganization(organizationId: string) {
-    return DEFAULT_ROLES.map(role => ({
-        ...role,
-        organizationId
-    }));
-  }
-
   private async handleFailedLoginAttempt(user: User) {
     const MAX_FAILED_ATTEMPTS = 5;
     const LOCKOUT_MINUTES = 15;
@@ -905,6 +800,7 @@ export class AuthService {
       user: userWithImpersonationStatus,
       accessToken,
       refreshToken,
+      refreshTokenId: refreshTokenRecord.id // Exposed for internal use
     };
   }
 
