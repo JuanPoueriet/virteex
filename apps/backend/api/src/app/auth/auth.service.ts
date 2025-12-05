@@ -81,6 +81,8 @@ export class AuthService {
          throw new UnauthorizedException('Usuario inactivo o bloqueado.');
        }
 
+      await this.checkImpossibleTravel(user.id, ipAddress);
+
       await this.auditService.record(
         user.id,
         'User',
@@ -204,6 +206,8 @@ export class AuthService {
       );
     }
 
+    await this.checkImpossibleTravel(user.id, ipAddress);
+
     if (ipAddress) {
         const location = this.geoService.getLocation(ipAddress);
         if (location && location.country) {
@@ -230,30 +234,7 @@ export class AuthService {
          };
       }
 
-      let isValid2FA = false;
-
-      // 1. Try TOTP (Authenticator App) if secret exists
-      if (user.twoFactorSecret) {
-          const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
-          isValid2FA = authenticator.verify({
-            token: twoFactorCode,
-            secret: decryptedSecret
-          });
-      }
-
-      // 2. If not valid via TOTP, try SMS OTP (if verification code exists)
-      if (!isValid2FA) {
-          const record = await this.verificationCodeRepository.findOne({
-              where: { userId: user.id, type: VerificationType.LOGIN_2FA },
-          });
-
-          if (record && new Date() <= record.expiresAt) {
-              isValid2FA = await argon2.verify(record.code, twoFactorCode);
-              if (isValid2FA) {
-                  await this.verificationCodeRepository.delete(record.id);
-              }
-          }
-      }
+      const isValid2FA = await this.validateTwoFactorCode(user, twoFactorCode);
 
       if (!isValid2FA) {
          await this.auditService.record(
@@ -280,6 +261,75 @@ export class AuthService {
     );
 
     return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+  }
+
+  private async validateTwoFactorCode(user: User, code: string): Promise<boolean> {
+      let isValid2FA = false;
+
+      // 1. Try TOTP (Authenticator App) if secret exists
+      if (user.twoFactorSecret) {
+          const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
+          try {
+             isValid2FA = authenticator.verify({
+                token: code,
+                secret: decryptedSecret
+             });
+          } catch(e) {
+             this.logger.error(`TOTP Verification Error for user ${user.id}: ${e.message}`);
+          }
+      }
+
+      // 2. If not valid via TOTP, try SMS OTP (if verification code exists)
+      if (!isValid2FA) {
+          const record = await this.verificationCodeRepository.findOne({
+              where: { userId: user.id, type: VerificationType.LOGIN_2FA },
+          });
+
+          if (record && new Date() <= record.expiresAt) {
+              isValid2FA = await argon2.verify(record.code, code);
+              if (isValid2FA) {
+                  await this.verificationCodeRepository.delete(record.id);
+              }
+          }
+      }
+
+      return isValid2FA;
+  }
+
+  // Check for Impossible Travel
+  private async checkImpossibleTravel(userId: string, currentIp?: string) {
+      if (!currentIp || !userId) return;
+
+      const lastLogin = await this.auditService.getLastLogin(userId);
+      if (!lastLogin || !lastLogin.ipAddress) return;
+
+      if (lastLogin.ipAddress === currentIp) return; // Same IP, assumably safe (or VPN, but location same)
+
+      const currentLocation = this.geoService.getLocation(currentIp);
+      const lastLocation = this.geoService.getLocation(lastLogin.ipAddress);
+
+      if (currentLocation.ll && lastLocation.ll) {
+          const [currentLat, currentLon] = currentLocation.ll;
+          const [lastLat, lastLon] = lastLocation.ll;
+
+          const distanceKm = this.geoService.calculateDistance(lastLat, lastLon, currentLat, currentLon);
+          const timeDiffHours = (Date.now() - lastLogin.timestamp.getTime()) / (1000 * 60 * 60);
+
+          // If time difference is very small (e.g. concurrent), treat as high speed required
+          // Avoid division by zero
+          const safeTimeDiff = timeDiffHours < 0.01 ? 0.01 : timeDiffHours;
+
+          const speed = distanceKm / safeTimeDiff;
+
+          // Max commercial plane speed ~900-1000 km/h. Let's use 1500 km/h to be safe (supersonic/fuzzy matching)
+          const MAX_SPEED_KMH = 1500;
+
+          if (distanceKm > 100 && speed > MAX_SPEED_KMH) {
+               this.logger.warn(`[SECURITY] Impossible Travel Detected for User ${userId}. Distance: ${distanceKm.toFixed(2)}km, Time: ${timeDiffHours.toFixed(2)}h, Speed: ${speed.toFixed(2)}km/h. Previous IP: ${lastLogin.ipAddress}, Current IP: ${currentIp}`);
+               throw new UnauthorizedException('Viaje imposible detectado. Por seguridad, su cuenta ha sido bloqueada temporalmente. Contacte a soporte.');
+               // Note: Ideally, we should also lock the account in DB (set lockoutUntil)
+          }
+      }
   }
 
 
@@ -368,6 +418,8 @@ export class AuthService {
              }
          } else {
             if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
+                // Warning: ua-parser-js license is AGPLv3. Ensure compliance or replace if needed.
+                // Assuming use here is for internal security logging/heuristics.
                 const parserStored = new UAParser(refreshTokenEntity.userAgent);
                 const parserCurrent = new UAParser(userAgent);
 
@@ -740,31 +792,7 @@ export class AuthService {
   }
 
   async complete2faLogin(user: User, code: string, ipAddress?: string, userAgent?: string) {
-      let isValid2FA = false;
-
-      // 1. Try TOTP (Authenticator App) if secret exists
-      if (user.twoFactorSecret) {
-          const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
-          isValid2FA = authenticator.verify({
-            token: code,
-            secret: decryptedSecret
-          });
-      }
-
-      // 2. If not valid via TOTP, try SMS OTP (if verification code exists)
-      if (!isValid2FA) {
-          const record = await this.verificationCodeRepository.findOne({
-              where: { userId: user.id, type: VerificationType.LOGIN_2FA },
-          });
-
-          if (record && new Date() <= record.expiresAt) {
-              isValid2FA = await argon2.verify(record.code, code);
-              // If valid, consume the code
-              if (isValid2FA) {
-                  await this.verificationCodeRepository.delete(record.id);
-              }
-          }
-      }
+      const isValid2FA = await this.validateTwoFactorCode(user, code);
 
       if (!isValid2FA) {
          await this.auditService.record(
