@@ -12,6 +12,7 @@ import { CountryService } from '../../../core/services/country.service';
 import { LanguageService } from '../../../core/services/language';
 import { TranslateService } from '@ngx-translate/core';
 import { UsersService } from '../../../core/api/users.service';
+import { GeoLocationService } from '../../../core/services/geo-location.service';
 
 // Mocks
 class MockAuthService {
@@ -23,6 +24,8 @@ class MockRecaptchaService {
 }
 class MockCountryService {
   currentCountry = jest.fn().mockReturnValue({ code: 'DO', currencyCode: 'DOP', name: 'Dominican Republic', formSchema: {} });
+  currentCountryCode = jest.fn().mockReturnValue('do');
+  detectAndSetCountry = jest.fn();
 }
 class MockTranslateService {
   addLangs = jest.fn();
@@ -35,6 +38,10 @@ class MockUsersService {
 }
 class MockLanguageService {
     currentLang = jest.fn().mockReturnValue('es');
+}
+
+class MockGeoLocationService {
+    getGeoLocation = jest.fn().mockReturnValue(of({ country: 'DO' }));
 }
 
 describe('RegisterPage', () => {
@@ -53,7 +60,8 @@ describe('RegisterPage', () => {
         { provide: CountryService, useClass: MockCountryService },
         { provide: TranslateService, useClass: MockTranslateService },
         { provide: UsersService, useClass: MockUsersService },
-        { provide: LanguageService, useClass: MockLanguageService }
+        { provide: LanguageService, useClass: MockLanguageService },
+        { provide: GeoLocationService, useClass: MockGeoLocationService }
       ]
     }).compileComponents();
 
@@ -79,13 +87,13 @@ describe('RegisterPage', () => {
     expect(accountInfo.valid).toBeFalsy();
 
     // Fill with valid data
-    // Note: jobTitle and phone are optional in UI now, but check valid inputs
+    // Updated test: Removed jobTitle and phone as they are optional/not in the main validation check for required
     accountInfo.patchValue({
       firstName: 'John',
       lastName: 'Doe',
       email: 'test@example.com',
-      jobTitle: 'Developer',
-      phone: '1234567890',
+      // jobTitle: 'Developer', // Removed from expectation if not required
+      // phone: '1234567890',
       passwordGroup: {
         password: 'Password123!',
         confirmPassword: 'Password123!'

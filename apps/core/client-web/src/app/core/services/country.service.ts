@@ -11,6 +11,10 @@ export interface CountryConfig {
   currencySymbol: string;
   locale: string;
   phoneCode: string;
+  taxIdLabel: string;
+  taxIdRegex: string;
+  taxIdMask: string;
+  fiscalRegionId?: string; // UUID of the fiscal region
   formSchema: any;
 }
 
@@ -47,8 +51,24 @@ export class CountryService {
       return of(cached);
     }
 
-    return this.http.get<CountryConfig>(`${environment.apiUrl}/countries/${code}`).pipe(
-      tap(config => this.currentCountry.set(config)),
+    return this.http.get<CountryConfig>(`${environment.apiUrl}/localization/config/${code}`).pipe(
+      tap(config => {
+        // Map backend response
+        const mappedConfig: CountryConfig = {
+           code: config['countryCode'] || code,
+           name: config['name'] || code,
+           currencyCode: config['currency'] || 'USD',
+           currencySymbol: '$',
+           locale: 'es-DO',
+           phoneCode: '+1',
+           taxIdLabel: config['taxIdLabel'] || 'Tax ID',
+           taxIdRegex: config['taxIdRegex'] || '.*',
+           taxIdMask: config['taxIdMask'] || '',
+           fiscalRegionId: config['fiscalRegionId'], // Backend must return this!
+           formSchema: {}
+        };
+        this.currentCountry.set(mappedConfig);
+      }),
       catchError(() => {
         console.warn('Backend inalcanzable, usando mock local para:', code);
         
@@ -60,18 +80,27 @@ export class CountryService {
             currencySymbol: 'RD$',
             locale: 'es-DO',
             phoneCode: '+1',
+            taxIdLabel: 'RNC',
+            taxIdRegex: '^\\d{9,11}$',
+            taxIdMask: '000-00000-0',
+            fiscalRegionId: undefined, // Cannot mock valid UUID easily without DB
             formSchema: {}
         };
 
         if (code.toLowerCase() === 'co') {
-             mock = { ...mock, code: 'co', name: 'Colombia', currencyCode: 'COP', currencySymbol: '$', phoneCode: '+57' };
+             mock = { ...mock, code: 'co', name: 'Colombia', currencyCode: 'COP', currencySymbol: '$', phoneCode: '+57', taxIdLabel: 'NIT' };
         } else if (code.toLowerCase() === 'us') {
-             mock = { ...mock, code: 'us', name: 'United States', currencyCode: 'USD', currencySymbol: '$', phoneCode: '+1', locale: 'en-US' };
+             mock = { ...mock, code: 'us', name: 'United States', currencyCode: 'USD', currencySymbol: '$', phoneCode: '+1', locale: 'en-US', taxIdLabel: 'EIN' };
         }
 
         this.currentCountry.set(mock);
         return of(mock);
       })
     );
+  }
+
+  // Helper to fetch details for tax ID
+  lookupTaxId(taxId: string, countryCode: string): Observable<any> {
+      return this.http.get<any>(`${environment.apiUrl}/localization/lookup/${taxId}?country=${countryCode}`);
   }
 }

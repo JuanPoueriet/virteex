@@ -1,7 +1,4 @@
 
-
-
-import { IsRNC } from '../../../../../../../libs/shared/util-auth/src/index';
 import {
     IsString,
     IsNotEmpty,
@@ -24,11 +21,11 @@ export class RegisterUserDto {
     })
     organizationName: string;
 
-    @ApiProperty({ example: '131222222', description: 'Tax ID (RNC)', required: false })
-    @IsString({ message: 'El RNC debe ser un texto.' })
+    // Refactored: Renamed from rnc to taxId and removed specific @IsRNC
+    @ApiProperty({ example: '131222222', description: 'Tax ID (RNC, RFC, EIN)', required: false })
+    @IsString({ message: 'El ID Fiscal debe ser un texto.' })
     @IsOptional()
-    @IsRNC({ message: 'El RNC no es válido (verifique los dígitos o el formato).' })
-    rnc?: string;
+    taxId?: string;
 
     @ApiProperty({ example: 'uuid-of-region', description: 'Fiscal Region ID' })
     @IsUUID('4', { message: 'El ID de la región fiscal no es válido.' })
@@ -67,4 +64,20 @@ export class RegisterUserDto {
     @IsString()
     @IsNotEmpty({ message: 'El token de reCAPTCHA es obligatorio.' })
     recaptchaToken: string;
+
+    // Added fields for provisioning
+    @ApiProperty({ example: 'technology', description: 'Industry', required: false })
+    @IsString()
+    @IsOptional()
+    industry?: string;
+
+    @ApiProperty({ example: '1-10', description: 'Company Size', required: false })
+    @IsString()
+    @IsOptional()
+    companySize?: string;
+
+    @ApiProperty({ example: 'Av. Winston Churchill', description: 'Fiscal Address', required: false })
+    @IsString()
+    @IsOptional()
+    address?: string;
 }
