@@ -72,6 +72,7 @@ export class RegisterPage implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private activatedRoute = inject(import('@angular/router').ActivatedRoute);
   private recaptchaV3Service = inject(ReCaptchaV3Service);
   public countryService = inject(CountryService);
   public languageService = inject(LanguageService);
@@ -163,6 +164,31 @@ export class RegisterPage implements OnInit {
          taxIdControl.updateValueAndValidity();
        }
     }
+
+    // Check for social registration token
+    this.activatedRoute.queryParams.subscribe(params => {
+      const token = params['token'];
+      if (token) {
+        this.authService.getSocialRegisterInfo(token).subscribe({
+          next: (info) => {
+            this.registerForm.patchValue({
+              accountInfo: {
+                firstName: info.firstName,
+                lastName: info.lastName,
+                email: info.email,
+                avatarUrl: info.picture
+              }
+            });
+            // Optionally disable email field if we trust the provider fully
+            // this.registerForm.get('accountInfo.email')?.disable();
+          },
+          error: (err) => {
+            console.error('Invalid social token', err);
+            // Optionally remove query param or show error
+          }
+        });
+      }
+    });
   }
 
   nextStep(): void {
