@@ -36,6 +36,7 @@ import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filt
 import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -46,6 +47,55 @@ export class AuthController {
     private readonly configService: ConfigService,
     private readonly cookieService: CookieService
   ) {}
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+      await this.handleSocialCallback(req.user, res);
+  }
+
+  @Get('microsoft')
+  @UseGuards(AuthGuard('microsoft'))
+  async microsoftAuth(@Req() req) {}
+
+  @Get('microsoft/callback')
+  @UseGuards(AuthGuard('microsoft'))
+  async microsoftAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+      await this.handleSocialCallback(req.user, res);
+  }
+
+  @Get('okta')
+  @UseGuards(AuthGuard('okta'))
+  async oktaAuth(@Req() req) {}
+
+  @Get('okta/callback')
+  @UseGuards(AuthGuard('okta'))
+  async oktaAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+      await this.handleSocialCallback(req.user, res);
+  }
+
+  private async handleSocialCallback(socialUser: any, res: Response) {
+    const { user, tokens } = await this.authService.validateOAuthLogin(socialUser);
+
+    if (!user) {
+        // Redirect to registration with pre-filled data
+        const params = new URLSearchParams({
+            email: socialUser.email,
+            firstName: socialUser.firstName,
+            lastName: socialUser.lastName,
+            provider: socialUser.provider
+        });
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/register?${params.toString()}`);
+    }
+
+    // Login successful
+    this.cookieService.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    return res.redirect(`${this.configService.get('FRONTEND_URL')}/dashboard`);
+  }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user and organization' })
