@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { VerificationCode } from './entities/verification-code.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
@@ -73,6 +74,8 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(User), useValue: mockRepository }, // Can remove this if AuthService doesn't use it anymore, but other services might need it if mocked poorly
         { provide: getRepositoryToken(Organization), useValue: mockRepository },
         { provide: getRepositoryToken(RefreshToken), useValue: mockRepository },
+        { provide: getRepositoryToken(VerificationCode), useValue: mockRepository },
+        { provide: 'SmsProvider', useValue: { send: jest.fn() } },
         { provide: JwtService, useValue: { sign: jest.fn(), verify: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn(), getOrThrow: jest.fn() } },
         { provide: DataSource, useValue: mockDataSource },
