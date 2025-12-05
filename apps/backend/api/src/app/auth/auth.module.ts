@@ -27,12 +27,14 @@ import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
+import { GeoModule } from '../geo/geo.module';
 
 @Module({
   imports: [
     ConfigModule,
     AuditModule,
     OrganizationsModule,
+    GeoModule,
     // Cache configuration: Redis if available, Memory fallback
     CacheModule.registerAsync({
         imports: [ConfigModule],

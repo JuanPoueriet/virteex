@@ -34,7 +34,8 @@ import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
-import { hasPermission } from '../../../../../../libs/shared/util-auth/src/index';
+import { GeoService } from '../geo/geo.service';
+import { hasPermission } from '@virteex/shared/util-auth';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegistrationService } from './services/registration.service';
@@ -58,7 +59,8 @@ export class AuthService {
     private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
     private readonly cryptoUtil: CryptoUtil,
-    private readonly registrationService: RegistrationService
+    private readonly registrationService: RegistrationService,
+    private readonly geoService: GeoService
   ) {}
 
   async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
@@ -70,12 +72,15 @@ export class AuthService {
     if (user) {
       // User exists, update provider info if not set or different (link account)
       if (user.authProvider !== socialUser.provider || user.authProviderId !== socialUser.providerId) {
-        await this.userRepository.update(user.id, {
+        // Asynchronous update (Fire and forget)
+        this.userRepository.update(user.id, {
           authProvider: socialUser.provider,
           authProviderId: socialUser.providerId,
           // Optional: Update avatar if missing
           avatarUrl: user.avatarUrl || socialUser.picture
-        });
+        }).catch(err => this.logger.error('Failed to update social user info', err));
+
+        // Update in memory for response
         user.authProvider = socialUser.provider;
         user.authProviderId = socialUser.providerId;
       }
@@ -84,15 +89,15 @@ export class AuthService {
          throw new UnauthorizedException('Usuario inactivo o bloqueado.');
        }
 
-      // Log Login
-       await this.auditService.record(
+      // Log Login (Non-blocking)
+      this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.LOGIN,
         { email: user.email, provider: socialUser.provider, ipAddress, userAgent },
         undefined,
-      );
+      ).catch(err => this.logger.error('Failed to record audit log', err));
 
        const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
        return { user, tokens: authResponse };
@@ -148,31 +153,41 @@ export class AuthService {
     if (!user || !isPasswordValid) {
       if (user) {
           await this.handleFailedLoginAttempt(user);
-          await this.auditService.record(
+          this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'Invalid Credentials' },
             undefined
-          );
+          ).catch(err => this.logger.error('Audit log error', err));
       }
       await this.simulateDelay(); // Additional Safe delay
       throw new UnauthorizedException('Credenciales no válidas');
     }
 
     if (user.status !== UserStatus.ACTIVE) {
-       await this.auditService.record(
+       this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'User Inactive/Blocked' },
             undefined
-       );
+       ).catch(err => this.logger.error('Audit log error', err));
       throw new UnauthorizedException(
         'Usuario inactivo o pendiente, por favor contacte al administrador.',
       );
+    }
+
+    // Geo-Fencing: Log detected country
+    if (ipAddress) {
+        const location = this.geoService.getLocation(ipAddress);
+        if (location && location.country) {
+            this.logger.log(`User login from Country: ${location.country} (IP: ${ipAddress})`);
+            // Future: Implement country whitelist/blacklist checks here
+            // if (user.allowedCountries && !user.allowedCountries.includes(location.country)) { ... }
+        }
     }
 
     // 2FA Check
@@ -189,38 +204,48 @@ export class AuthService {
       });
 
       if (!isValid2FA) {
-         await this.auditService.record(
+         this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'Invalid 2FA Code' },
             undefined
-         );
+         ).catch(err => this.logger.error('Audit log error', err));
          throw new UnauthorizedException('Código 2FA inválido');
       }
     }
 
     await this.resetLoginAttempts(user);
 
-    await this.auditService.record(
+    this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.LOGIN,
         { email: user.email, ipAddress, userAgent },
         undefined,
-    );
+    ).catch(err => this.logger.error('Audit log error', err));
 
     return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
   }
 
 
   async validate(payload: JwtPayload): Promise<any> {
-    const user = await this.userRepository.findOne({
-      where: { id: payload.id },
-      relations: ['roles', 'organization'],
-    });
+    // Optimization: Check cache first
+    let user = await this.userCacheService.getUser(payload.id);
+
+    if (!user) {
+      user = await this.userRepository.findOne({
+        where: { id: payload.id },
+        relations: ['roles', 'organization'],
+      });
+
+      if (user) {
+        // Cache for 15 minutes (or AuthConfig.CACHE_TTL)
+        await this.userCacheService.setUser(payload.id, user, AuthConfig.CACHE_TTL);
+      }
+    }
 
     if (!user || user.status === UserStatus.BLOCKED) {
       throw new UnauthorizedException('Token inválido o usuario bloqueado.');
@@ -529,13 +554,13 @@ export class AuthService {
           });
       }
 
-      await this.auditService.record(
+      this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.REFRESH,
         { email: user.email, ipAddress, userAgent },
-      );
+      ).catch(err => this.logger.error('Audit log error', err));
 
       return {
         user: authResponse.user,
@@ -576,10 +601,19 @@ export class AuthService {
 
 
   async status(userFromJwt: any) {
-    const freshUser = await this.userRepository.findOne({
-      where: { id: userFromJwt.id },
-      relations: ['roles', 'organization'],
-    });
+    // Optimization: Check cache first
+    let freshUser = await this.userCacheService.getUser(userFromJwt.id);
+
+    if (!freshUser) {
+        freshUser = await this.userRepository.findOne({
+            where: { id: userFromJwt.id },
+            relations: ['roles', 'organization'],
+        });
+
+        if (freshUser) {
+            await this.userCacheService.setUser(userFromJwt.id, freshUser, AuthConfig.CACHE_TTL);
+        }
+    }
 
     if (!freshUser) {
       throw new UnauthorizedException('Usuario no encontrado');
