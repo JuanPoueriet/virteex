@@ -15,6 +15,9 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
 import { CookieService } from './services/cookie.service';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { MicrosoftStrategy } from './strategies/microsoft.strategy';
+import { OktaStrategy } from './strategies/okta.strategy';
 
 import { User } from '../users/entities/user.entity/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
@@ -95,7 +98,16 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     LocalizationModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UserCacheService, CookieService, GoogleRecaptchaGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    UserCacheService,
+    CookieService,
+    GoogleRecaptchaGuard,
+    GoogleStrategy,
+    MicrosoftStrategy,
+    OktaStrategy
+  ],
   exports: [AuthService, PassportModule, JwtModule, JwtStrategy, CookieService],
 })
 export class AuthModule {}

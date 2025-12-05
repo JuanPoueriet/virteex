@@ -195,6 +195,13 @@ export class LoginPage implements OnInit {
     this.passwordVisible.update((visible) => !visible);
   }
 
+  socialLogin(provider: string) {
+    // The backend URL needs to be configured or hardcoded for now as per plan
+    // In production this should come from environment
+    const apiUrl = '/api/v1/auth'; // Proxy handles this or direct URL
+    window.location.href = `${apiUrl}/${provider}`;
+  }
+
   onSubmit(): void {
     this.loginForm.markAllAsTouched();
     if (this.loginForm.invalid) {

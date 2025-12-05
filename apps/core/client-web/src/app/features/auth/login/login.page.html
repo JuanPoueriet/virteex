@@ -77,6 +77,22 @@
         novalidate
         #formElement
       >
+        <div class="social-login-buttons">
+          <button type="button" class="social-btn google" (click)="socialLogin('google')">
+            <img src="assets/icons/google.svg" alt="Google" width="20" height="20">
+            <span>Google</span>
+          </button>
+          <button type="button" class="social-btn microsoft" (click)="socialLogin('microsoft')">
+            <img src="assets/icons/microsoft.svg" alt="Microsoft" width="20" height="20">
+            <span>Microsoft</span>
+          </button>
+          <!-- Okta optional or can be added -->
+        </div>
+
+        <div class="divider">
+          <span>{{ 'LOGIN.OR' | translate }}</span>
+        </div>
+
         <div class="form-field">
           <label for="email" class="input-label">{{
             "LOGIN.EMAIL_LABEL" | translate

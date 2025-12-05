@@ -41,6 +41,7 @@ import { hasPermission } from '../../../../../../libs/shared/util-auth/src/index
 import { UserRegisteredEvent } from './events/user-registered.event';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
+import { SocialUser } from './interfaces/social-user.interface';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -67,6 +68,47 @@ export class AuthService {
     private readonly cryptoUtil: CryptoUtil,
     private readonly organizationsService: OrganizationsService
   ) {}
+
+  async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
+    const user = await this.userRepository.findOne({
+      where: { email: socialUser.email },
+      relations: ['roles', 'organization'],
+    });
+
+    if (user) {
+      // User exists, update provider info if not set or different (link account)
+      if (user.authProvider !== socialUser.provider || user.authProviderId !== socialUser.providerId) {
+        await this.userRepository.update(user.id, {
+          authProvider: socialUser.provider,
+          authProviderId: socialUser.providerId,
+          // Optional: Update avatar if missing
+          avatarUrl: user.avatarUrl || socialUser.picture
+        });
+        user.authProvider = socialUser.provider;
+        user.authProviderId = socialUser.providerId;
+      }
+
+       if (user.status !== UserStatus.ACTIVE) {
+         throw new UnauthorizedException('Usuario inactivo o bloqueado.');
+       }
+
+      // Log Login
+       await this.auditService.record(
+        user.id,
+        'User',
+        user.id,
+        ActionType.LOGIN,
+        { email: user.email, provider: socialUser.provider, ipAddress, userAgent },
+        undefined,
+      );
+
+       const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+       return { user, tokens: authResponse };
+    }
+
+    // User does not exist
+    return { user: null };
+  }
 
   async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
     const {
