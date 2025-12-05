@@ -37,6 +37,7 @@ import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -276,5 +277,54 @@ export class AuthController {
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
     return { user, access_token: accessToken };
+  }
+
+  // ------------------------------------------------------------------
+  // Two-Factor Authentication (MFA)
+  // ------------------------------------------------------------------
+
+  @Post('2fa/generate')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Generate 2FA secret and QR code URL' })
+  async generateTwoFactorSecret(@CurrentUser() user: User) {
+    return this.authService.generateTwoFactorSecret(user);
+  }
+
+  @Post('2fa/enable')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Verify token and enable 2FA' })
+  async enableTwoFactor(
+    @CurrentUser() user: User,
+    @Body() enableTwoFactorDto: EnableTwoFactorDto,
+  ) {
+    return this.authService.enableTwoFactor(user, enableTwoFactorDto.token);
+  }
+
+  @Post('2fa/disable')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Disable 2FA' })
+  async disableTwoFactor(@CurrentUser() user: User) {
+    return this.authService.disableTwoFactor(user);
+  }
+
+  // ------------------------------------------------------------------
+  // Session Management
+  // ------------------------------------------------------------------
+
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'List active sessions (devices)' })
+  async getUserSessions(@CurrentUser() user: User) {
+    return this.authService.getUserSessions(user.id);
+  }
+
+  @Post('sessions/:id/revoke') // Using POST or DELETE is fine, usually DELETE for resource removal
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Revoke a specific session' })
+  async revokeSession(
+    @CurrentUser() user: User,
+    @Param('id') sessionId: string,
+  ) {
+    return this.authService.revokeSession(user.id, sessionId);
   }
 }

@@ -702,6 +702,47 @@ export class AuthService {
       return { message: '2FA disabled successfully' };
   }
 
+  async getUserSessions(userId: string) {
+    const sessions = await this.refreshTokenRepository.find({
+      where: {
+        userId,
+        isRevoked: false,
+        expiresAt: MoreThan(new Date()),
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    return sessions.map((session) => ({
+      id: session.id,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      createdAt: session.createdAt,
+      expiresAt: session.expiresAt,
+      isCurrent: false, // Controller can enrich this if needed, or we rely on ID match
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const session = await this.refreshTokenRepository.findOne({
+      where: { id: sessionId, userId },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Sesión no encontrada o no pertenece al usuario.');
+    }
+
+    session.isRevoked = true;
+    session.revokedAt = new Date();
+    await this.refreshTokenRepository.save(session);
+
+    // Ideally, we should also invalidate the user cache if we want to force immediate check,
+    // but Refresh Token check happens on DB, so it's fine.
+    // However, if the Access Token is still valid, they can still act until it expires (short lived).
+    // This is acceptable trade-off. To be stricter, we could bump tokenVersion, but that kills ALL sessions.
+    // So we just rely on short Access Token TTL (e.g. 15min).
+
+    return { message: 'Sesión revocada exitosamente.' };
+  }
 
   private async handleFailedLoginAttempt(user: User) {
     const MAX_FAILED_ATTEMPTS = 5;
