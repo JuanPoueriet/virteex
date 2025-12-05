@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule, Building, Users, Globe, Briefcase } from 'lucide-angular';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../../../environments/environment';
+import { environment } from 'apps/core/client-web/src/environments/environment';
+// import { environment } from '../../../../../../../environments/environment';
 
 @Component({
   selector: 'app-step-business',
