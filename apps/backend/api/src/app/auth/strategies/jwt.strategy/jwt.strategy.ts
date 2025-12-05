@@ -11,6 +11,7 @@ import { Cache } from 'cache-manager';
 
 import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
+import { AuthConfig } from '../../auth.config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -55,7 +56,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
         if (user) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
-             await this.cacheManager.set(cacheKey, user, 15 * 60 * 1000);
+             await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
         }
     }
 
