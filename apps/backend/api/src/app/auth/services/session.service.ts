@@ -1,0 +1,238 @@
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, LessThan, MoreThan } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import * as ms from 'ms';
+
+import { RefreshToken } from '../entities/refresh-token.entity';
+import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
+import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { AuthConfig } from '../auth.config';
+import { AuditTrailService } from '../../audit/audit.service';
+import { ActionType } from '../../audit/entities/audit-log.entity';
+import { UserCacheService } from './user-cache.service';
+import { UsersService } from '../../users/users.service';
+import { SecurityAnalysisService } from './security-analysis.service';
+import { TokenService } from './token.service';
+
+@Injectable()
+export class SessionService {
+  private readonly logger = new Logger(SessionService.name);
+
+  constructor(
+    private readonly usersService: UsersService,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly auditService: AuditTrailService,
+    private readonly userCacheService: UserCacheService,
+    private readonly securityAnalysisService: SecurityAnalysisService,
+    private readonly tokenService: TokenService
+  ) {}
+
+  async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
+    try {
+      const payload = this.jwtService.verify<JwtPayload & { jti?: string }>(token, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
+
+      const user = await this.usersService.findUserByIdForAuth(payload.id);
+
+      if (!user) {
+        throw new UnauthorizedException('El usuario del token ya no existe.');
+      }
+      if (user.status !== UserStatus.ACTIVE) {
+        throw new UnauthorizedException('El usuario del token está inactivo.');
+      }
+
+      if (payload.jti) {
+        const refreshTokenEntity = await this.refreshTokenRepository.findOneBy({ id: payload.jti });
+
+        if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
+          const GRACE_PERIOD = AuthConfig.REFRESH_GRACE_PERIOD;
+          if (
+            refreshTokenEntity?.revokedAt &&
+            Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD
+          ) {
+            this.logger.warn(
+              `[SECURITY] Refresh token reused within grace period. Issuing new token.`
+            );
+
+            if (refreshTokenEntity.replacedByToken) {
+              await this.refreshTokenRepository.update(refreshTokenEntity.replacedByToken, {
+                isRevoked: true,
+                revokedAt: new Date(),
+              });
+            }
+          } else {
+            this.logger.warn(
+              `[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`
+            );
+            user.tokenVersion = (user.tokenVersion || 0) + 1;
+            await this.usersService.save(user);
+            await this.userCacheService.clearUserSession(user.id);
+            throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
+          }
+        } else {
+          // User Agent Analysis (using new SecurityAnalysisService)
+          if (
+            refreshTokenEntity.userAgent &&
+            userAgent &&
+            refreshTokenEntity.userAgent !== userAgent
+          ) {
+            const storedUA = this.securityAnalysisService.parseUserAgent(
+              refreshTokenEntity.userAgent
+            );
+            const currentUA = this.securityAnalysisService.parseUserAgent(userAgent);
+
+            const isBrowserMatch = storedUA.browser === currentUA.browser;
+            const isOSMatch = storedUA.os === currentUA.os;
+
+            if (!isBrowserMatch || !isOSMatch) {
+              this.logger.warn(
+                `[SECURITY] User Agent mismatch detected (OS/Browser changed). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Potential session hijacking.`
+              );
+              throw new UnauthorizedException(
+                'Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.'
+              );
+            } else {
+              this.logger.warn(
+                `[SECURITY] Minor User Agent change detected (likely update). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Allowing.`
+              );
+            }
+          }
+
+          if (
+            refreshTokenEntity.ipAddress &&
+            ipAddress &&
+            refreshTokenEntity.ipAddress !== ipAddress
+          ) {
+            this.logger.log(
+              `[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`
+            );
+          }
+
+          refreshTokenEntity.isRevoked = true;
+          refreshTokenEntity.revokedAt = new Date();
+          await this.refreshTokenRepository.save(refreshTokenEntity);
+        }
+      }
+
+      const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
+
+      if (payload.jti) {
+        await this.refreshTokenRepository.update(payload.jti, {
+          replacedByToken: authResponse.refreshTokenId,
+        });
+      }
+
+      await this.auditService.record(
+        user.id,
+        'User',
+        user.id,
+        ActionType.REFRESH,
+        { email: user.email, ipAddress, userAgent }
+      );
+
+      return {
+        user: authResponse.user,
+        accessToken: authResponse.accessToken,
+        refreshToken: authResponse.refreshToken,
+      };
+    } catch (error) {
+      this.logger.error('Error al verificar el refresh token:', (error as Error).message);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Refresh token inválido o expirado');
+    }
+  }
+
+  async getUserSessions(userId: string) {
+    const sessions = await this.refreshTokenRepository.find({
+      where: {
+        userId,
+        isRevoked: false,
+        expiresAt: MoreThan(new Date()),
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    return sessions.map((session) => ({
+      id: session.id,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      createdAt: session.createdAt,
+      expiresAt: session.expiresAt,
+      isCurrent: false,
+    }));
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const session = await this.refreshTokenRepository.findOne({
+      where: { id: sessionId, userId },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Sesión no encontrada o no pertenece al usuario.');
+    }
+
+    session.isRevoked = true;
+    session.revokedAt = new Date();
+    await this.refreshTokenRepository.save(session);
+
+    return { message: 'Sesión revocada exitosamente.' };
+  }
+
+  async verifyUserFromToken(token: string): Promise<User | null> {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+      });
+
+      const user = await this.usersService.findUserByIdForAuth(payload.id);
+
+      if (
+        !user ||
+        user.status !== UserStatus.ACTIVE ||
+        user.tokenVersion !== payload.tokenVersion
+      ) {
+        return null;
+      }
+
+      return user;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleTokenCleanup() {
+    this.logger.log('Starting expired refresh token cleanup...');
+    const retentionPeriod = 30; // days
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
+
+    const result = await this.refreshTokenRepository.delete({
+      expiresAt: LessThan(expirationDate),
+    });
+
+    const resultRevoked = await this.refreshTokenRepository.delete({
+      isRevoked: true,
+      revokedAt: LessThan(expirationDate),
+    });
+
+    this.logger.log(
+      `Cleanup complete. Deleted ${result.affected} expired tokens and ${resultRevoked.affected} revoked tokens.`
+    );
+  }
+}

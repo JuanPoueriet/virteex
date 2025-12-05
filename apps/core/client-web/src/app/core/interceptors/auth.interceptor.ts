@@ -57,6 +57,12 @@ export const authInterceptor: HttpInterceptorFn = (
                             console.error('[Interceptor] Fallo al refrescar el token. Deslogueando usuario.', refreshError);
                             refreshTokenSubject.next(false); // Emitir false para indicar fallo
 
+                            // Check if the error is a network error (status 0) to avoid logging out on temporary connection loss.
+                            if (refreshError.status === 0) {
+                                console.warn('[Interceptor] Network error during refresh. Not logging out yet.');
+                                return throwError(() => refreshError);
+                            }
+
                             // Prevent logout loop if the error comes from a critical or already failing state
                             // But usually, logout() handles redirect to login, which is public.
                             // Ensure logout doesn't trigger interceptor failure loops.

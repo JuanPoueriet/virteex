@@ -46,6 +46,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { AuthGuard } from '@nestjs/passport';
 import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
+import { CsrfGuard } from './guards/csrf.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -171,6 +172,7 @@ export class AuthController {
   @Post('set-password-from-invitation')
   @HttpCode(HttpStatus.OK)
   @ApiResponse({ type: AuthResponseDto })
+  @UseGuards(CsrfGuard)
   async setPasswordFromInvitation(
     @Body() setPasswordDto: SetPasswordFromInvitationDto,
     @Res({ passthrough: true }) res: Response
@@ -263,6 +265,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe())
+  @UseGuards(CsrfGuard)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     const user = await this.passwordRecoveryService.resetPassword(resetPasswordDto);
     const { passwordHash, ...userResult } = user;
@@ -270,7 +273,7 @@ export class AuthController {
   }
 
   @Post('impersonate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   async impersonate(
     @CurrentUser() adminUser: User,
     @Body('userId') targetUserId: string,
@@ -285,7 +288,7 @@ export class AuthController {
   }
 
   @Post('stop-impersonation')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   async stopImpersonation(
     @CurrentUser() impersonatingUser: User,
     @Res({ passthrough: true }) res: Response
@@ -303,14 +306,14 @@ export class AuthController {
   // ------------------------------------------------------------------
 
   @Post('2fa/generate')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @ApiOperation({ summary: 'Generate 2FA secret and QR code URL' })
   async generateTwoFactorSecret(@CurrentUser() user: User) {
     return this.twoFactorAuthService.generateTwoFactorSecret(user);
   }
 
   @Post('2fa/enable')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @ApiOperation({ summary: 'Verify token and enable 2FA' })
   async enableTwoFactor(
     @CurrentUser() user: User,
@@ -320,14 +323,14 @@ export class AuthController {
   }
 
   @Post('2fa/disable')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @ApiOperation({ summary: 'Disable 2FA' })
   async disableTwoFactor(@CurrentUser() user: User) {
     return this.twoFactorAuthService.disableTwoFactor(user);
   }
 
   @Post('send-phone-otp')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @Throttle({ default: { limit: 3, ttl: 60000 } }) // Rate limit: 3 per minute
   async sendPhoneOtp(@CurrentUser() user: User, @Body('phoneNumber') phoneNumber: string) {
       if (!phoneNumber) {
@@ -338,7 +341,7 @@ export class AuthController {
   }
 
   @Post('verify-phone')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   async verifyPhoneOtp(@CurrentUser() user: User, @Body() body: { code: string, phoneNumber: string }) {
       return this.authService.verifyPhoneOtp(user.id, body.code, body.phoneNumber);
   }
@@ -419,7 +422,7 @@ export class AuthController {
   }
 
   @Post('sessions/:id/revoke') // Using POST or DELETE is fine, usually DELETE for resource removal
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @ApiOperation({ summary: 'Revoke a specific session' })
   async revokeSession(
     @CurrentUser() user: User,

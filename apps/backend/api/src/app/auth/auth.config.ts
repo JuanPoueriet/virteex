@@ -46,4 +46,8 @@ export const AuthConfig = {
   get TWILIO_ACCOUNT_SID() { return process.env.TWILIO_ACCOUNT_SID; },
   get TWILIO_AUTH_TOKEN() { return process.env.TWILIO_AUTH_TOKEN; },
   get TWILIO_PHONE_NUMBER() { return process.env.TWILIO_PHONE_NUMBER; },
+
+  // Impossible Travel
+  get IMPOSSIBLE_TRAVEL_MAX_SPEED() { return parseInt(process.env.AUTH_IMPOSSIBLE_TRAVEL_MAX_SPEED || '1500', 10); }, // km/h
+  get IMPOSSIBLE_TRAVEL_MIN_DISTANCE() { return parseInt(process.env.AUTH_IMPOSSIBLE_TRAVEL_MIN_DISTANCE || '100', 10); }, // km
 };

@@ -20,6 +20,9 @@ import { GeoService } from '../geo/geo.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { ImpersonationService } from './services/impersonation.service';
 import { UsersService } from '../users/users.service';
+import { SessionService } from './services/session.service';
+import { SecurityAnalysisService } from './services/security-analysis.service';
+import { TokenService } from './services/token.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -98,6 +101,30 @@ describe('AuthService', () => {
           useValue: {
             validateImpersonationRequest: jest.fn(),
             validateStopImpersonation: jest.fn(),
+          },
+        },
+        {
+          provide: SessionService,
+          useValue: {
+            refreshAccessToken: jest.fn(),
+            getUserSessions: jest.fn(),
+            revokeSession: jest.fn(),
+            verifyUserFromToken: jest.fn(),
+          },
+        },
+        {
+          provide: SecurityAnalysisService,
+          useValue: {
+            checkImpossibleTravel: jest.fn(),
+            validateTwoFactorCode: jest.fn(),
+          },
+        },
+        {
+          provide: TokenService,
+          useValue: {
+            generateAuthResponse: jest.fn(),
+            buildSafeUser: jest.fn(),
+            buildPayload: jest.fn(),
           },
         },
       ],

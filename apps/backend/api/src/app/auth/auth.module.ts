@@ -20,6 +20,9 @@ import { ImpersonationService } from './services/impersonation.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
 import { CookieService } from './services/cookie.service';
+import { SessionService } from './services/session.service';
+import { SecurityAnalysisService } from './services/security-analysis.service';
+import { TokenService } from './services/token.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { OktaStrategy } from './strategies/okta.strategy';
@@ -120,6 +123,9 @@ import { TwilioSmsProvider } from './services/sms.provider';
     JwtStrategy,
     UserCacheService,
     CookieService,
+    SessionService,
+    SecurityAnalysisService,
+    TokenService,
     GoogleRecaptchaGuard,
     GoogleStrategy,
     MicrosoftStrategy,
