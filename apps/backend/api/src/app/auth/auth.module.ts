@@ -108,6 +108,6 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     MicrosoftStrategy,
     OktaStrategy
   ],
-  exports: [AuthService, PassportModule, JwtModule, JwtStrategy, CookieService],
+  exports: [AuthService, PassportModule, JwtModule, JwtStrategy, CookieService, UserCacheService],
 })
 export class AuthModule {}
