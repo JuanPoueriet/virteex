@@ -15,6 +15,7 @@ import { UserRegisteredEvent } from '../events/user-registered.event';
 import { RoleEnum } from '../../roles/enums/role.enum';
 import { DEFAULT_ROLES } from '../../config/roles.config';
 import { AuthConfig } from '../auth.config';
+import { UserSecurity } from '../../users/entities/user-security.entity';
 
 @Injectable()
 export class RegistrationService {
@@ -94,17 +95,22 @@ export class RegistrationService {
       }
 
       const passwordHash = await argon2.hash(password);
+
+      const userSecurity = queryRunner.manager.create(UserSecurity, {
+          passwordHash,
+          failedLoginAttempts: 0,
+          lockoutUntil: null,
+      });
+
       const user = queryRunner.manager.create(User, {
         firstName,
         lastName,
         email,
-        passwordHash,
         organization,
         organizationId: organization.id,
         roles: [adminRole],
         status: UserStatus.ACTIVE,
-        failedLoginAttempts: 0,
-        lockoutUntil: null,
+        security: userSecurity
       });
       await queryRunner.manager.save(user);
 

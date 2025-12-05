@@ -13,6 +13,7 @@ import {
 import { Organization } from '../../../organizations/entities/organization.entity';
 import { Role } from '../../../roles/entities/role.entity';
 import { Passkey } from '../passkey.entity';
+import { UserSecurity } from '../user-security.entity';
 
 export enum UserStatus {
   PENDING = 'PENDING',
@@ -37,14 +38,6 @@ export class User {
   @Column({ length: 255, unique: true })
   email: string;
 
-  @Column({
-    name: 'password_hash',
-    type: 'varchar',
-    nullable: true,
-    select: false,
-  })
-  passwordHash?: string | null;
-
   @Column({ name: 'auth_provider', nullable: true })
   authProvider?: string;
 
@@ -63,31 +56,6 @@ export class User {
     default: UserStatus.ACTIVE,
   })
   status: UserStatus;
-
-  @Column({
-    name: 'token_version',
-    type: 'integer',
-    default: 0,
-    comment: 'Incrementado para invalidar todos los JWT emitidos previamente.',
-  })
-  tokenVersion: number;
-
-  @Column({ name: 'failed_login_attempts', type: 'integer', default: 0 })
-  failedLoginAttempts: number;
-
-  @Column({ name: 'lockout_until', type: 'timestamptz', nullable: true })
-  lockoutUntil: Date | null;
-
-  @Column({
-    name: 'password_reset_token',
-    type: 'varchar',
-    nullable: true,
-    select: false,
-  })
-  passwordResetToken?: string | null;
-
-  @Column({ name: 'password_reset_expires', type: 'timestamp', nullable: true })
-  passwordResetExpires?: Date | null;
 
   @Column({ name: 'is_online', default: false })
   isOnline: boolean;
@@ -127,11 +95,11 @@ export class User {
   @Column({ name: 'is_email_verified', default: false })
   isEmailVerified: boolean;
 
-  @Column({ name: 'is_two_factor_enabled', default: false })
-  isTwoFactorEnabled: boolean;
-
-  @Column({ name: 'two_factor_secret', type: 'varchar', nullable: true, select: false })
-  twoFactorSecret?: string;
+  @OneToOne(() => UserSecurity, (security) => security.user, {
+    cascade: true,
+    eager: true,
+  })
+  security: UserSecurity;
 
   @Column({ nullable: true })
   invitationToken?: string;

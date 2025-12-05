@@ -203,9 +203,10 @@ export class LoginPage implements OnInit {
   }
 
   socialLogin(provider: string) {
-    // The backend URL needs to be configured or hardcoded for now as per plan
-    // In production this should come from environment
-    const apiUrl = '/api/v1/auth'; // Proxy handles this or direct URL
+    // Use the global window object to get the origin or configured base URL
+    // In Angular we typically inject DOCUMENT or use environment, but for now we use location.origin
+    // to dynamically construct the URL relative to where the frontend is served (assuming proxy).
+    const apiUrl = `${window.location.origin}/api/v1/auth`;
     window.location.href = `${apiUrl}/${provider}`;
   }
 
@@ -249,7 +250,7 @@ export class LoginPage implements OnInit {
     this.recaptchaV3Service.execute('login').subscribe({
       next: (token) => {
         const formValue = this.loginForm.getRawValue();
-        const credentials: any = {
+        const credentials = {
           email: formValue.email,
           password: formValue.password,
           recaptchaToken: token,

@@ -8,12 +8,13 @@ import * as ms from 'ms';
 
 import { User } from '../../users/entities/user.entity/user.entity';
 import { MailService } from '../../mail/mail.service';
-import { UserCacheService } from './user-cache.service';
+import { UserCacheService } from '../modules/user-cache.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from '../dto/set-password-from-invitation.dto';
 import { AuthConfig } from '../auth.config';
 import { UserStatus } from '../../users/entities/user.entity/user.entity';
+import { UserSecurity } from '../../users/entities/user-security.entity';
 
 interface PasswordResetJwtPayload {
   sub: string;
@@ -36,7 +37,7 @@ export class PasswordRecoveryService {
     const { email } = forgotPasswordDto;
     const genericMessage = 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.';
 
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOne({ where: { email }, relations: ['security'] });
     if (!user) {
       await this.simulateDelay();
       return { message: genericMessage };
@@ -50,8 +51,10 @@ export class PasswordRecoveryService {
       expirationTime,
     );
 
-    user.passwordResetToken = token;
-    user.passwordResetExpires = new Date(
+    if (!user.security) user.security = new UserSecurity();
+
+    user.security.passwordResetToken = token;
+    user.security.passwordResetExpires = new Date(
       Date.now() + this.convertToMs(expirationTime),
     );
     await this.userRepository.save(user);
@@ -73,23 +76,14 @@ export class PasswordRecoveryService {
       throw new UnauthorizedException('Token inválido o expirado');
     }
 
+    // We need to query by reset token, which is now in UserSecurity
     const user = await this.userRepository.findOne({
-      where: {
-        id: payload.sub,
-        passwordResetToken: token,
-        passwordResetExpires: MoreThan(new Date()),
-      },
-      select: [
-        'id',
-        'email',
-        'passwordHash',
-        'passwordResetToken',
-        'passwordResetExpires',
-        'tokenVersion'
-      ],
+        where: { id: payload.sub },
+        relations: ['security']
     });
 
-    if (!user) {
+    if (!user || !user.security || user.security.passwordResetToken !== token ||
+        (user.security.passwordResetExpires && user.security.passwordResetExpires <= new Date())) {
       throw new NotFoundException(
         'El token de restablecimiento es inválido o ha expirado.',
       );
@@ -101,33 +95,30 @@ export class PasswordRecoveryService {
       );
     }
 
-    if (!user.passwordHash) {
+    if (!user.security.passwordHash) {
       throw new BadRequestException(
         'No se encontró una contraseña previa para este usuario.',
       );
     }
 
-    const isSamePassword = await argon2.verify(user.passwordHash, password);
+    const isSamePassword = await argon2.verify(user.security.passwordHash, password);
     if (isSamePassword) {
       throw new BadRequestException(
         'La nueva contraseña no puede ser igual a la anterior',
       );
     }
 
-    user.passwordHash = await argon2.hash(password);
-    user.passwordResetToken = null;
-    user.passwordResetExpires = null;
+    user.security.passwordHash = await argon2.hash(password);
+    user.security.passwordResetToken = null;
+    user.security.passwordResetExpires = null;
 
     // Invalidate all existing sessions on password change
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    user.security.tokenVersion = (user.security.tokenVersion || 0) + 1;
 
     // Invalidate cache explicitly
     await this.userCacheService.clearUserSession(user.id);
 
     const updatedUser = await this.userRepository.save(user);
-    // Return user with passwordHash for AuthController to filter, or return safe user.
-    // AuthController expects a User object, but filters it.
-    // The previous implementation returned safeUser.
     return updatedUser;
   }
 
@@ -158,7 +149,7 @@ export class PasswordRecoveryService {
         status: UserStatus.PENDING,
         invitationTokenExpires: MoreThan(new Date()),
       },
-      relations: ['roles', 'organization'],
+      relations: ['roles', 'organization', 'security'],
     });
 
     if (!user) {
@@ -167,7 +158,9 @@ export class PasswordRecoveryService {
       );
     }
 
-    user.passwordHash = await argon2.hash(password);
+    if (!user.security) user.security = new UserSecurity();
+
+    user.security.passwordHash = await argon2.hash(password);
     user.status = UserStatus.ACTIVE;
     user.invitationToken = undefined;
     user.invitationTokenExpires = undefined;

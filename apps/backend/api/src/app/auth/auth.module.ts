@@ -18,7 +18,6 @@ import { PasswordRecoveryService } from './services/password-recovery.service';
 import { WebAuthnService } from './services/webauthn.service';
 import { ImpersonationService } from './services/impersonation.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
-import { UserCacheService } from './services/user-cache.service';
 import { CookieService } from './services/cookie.service';
 import { SessionService } from './services/session.service';
 import { SecurityAnalysisService } from './services/security-analysis.service';
@@ -31,6 +30,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { VerificationCode } from './entities/verification-code.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { User } from '../users/entities/user.entity/user.entity';
+import { UserSecurity } from '../users/entities/user-security.entity';
 import { Passkey } from '../users/entities/passkey.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
@@ -42,6 +42,7 @@ import { TwilioSmsProvider } from './services/sms.provider';
 import { AbstractSmsProvider } from './services/abstract-sms.provider';
 import { SocialAuthService } from './services/social-auth.service';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
+import { UserCacheModule } from './modules/user-cache.module';
 
 @Module({
   imports: [
@@ -49,27 +50,9 @@ import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
     AuditModule,
     OrganizationsModule,
     GeoModule,
-    forwardRef(() => UsersModule), // Import UsersModule to use UsersService
-    // Cache configuration: Redis if available, Memory fallback
-    CacheModule.registerAsync({
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: async (configService: ConfigService) => {
-            const redisHost = configService.get<string>('REDIS_HOST');
-            if (redisHost) {
-                return {
-                    store: redisStore,
-                    host: redisHost,
-                    port: configService.get<number>('REDIS_PORT', 6379),
-                    ttl: 600,
-                };
-            }
-            return {
-                ttl: 600,
-            };
-        },
-    }),
-    TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode, User, Passkey]), // Added User and Passkey
+    UsersModule,
+    UserCacheModule,
+    TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode, User, UserSecurity, Passkey]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -124,7 +107,6 @@ import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
     WebAuthnService,
     ImpersonationService,
     JwtStrategy,
-    UserCacheService,
     CookieService,
     SessionService,
     SecurityAnalysisService,
@@ -150,9 +132,9 @@ import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
     JwtModule,
     JwtStrategy,
     CookieService,
-    UserCacheService,
     SocialAuthService,
-    MfaOrchestratorService
+    MfaOrchestratorService,
+    UserCacheModule
   ],
 })
 export class AuthModule {}

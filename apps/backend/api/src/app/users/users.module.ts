@@ -10,7 +10,7 @@ import { MailModule } from '../mail/mail.module';
 import { RolesModule } from '../roles/roles.module';
 import { WebsocketsModule } from '../websockets/websockets.module';
 import { UserSubscriber } from './subscribers/user.subscriber';
-import { AuthModule } from '../auth/auth.module';
+import { UserCacheModule } from '../auth/modules/user-cache.module';
 
 @Module({
   imports: [
@@ -18,11 +18,11 @@ import { AuthModule } from '../auth/auth.module';
     RolesModule,
     MailModule,
     WebsocketsModule,
-    forwardRef(() => AuthModule), // Import AuthModule to get correct UserCacheService configuration
+    UserCacheModule,
   ],
 
   controllers: [UsersController],
-  providers: [UsersService, UserSubscriber], // Removed UserCacheService to use the one from AuthModule
+  providers: [UsersService, UserSubscriber],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}

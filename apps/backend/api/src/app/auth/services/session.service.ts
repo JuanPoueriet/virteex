@@ -18,10 +18,11 @@ import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfig } from '../auth.config';
 import { AuditTrailService } from '../../audit/audit.service';
 import { ActionType } from '../../audit/entities/audit-log.entity';
-import { UserCacheService } from './user-cache.service';
+import { UserCacheService } from '../modules/user-cache.service';
 import { UsersService } from '../../users/users.service';
 import { SecurityAnalysisService } from './security-analysis.service';
 import { TokenService } from './token.service';
+import { UserSecurity } from '../../users/entities/user-security.entity';
 
 @Injectable()
 export class SessionService {
@@ -31,6 +32,8 @@ export class SessionService {
     private readonly usersService: UsersService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(UserSecurity)
+    private readonly userSecurityRepository: Repository<UserSecurity>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditTrailService,
@@ -77,8 +80,12 @@ export class SessionService {
             this.logger.warn(
               `[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`
             );
-            user.tokenVersion = (user.tokenVersion || 0) + 1;
-            await this.usersService.save(user);
+
+            if (user.security) {
+                user.security.tokenVersion = (user.security.tokenVersion || 0) + 1;
+                await this.userSecurityRepository.save(user.security);
+            }
+
             await this.userCacheService.clearUserSession(user.id);
             throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
           }
@@ -116,8 +123,11 @@ export class SessionService {
             ipAddress &&
             refreshTokenEntity.ipAddress !== ipAddress
           ) {
+            // Mask IP in logs
+            const maskedIp = this.maskIp(refreshTokenEntity.ipAddress);
+            const maskedNewIp = this.maskIp(ipAddress);
             this.logger.log(
-              `[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`
+              `[SECURITY] IP Change for Refresh: ${maskedIp} -> ${maskedNewIp}`
             );
           }
 
@@ -204,7 +214,7 @@ export class SessionService {
       if (
         !user ||
         user.status !== UserStatus.ACTIVE ||
-        user.tokenVersion !== payload.tokenVersion
+        (user.security?.tokenVersion || 0) !== payload.tokenVersion
       ) {
         return null;
       }
@@ -234,5 +244,21 @@ export class SessionService {
     this.logger.log(
       `Cleanup complete. Deleted ${result.affected} expired tokens and ${resultRevoked.affected} revoked tokens.`
     );
+  }
+
+  private maskIp(ip: string): string {
+      // Basic masking, keep first 2 octets for IPv4
+      if (ip.includes('.')) {
+          const parts = ip.split('.');
+          if (parts.length === 4) {
+              return `${parts[0]}.${parts[1]}.*.*`;
+          }
+      }
+      // For IPv6, keep first segment
+      if (ip.includes(':')) {
+          const parts = ip.split(':');
+          return `${parts[0]}:*:...`;
+      }
+      return '***';
   }
 }

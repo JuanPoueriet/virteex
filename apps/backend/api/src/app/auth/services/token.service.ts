@@ -75,11 +75,16 @@ export class TokenService {
 
   buildSafeUser(user: User) {
     const permissions = [...new Set(user.roles.flatMap((role) => role.permissions))];
-    const { passwordHash, twoFactorSecret, ...safeUser } = user;
+    // Security fields are now in user.security, so they are not directly on user.
+    // However, if user.security is loaded (eager: true), we should exclude it or transform it.
+    // User entity no longer has passwordHash or twoFactorSecret directly.
+    const { security, ...safeUser } = user;
     return {
       ...safeUser,
       permissions,
       organization: user.organization,
+      // If we want to expose some security flags (like isTwoFactorEnabled), we should add them back.
+      isTwoFactorEnabled: security?.isTwoFactorEnabled || false
     };
   }
 
@@ -89,7 +94,7 @@ export class TokenService {
       email: user.email,
       organizationId: user.organizationId,
       roles: user.roles.map((r) => r.name),
-      tokenVersion: user.tokenVersion,
+      tokenVersion: user.security?.tokenVersion || 0,
       ...extra,
     };
   }

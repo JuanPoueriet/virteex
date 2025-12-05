@@ -1,5 +1,5 @@
 
-import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity/user.entity';
@@ -11,7 +11,8 @@ import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
 import { EventsGateway } from '../websockets/events.gateway';
-import { UserCacheService } from '../auth/services/user-cache.service';
+import { UserCacheService } from '../auth/modules/user-cache.service';
+import { UserSecurity } from './entities/user-security.entity';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +22,6 @@ export class UsersService {
     private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
-    @Inject(forwardRef(() => UserCacheService))
     private readonly userCacheService: UserCacheService
   ) {}
 
@@ -98,7 +98,10 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
     organizationId: string,
   ): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id, organizationId });
+    const user = await this.userRepository.findOne({
+        where: { id, organizationId },
+        relations: ['security']
+    });
     if (!user) {
       throw new NotFoundException(
         `Usuario con ID ${id} no encontrado en tu organización.`,
@@ -116,7 +119,9 @@ export class UsersService {
       }
       user.roles = [role];
       // Increment token version to invalidate sessions on role change
-      user.tokenVersion = (user.tokenVersion || 0) + 1;
+      if (user.security) {
+          user.security.tokenVersion = (user.security.tokenVersion || 0) + 1;
+      }
       await this.userCacheService.clearUserSession(id);
     } else {
       await this.userCacheService.clearUserSession(id);
@@ -151,6 +156,7 @@ export class UsersService {
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id: id as any },
+      relations: ['security']
     });
 
     if (!user) {
@@ -162,6 +168,7 @@ export class UsersService {
   async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email },
+      relations: ['security']
     });
 
     return user;
@@ -172,40 +179,44 @@ export class UsersService {
     status: UserStatus,
     organizationId: string,
   ): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id, organizationId });
+    const user = await this.userRepository.findOne({
+        where: { id, organizationId },
+        relations: ['security']
+    });
     if (!user) {
       throw new NotFoundException(`Usuario no encontrado`);
     }
     user.status = status;
     // Invalidate sessions on status change (e.g., blocking)
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    if (user.security) {
+        user.security.tokenVersion = (user.security.tokenVersion || 0) + 1;
+    }
     await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);
   }
 
   async resetPassword(id: string, organizationId: string): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id, organizationId });
+    const user = await this.userRepository.findOne({
+        where: { id, organizationId },
+        relations: ['security']
+    });
     if (!user) {
       throw new NotFoundException(`Usuario no encontrado`);
     }
 
+    // Ensure security entity exists (it should, but for safety)
+    if (!user.security) {
+        user.security = new UserSecurity();
+    }
+
     const resetToken = crypto.randomBytes(32).toString('hex');
 
-    user.passwordResetToken = crypto
+    user.security.passwordResetToken = crypto
       .createHash('sha256')
       .update(resetToken)
       .digest('hex');
 
-    user.passwordResetExpires = new Date(Date.now() + 3600000);
-
-    // Invalidate sessions on password reset request?
-    // Usually not needed until password is actually changed, but good practice if account is compromised.
-    // However, the actual change happens in PasswordRecoveryService which DOES bump version.
-    // Here we are just sending the email.
-
-    // BUT, if this is an ADMIN resetting a user's password, it usually just sends the email?
-    // "resetPassword" here seems to initiate the flow.
-    // So no tokenVersion bump here.
+    user.security.passwordResetExpires = new Date(Date.now() + 3600000);
 
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(id);
@@ -218,8 +229,8 @@ export class UsersService {
         error,
       );
 
-      user.passwordResetToken = null;
-      user.passwordResetExpires = null;
+      user.security.passwordResetToken = null;
+      user.security.passwordResetExpires = null;
       await this.userRepository.save(user);
 
       throw new Error(
@@ -266,6 +277,7 @@ export class UsersService {
       status: UserStatus.PENDING,
       invitationToken: invitationToken,
       invitationTokenExpires: tokenExpires,
+      security: new UserSecurity() // Initialize security
     });
 
     await this.userRepository.save(newUser);
@@ -278,13 +290,15 @@ export class UsersService {
   }
 
   async forceLogout(userId: string): Promise<{ message: string }> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['security'] });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    user.tokenVersion += 1;
-    await this.userRepository.save(user);
+    if (user.security) {
+        user.security.tokenVersion += 1;
+        await this.userRepository.save(user);
+    }
     await this.userCacheService.clearUserSession(userId);
 
     this.eventsGateway.sendToUser(userId, 'force-logout', {
@@ -295,13 +309,15 @@ export class UsersService {
   }
 
   async blockAndLogout(userId: string): Promise<{ message: string }> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['security'] });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
     user.status = UserStatus.BLOCKED;
-    user.tokenVersion += 1;
+    if (user.security) {
+        user.security.tokenVersion += 1;
+    }
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(userId);
 
@@ -327,54 +343,16 @@ export class UsersService {
   // --- Auth Abstraction Methods ---
 
   async findUserForAuth(email: string): Promise<User | null> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'role')
-      .leftJoinAndSelect('user.organization', 'organization')
-      .addSelect('user.twoFactorSecret')
-      .addSelect('user.isTwoFactorEnabled')
-      .where('user.email = :email', { email })
-      .select([
-        'user.id',
-        'user.email',
-        'user.passwordHash',
-        'user.status',
-        'user.organizationId',
-        'user.firstName',
-        'user.lastName',
-        'user.preferredLanguage',
-        'user.failedLoginAttempts',
-        'user.lockoutUntil',
-        'user.tokenVersion',
-        'user.twoFactorSecret',
-        'user.isTwoFactorEnabled',
-        'user.authProvider',
-        'user.authProviderId',
-        'user.avatarUrl',
-        'role.id',
-        'role.name',
-        'role.permissions',
-        'organization.id',
-        'organization.legalName',
-        'organization.taxId',
-      ])
-      .getOne();
+    return this.userRepository.findOne({
+        where: { email },
+        relations: ['roles', 'organization', 'security'],
+    });
   }
 
   async findUserByIdForAuth(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      relations: ['roles', 'organization'],
-      select: [
-        'id',
-        'email',
-        'firstName',
-        'lastName',
-        'status',
-        'tokenVersion',
-        'organizationId',
-        // Minimal fields for strategy validation
-      ],
+      relations: ['roles', 'organization', 'security'],
     });
   }
 
@@ -383,6 +361,41 @@ export class UsersService {
   }
 
   async update(id: string, partialEntity: any): Promise<void> {
+    // Check if security fields are in partialEntity, if so, we need to update security
+    // This method seems generic, so it's risky.
+    // If partialEntity contains fields moved to security, we must split them.
+    // However, looking at the code, it's safer to not use generic update for security fields.
+    // I will assume for now this is used for simple updates.
+    // Ideally, I should check keys.
+    const securityKeys = [
+        'passwordHash', 'tokenVersion', 'failedLoginAttempts', 'lockoutUntil',
+        'passwordResetToken', 'passwordResetExpires', 'isTwoFactorEnabled', 'twoFactorSecret'
+    ];
+
+    const hasSecurityKeys = Object.keys(partialEntity).some(k => securityKeys.includes(k));
+
+    if (hasSecurityKeys) {
+        const user = await this.userRepository.findOne({ where: { id }, relations: ['security'] });
+        if (user) {
+            if (!user.security) user.security = new UserSecurity();
+            const securityUpdates: any = {};
+            const userUpdates: any = {};
+
+            Object.keys(partialEntity).forEach(key => {
+                if (securityKeys.includes(key)) {
+                    securityUpdates[key] = partialEntity[key];
+                } else {
+                    userUpdates[key] = partialEntity[key];
+                }
+            });
+
+            Object.assign(user.security, securityUpdates);
+            Object.assign(user, userUpdates);
+            await this.userRepository.save(user);
+            return;
+        }
+    }
+
     await this.userRepository.update(id, partialEntity);
   }
 }
