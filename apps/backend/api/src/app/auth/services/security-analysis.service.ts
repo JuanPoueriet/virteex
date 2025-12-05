@@ -74,8 +74,8 @@ export class SecurityAnalysisService {
     let isValid2FA = false;
 
     // 1. Try TOTP (Authenticator App) if secret exists
-    if (user.twoFactorSecret) {
-      const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
+    if (user.security && user.security.twoFactorSecret) {
+      const decryptedSecret = this.cryptoUtil.decrypt(user.security.twoFactorSecret);
       try {
         isValid2FA = authenticator.verify({
           token: code,

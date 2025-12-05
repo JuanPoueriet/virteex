@@ -64,8 +64,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token inválido: el usuario no existe.');
     }
 
+    // Handle security entity access safely
+    const currentTokenVersion = user.security?.tokenVersion || 0;
 
-    if (user.tokenVersion !== tokenVersion) {
+    if (currentTokenVersion !== tokenVersion) {
       // Note: We are strict about token version matching.
       // Cache invalidation on user/role update is handled by UsersService and AuthService
       // ensuring that the cache doesn't hold stale user objects with old tokenVersions.

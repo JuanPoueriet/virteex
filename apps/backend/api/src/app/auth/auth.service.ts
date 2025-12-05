@@ -21,7 +21,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
-import { UserCacheService } from './services/user-cache.service';
+import { UserCacheService } from './modules/user-cache.service';
 import { GeoService } from '../geo/geo.service';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegistrationService } from './services/registration.service';
@@ -88,9 +88,9 @@ export class AuthService {
 
     const user = await this.usersService.findUserForAuth(email);
 
-    if (user && user.lockoutUntil && new Date() < user.lockoutUntil) {
+    if (user && user.security && user.security.lockoutUntil && new Date() < user.security.lockoutUntil) {
       const remainingTime = Math.ceil(
-        (user.lockoutUntil.getTime() - Date.now()) / (1000 * 60),
+        (user.security.lockoutUntil.getTime() - Date.now()) / (1000 * 60),
       );
       throw new UnauthorizedException(
         `Cuenta bloqueada temporalmente. Intente nuevamente en ${remainingTime} minutos.`,
@@ -98,8 +98,8 @@ export class AuthService {
     }
 
     let isPasswordValid = false;
-    if (user && user.passwordHash) {
-        isPasswordValid = await argon2.verify(user.passwordHash, password);
+    if (user && user.security && user.security.passwordHash) {
+        isPasswordValid = await argon2.verify(user.security.passwordHash, password);
     } else {
         try {
             await argon2.verify(AuthConfig.DUMMY_PASSWORD_HASH, password);
@@ -147,10 +147,10 @@ export class AuthService {
     }
 
     // 2FA Check
-    if (user.isTwoFactorEnabled) {
+    if (user.security && user.security.isTwoFactorEnabled) {
       if (!twoFactorCode) {
          const tempToken = this.jwtService.sign(
-            { id: user.id, type: '2fa_pending', tokenVersion: user.tokenVersion },
+            { id: user.id, type: '2fa_pending', tokenVersion: user.security.tokenVersion },
             { expiresIn: '5m', secret: this.configService.getOrThrow('JWT_SECRET') }
          );
 
@@ -204,7 +204,9 @@ export class AuthService {
       );
     }
 
-    if (user.tokenVersion !== payload.tokenVersion) {
+    const tokenVersion = user.security?.tokenVersion || 0;
+
+    if (tokenVersion !== payload.tokenVersion) {
       throw new UnauthorizedException(
         'La sesión ha expirado. Por favor, inicia sesión de nuevo.',
       );
@@ -301,24 +303,26 @@ export class AuthService {
   }
 
   private async handleFailedLoginAttempt(user: User) {
+    if (!user.security) return;
+
     const MAX_FAILED_ATTEMPTS = 5;
     const LOCKOUT_MINUTES = 15;
 
-    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+    user.security.failedLoginAttempts = (user.security.failedLoginAttempts || 0) + 1;
 
-    if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+    if (user.security.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
       const lockoutTime = new Date();
       lockoutTime.setMinutes(lockoutTime.getMinutes() + LOCKOUT_MINUTES);
-      user.lockoutUntil = lockoutTime;
+      user.security.lockoutUntil = lockoutTime;
     }
 
     await this.usersService.save(user);
   }
 
   private async resetLoginAttempts(user: User) {
-    if (user.failedLoginAttempts > 0 || user.lockoutUntil) {
-      user.failedLoginAttempts = 0;
-      user.lockoutUntil = null;
+    if (user.security && (user.security.failedLoginAttempts > 0 || user.security.lockoutUntil)) {
+      user.security.failedLoginAttempts = 0;
+      user.security.lockoutUntil = null;
       await this.usersService.save(user);
     }
   }

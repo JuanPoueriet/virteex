@@ -14,12 +14,15 @@ import { AuditTrailService } from '../../audit/audit.service';
 import { ActionType } from '../../audit/entities/audit-log.entity';
 import { TokenService } from './token.service';
 import { UsersService } from '../../users/users.service';
+import { UserSecurity } from '../../users/entities/user-security.entity';
 
 @Injectable()
 export class MfaOrchestratorService {
   constructor(
     @InjectRepository(VerificationCode)
     private readonly verificationCodeRepository: Repository<VerificationCode>,
+    @InjectRepository(UserSecurity)
+    private readonly userSecurityRepository: Repository<UserSecurity>,
     private readonly smsProvider: AbstractSmsProvider,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -116,13 +119,10 @@ export class MfaOrchestratorService {
       }
 
     // Reset attempts on successful 2FA
-    // Ideally we should reset login attempts here, but that method is private in AuthService or should be moved.
-    // For now we can expose a method in UsersService or handle it here if we inject UsersService.
-    if (user.failedLoginAttempts > 0 || user.lockoutUntil) {
-       await this.usersService.update(user.id, {
-         failedLoginAttempts: 0,
-         lockoutUntil: null
-       });
+    if (user.security && (user.security.failedLoginAttempts > 0 || user.security.lockoutUntil)) {
+       user.security.failedLoginAttempts = 0;
+       user.security.lockoutUntil = null;
+       await this.userSecurityRepository.save(user.security);
     }
 
     await this.auditService.record(
