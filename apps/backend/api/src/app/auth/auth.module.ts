@@ -12,6 +12,7 @@ import * as redisStore from 'cache-manager-redis-store';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { RegistrationService } from './services/registration.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
 import { CookieService } from './services/cookie.service';
@@ -100,6 +101,7 @@ import { OrganizationsModule } from '../organizations/organizations.module';
   controllers: [AuthController],
   providers: [
     AuthService,
+    RegistrationService,
     JwtStrategy,
     UserCacheService,
     CookieService,

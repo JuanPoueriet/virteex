@@ -29,7 +29,7 @@ export class RefreshToken {
   @Column({ name: 'replaced_by_token', nullable: true })
   replacedByToken?: string;
 
-  @Column({ name: 'user_agent', nullable: true })
+  @Column({ name: 'user_agent', nullable: true, type: 'text' })
   userAgent?: string;
 
   @Column({ name: 'ip_address', nullable: true })
