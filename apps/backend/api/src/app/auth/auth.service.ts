@@ -1,23 +1,18 @@
 
 import {
-  ForbiddenException,
   Injectable,
   UnauthorizedException,
   Logger,
-  NotFoundException,
   Inject,
   BadRequestException
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, MoreThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
 import { randomInt } from 'crypto';
-import { authenticator } from 'otplib';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { UAParser } from 'ua-parser-js';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -31,13 +26,15 @@ import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { GeoService } from '../geo/geo.service';
-import { CryptoUtil } from '../shared/utils/crypto.util';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegistrationService } from './services/registration.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { ImpersonationService } from './services/impersonation.service';
 import { UsersService } from '../users/users.service';
 import { SmsProvider } from './services/sms.provider';
+import { SessionService } from './services/session.service';
+import { SecurityAnalysisService } from './services/security-analysis.service';
+import { TokenService } from './services/token.service';
 
 @Injectable()
 export class AuthService {
@@ -55,11 +52,13 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
-    private readonly cryptoUtil: CryptoUtil,
     private readonly registrationService: RegistrationService,
     private readonly passwordRecoveryService: PasswordRecoveryService,
     private readonly impersonationService: ImpersonationService,
-    private readonly geoService: GeoService
+    private readonly geoService: GeoService,
+    private readonly sessionService: SessionService,
+    private readonly securityAnalysisService: SecurityAnalysisService,
+    private readonly tokenService: TokenService
   ) {}
 
   async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
@@ -81,7 +80,7 @@ export class AuthService {
          throw new UnauthorizedException('Usuario inactivo o bloqueado.');
        }
 
-      await this.checkImpossibleTravel(user.id, ipAddress);
+      await this.securityAnalysisService.checkImpossibleTravel(user.id, ipAddress);
 
       await this.auditService.record(
         user.id,
@@ -92,7 +91,7 @@ export class AuthService {
         undefined,
       );
 
-       const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+       const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
        return { user, tokens: authResponse };
     }
 
@@ -142,7 +141,7 @@ export class AuthService {
 
   async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
     const user = await this.registrationService.register(registerUserDto);
-    const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+    const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
 
     return {
       user: authResponse.user,
@@ -206,7 +205,7 @@ export class AuthService {
       );
     }
 
-    await this.checkImpossibleTravel(user.id, ipAddress);
+    await this.securityAnalysisService.checkImpossibleTravel(user.id, ipAddress);
 
     if (ipAddress) {
         const location = this.geoService.getLocation(ipAddress);
@@ -234,7 +233,7 @@ export class AuthService {
          };
       }
 
-      const isValid2FA = await this.validateTwoFactorCode(user, twoFactorCode);
+      const isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, twoFactorCode);
 
       if (!isValid2FA) {
          await this.auditService.record(
@@ -260,78 +259,8 @@ export class AuthService {
         undefined,
     );
 
-    return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+    return await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
   }
-
-  private async validateTwoFactorCode(user: User, code: string): Promise<boolean> {
-      let isValid2FA = false;
-
-      // 1. Try TOTP (Authenticator App) if secret exists
-      if (user.twoFactorSecret) {
-          const decryptedSecret = this.cryptoUtil.decrypt(user.twoFactorSecret);
-          try {
-             isValid2FA = authenticator.verify({
-                token: code,
-                secret: decryptedSecret
-             });
-          } catch(e) {
-             this.logger.error(`TOTP Verification Error for user ${user.id}: ${e.message}`);
-          }
-      }
-
-      // 2. If not valid via TOTP, try SMS OTP (if verification code exists)
-      if (!isValid2FA) {
-          const record = await this.verificationCodeRepository.findOne({
-              where: { userId: user.id, type: VerificationType.LOGIN_2FA },
-          });
-
-          if (record && new Date() <= record.expiresAt) {
-              isValid2FA = await argon2.verify(record.code, code);
-              if (isValid2FA) {
-                  await this.verificationCodeRepository.delete(record.id);
-              }
-          }
-      }
-
-      return isValid2FA;
-  }
-
-  // Check for Impossible Travel
-  private async checkImpossibleTravel(userId: string, currentIp?: string) {
-      if (!currentIp || !userId) return;
-
-      const lastLogin = await this.auditService.getLastLogin(userId);
-      if (!lastLogin || !lastLogin.ipAddress) return;
-
-      if (lastLogin.ipAddress === currentIp) return; // Same IP, assumably safe (or VPN, but location same)
-
-      const currentLocation = this.geoService.getLocation(currentIp);
-      const lastLocation = this.geoService.getLocation(lastLogin.ipAddress);
-
-      if (currentLocation.ll && lastLocation.ll) {
-          const [currentLat, currentLon] = currentLocation.ll;
-          const [lastLat, lastLon] = lastLocation.ll;
-
-          const distanceKm = this.geoService.calculateDistance(lastLat, lastLon, currentLat, currentLon);
-          const timeDiffHours = (Date.now() - lastLogin.timestamp.getTime()) / (1000 * 60 * 60);
-
-          // If time difference is very small (e.g. concurrent), treat as high speed required
-          // Avoid division by zero
-          const safeTimeDiff = timeDiffHours < 0.01 ? 0.01 : timeDiffHours;
-
-          const speed = distanceKm / safeTimeDiff;
-
-          // Max commercial plane speed ~900-1000 km/h. Let's use 1500 km/h to be safe (supersonic/fuzzy matching)
-          const MAX_SPEED_KMH = 1500;
-
-          if (distanceKm > 100 && speed > MAX_SPEED_KMH) {
-               this.logger.warn(`[SECURITY] Impossible Travel Detected for User ${userId}. Distance: ${distanceKm.toFixed(2)}km, Time: ${timeDiffHours.toFixed(2)}h, Speed: ${speed.toFixed(2)}km/h. Previous IP: ${lastLogin.ipAddress}, Current IP: ${currentIp}`);
-               throw new UnauthorizedException('Viaje imposible detectado. Por seguridad, su cuenta ha sido bloqueada temporalmente. Contacte a soporte.');
-               // Note: Ideally, we should also lock the account in DB (set lockoutUntil)
-          }
-      }
-  }
-
 
   async validate(payload: JwtPayload): Promise<any> {
     let user = await this.userCacheService.getUser(payload.id);
@@ -360,7 +289,7 @@ export class AuthService {
       );
     }
 
-    const safeUser = this.buildSafeUser(user);
+    const safeUser = this.tokenService.buildSafeUser(user);
 
     return {
       ...safeUser,
@@ -377,130 +306,12 @@ export class AuthService {
     setPasswordDto: SetPasswordFromInvitationDto,
   ) {
     const user = await this.passwordRecoveryService.setPasswordFromInvitation(setPasswordDto);
-    return await this.generateAuthResponse(user);
+    return await this.tokenService.generateAuthResponse(user);
   }
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
-    try {
-      const payload = this.jwtService.verify<JwtPayload & { jti?: string }>(token, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
-
-      const user = await this.usersService.findUserByIdForAuth(payload.id);
-
-      if (!user) {
-        throw new UnauthorizedException('El usuario del token ya no existe.');
-      }
-      if (user.status !== UserStatus.ACTIVE) {
-        throw new UnauthorizedException('El usuario del token está inactivo.');
-      }
-
-      if (payload.jti) {
-         const refreshTokenEntity = await this.refreshTokenRepository.findOneBy({ id: payload.jti });
-
-         if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
-             const GRACE_PERIOD = AuthConfig.REFRESH_GRACE_PERIOD;
-             if (refreshTokenEntity?.revokedAt && (Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD)) {
-                 this.logger.warn(`[SECURITY] Refresh token reused within grace period. Issuing new token.`);
-
-                 if (refreshTokenEntity.replacedByToken) {
-                     await this.refreshTokenRepository.update(refreshTokenEntity.replacedByToken, {
-                         isRevoked: true,
-                         revokedAt: new Date(),
-                     });
-                 }
-             } else {
-                 this.logger.warn(`[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`);
-                 user.tokenVersion = (user.tokenVersion || 0) + 1;
-                 await this.usersService.save(user);
-                 await this.userCacheService.clearUserSession(user.id);
-                 throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
-             }
-         } else {
-            if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
-                // Warning: ua-parser-js license is AGPLv3. Ensure compliance or replace if needed.
-                // Assuming use here is for internal security logging/heuristics.
-                const parserStored = new UAParser(refreshTokenEntity.userAgent);
-                const parserCurrent = new UAParser(userAgent);
-
-                const storedBrowser = parserStored.getBrowser();
-                const currentBrowser = parserCurrent.getBrowser();
-                const storedOS = parserStored.getOS();
-                const currentOS = parserCurrent.getOS();
-
-                const isBrowserMatch = storedBrowser.name === currentBrowser.name;
-                const isOSMatch = storedOS.name === currentOS.name;
-
-                if (!isBrowserMatch || !isOSMatch) {
-                   this.logger.warn(`[SECURITY] User Agent mismatch detected (OS/Browser changed). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Potential session hijacking.`);
-                   throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
-                } else {
-                   this.logger.warn(`[SECURITY] Minor User Agent change detected (likely update). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Allowing.`);
-                }
-            }
-
-            if (refreshTokenEntity.ipAddress && ipAddress && refreshTokenEntity.ipAddress !== ipAddress) {
-                this.logger.log(`[SECURITY] IP Change for Refresh: ${refreshTokenEntity.ipAddress} -> ${ipAddress}`);
-            }
-
-            refreshTokenEntity.isRevoked = true;
-            refreshTokenEntity.revokedAt = new Date();
-            await this.refreshTokenRepository.save(refreshTokenEntity);
-         }
-      }
-
-      const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
-
-      if (payload.jti) {
-          await this.refreshTokenRepository.update(payload.jti, {
-              replacedByToken: authResponse.refreshTokenId
-          });
-      }
-
-      await this.auditService.record(
-        user.id,
-        'User',
-        user.id,
-        ActionType.REFRESH,
-        { email: user.email, ipAddress, userAgent },
-      );
-
-      return {
-        user: authResponse.user,
-        accessToken: authResponse.accessToken,
-        refreshToken: authResponse.refreshToken,
-      };
-    } catch (error) {
-      this.logger.error(
-        'Error al verificar el refresh token:',
-        (error as Error).message,
-      );
-      if (error instanceof UnauthorizedException) {
-          throw error;
-      }
-      throw new UnauthorizedException('Refresh token inválido o expirado');
-    }
+    return this.sessionService.refreshAccessToken(token, ipAddress, userAgent);
   }
-
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async handleTokenCleanup() {
-    this.logger.log('Starting expired refresh token cleanup...');
-    const retentionPeriod = 30; // days
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
-
-    const result = await this.refreshTokenRepository.delete({
-       expiresAt: LessThan(expirationDate)
-    });
-
-    const resultRevoked = await this.refreshTokenRepository.delete({
-        isRevoked: true,
-        revokedAt: LessThan(expirationDate)
-    });
-
-    this.logger.log(`Cleanup complete. Deleted ${result.affected} expired tokens and ${resultRevoked.affected} revoked tokens.`);
-  }
-
 
   async status(userFromJwt: any) {
     let freshUser = await this.userCacheService.getUser(userFromJwt.id);
@@ -517,7 +328,7 @@ export class AuthService {
       throw new UnauthorizedException('Usuario no encontrado');
     }
 
-    const safeUser = this.buildSafeUser(freshUser);
+    const safeUser = this.tokenService.buildSafeUser(freshUser);
 
     const userWithImpersonationStatus = {
       ...safeUser,
@@ -544,7 +355,7 @@ export class AuthService {
         undefined
     );
 
-    return await this.generateAuthResponse(targetUser, {
+    return await this.tokenService.generateAuthResponse(targetUser, {
       isImpersonating: true,
       originalUserId: adminUser.id,
     });
@@ -552,7 +363,7 @@ export class AuthService {
 
   async stopImpersonation(impersonatingUser: User) {
     const adminUser = await this.impersonationService.validateStopImpersonation(impersonatingUser);
-    return await this.generateAuthResponse(adminUser);
+    return await this.tokenService.generateAuthResponse(adminUser);
   }
 
   async logout(userId: string) {
@@ -561,39 +372,11 @@ export class AuthService {
   }
 
   async getUserSessions(userId: string) {
-    const sessions = await this.refreshTokenRepository.find({
-      where: {
-        userId,
-        isRevoked: false,
-        expiresAt: MoreThan(new Date()),
-      },
-      order: { createdAt: 'DESC' },
-    });
-
-    return sessions.map((session) => ({
-      id: session.id,
-      ipAddress: session.ipAddress,
-      userAgent: session.userAgent,
-      createdAt: session.createdAt,
-      expiresAt: session.expiresAt,
-      isCurrent: false,
-    }));
+    return this.sessionService.getUserSessions(userId);
   }
 
   async revokeSession(userId: string, sessionId: string) {
-    const session = await this.refreshTokenRepository.findOne({
-      where: { id: sessionId, userId },
-    });
-
-    if (!session) {
-      throw new NotFoundException('Sesión no encontrada o no pertenece al usuario.');
-    }
-
-    session.isRevoked = true;
-    session.revokedAt = new Date();
-    await this.refreshTokenRepository.save(session);
-
-    return { message: 'Sesión revocada exitosamente.' };
+    return this.sessionService.revokeSession(userId, sessionId);
   }
 
   private async handleFailedLoginAttempt(user: User) {
@@ -619,105 +402,8 @@ export class AuthService {
     }
   }
 
-  private buildSafeUser(user: User) {
-    const permissions = [
-      ...new Set(user.roles.flatMap((role) => role.permissions)),
-    ];
-    const { passwordHash, twoFactorSecret, ...safeUser } = user;
-    return {
-      ...safeUser,
-      permissions,
-      organization: user.organization,
-    };
-  }
-
-  private buildPayload(
-    user: User,
-    extra: Partial<JwtPayload> = {},
-  ): JwtPayload {
-    return {
-      id: user.id,
-      email: user.email,
-      organizationId: user.organizationId,
-      roles: user.roles.map((r) => r.name),
-      tokenVersion: user.tokenVersion,
-      ...extra,
-    };
-  }
-
-  private async generateAuthResponse(
-    user: User,
-    extraPayload: Partial<JwtPayload> = {},
-    ipAddress?: string,
-    userAgent?: string
-  ) {
-    const payload = this.buildPayload(user, extraPayload);
-    const safeUser = this.buildSafeUser(user);
-
-    const userWithImpersonationStatus = {
-      ...safeUser,
-      isImpersonating: payload.isImpersonating || false,
-      originalUserId: payload.originalUserId || undefined,
-    };
-
-    const refreshExpiration = AuthConfig.JWT_REFRESH_EXPIRATION;
-    const expirationDate = new Date(Date.now() + this.convertToMs(refreshExpiration));
-
-    const refreshTokenRecord = this.refreshTokenRepository.create({
-        user: user,
-        userId: user.id,
-        isRevoked: false,
-        expiresAt: expirationDate,
-        ipAddress,
-        userAgent
-    });
-
-    await this.refreshTokenRepository.save(refreshTokenRecord);
-
-    const accessToken = this.getJwtToken(payload, AuthConfig.JWT_ACCESS_EXPIRATION);
-
-    const refreshTokenPayload = { ...payload, jti: refreshTokenRecord.id };
-    const refreshToken = this.getJwtToken(
-        refreshTokenPayload,
-        refreshExpiration,
-        this.configService.get('JWT_REFRESH_SECRET'),
-    );
-
-    return {
-      user: userWithImpersonationStatus,
-      accessToken,
-      refreshToken,
-      refreshTokenId: refreshTokenRecord.id
-    };
-  }
-
-  private getJwtToken(
-    payload: JwtPayload,
-    expiresIn?: string,
-    secret?: string,
-  ) {
-    return this.jwtService.sign(payload, {
-      secret: secret || this.configService.getOrThrow('JWT_SECRET'),
-      expiresIn: expiresIn || AuthConfig.JWT_ACCESS_EXPIRATION,
-    });
-  }
-
   async verifyUserFromToken(token: string): Promise<User | null> {
-    try {
-      const payload = this.jwtService.verify(token, {
-        secret: this.configService.getOrThrow('JWT_SECRET'),
-      });
-
-      const user = await this.usersService.findUserByIdForAuth(payload.id);
-
-      if (!user || user.status !== UserStatus.ACTIVE || user.tokenVersion !== payload.tokenVersion) {
-        return null;
-      }
-
-      return user;
-    } catch (e) {
-      return null;
-    }
+    return this.sessionService.verifyUserFromToken(token);
   }
 
   async sendPhoneOtp(userId: string, phoneNumber: string) {
@@ -792,7 +478,7 @@ export class AuthService {
   }
 
   async complete2faLogin(user: User, code: string, ipAddress?: string, userAgent?: string) {
-      const isValid2FA = await this.validateTwoFactorCode(user, code);
+      const isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, code);
 
       if (!isValid2FA) {
          await this.auditService.record(
@@ -818,7 +504,7 @@ export class AuthService {
         undefined,
     );
 
-    return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
+    return await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
   }
 
   private convertToMs(time: string): number {
