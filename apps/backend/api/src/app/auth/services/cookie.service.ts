@@ -19,8 +19,9 @@ export class CookieService {
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      // Usamos 'lax' para permitir redirecciones desde sitios externos (ej. emails, pasarelas de pago)
-      // mientras mantenemos un nivel aceptable de seguridad contra CSRF.
+      // Se mantiene 'lax' para permitir que el callback de OAuth (Google/Microsoft)
+      // envíe las cookies de sesión en el redirect. 'strict' rompería el login social.
+      // Se debe asegurar protección CSRF vía tokens en endpoints mutables.
       sameSite: 'lax' as 'strict' | 'lax' | 'none',
     };
 
