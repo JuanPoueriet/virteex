@@ -3,6 +3,7 @@ import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { JsonLogger } from './app/common/loggers/json.logger';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
@@ -14,6 +15,20 @@ async function bootstrap() {
     logger: new JsonLogger(),
   });
   const configService = app.get(ConfigService);
+
+  // Security Headers using Helmet
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
 
   app.use(cookieParser());
 

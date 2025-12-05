@@ -22,6 +22,7 @@ import { UserPayload } from '../../shared/interfaces/user-payload.interface';
 import { NotificationService } from './notification';
 import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
+import { ErrorHandlerService } from './error-handler.service';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 import { hasPermission } from '@virteex/shared/util-auth';
 
@@ -38,6 +39,7 @@ export class AuthService {
   private router = inject(Router);
   private notificationService = inject(NotificationService);
   private webSocketService = inject(WebSocketService);
+  private errorHandlerService = inject(ErrorHandlerService);
   private readonly baseUrl = inject(API_URL);
 
   // URL base de tu API de autenticación.
@@ -145,7 +147,7 @@ export class AuthService {
           this.listenForForcedLogout();
         }),
         map((response) => response.user),
-        catchError((err) => this.handleError('login', err))
+        catchError((err) => this.errorHandlerService.handleError('login', err))
       );
   }
 
@@ -205,7 +207,7 @@ export class AuthService {
           this._authStatus.set(AuthStatus.authenticated);
           this.router.navigate(['/app/dashboard']);
         }),
-        catchError((err) => this.handleError('register', err))
+        catchError((err) => this.errorHandlerService.handleError('register', err))
       );
   }
 
@@ -246,7 +248,7 @@ export class AuthService {
       .post<{ message: string }>(url, { email, recaptchaToken }, {
         context: new HttpContext().set(IS_PUBLIC_API, true)
       })
-      .pipe(catchError((err) => this.handleError('forgotPassword', err)));
+      .pipe(catchError((err) => this.errorHandlerService.handleError('forgotPassword', err)));
   }
 
   /**
@@ -261,7 +263,7 @@ export class AuthService {
       .post<User>(url, { token, password }, {
         context: new HttpContext().set(IS_PUBLIC_API, true)
       })
-      .pipe(catchError((err) => this.handleError('resetPassword', err)));
+      .pipe(catchError((err) => this.errorHandlerService.handleError('resetPassword', err)));
   }
 
   // **** ✅ NUEVO MÉTODO AÑADIDO ****
@@ -281,46 +283,8 @@ export class AuthService {
           this._currentUser.set(response.user);
           this._authStatus.set(AuthStatus.authenticated);
         }),
-        catchError((err) => this.handleError('setPasswordFromInvitation', err))
+        catchError((err) => this.errorHandlerService.handleError('setPasswordFromInvitation', err))
       );
-  }
-
-  private handleError(
-    operation: string,
-    error: HttpErrorResponse
-  ): Observable<never> {
-    let customErrorMessage =
-      'Ocurrió un error inesperado. Por favor, intenta más tarde.';
-    console.error(
-      `Error en la operación '${operation}'. Código: ${error.status}`,
-      error.error
-    );
-
-    if (error.error instanceof ErrorEvent) {
-      customErrorMessage = `Error de red: ${error.error.message}`;
-    } else {
-      const serverError = error.error;
-      if (serverError && typeof serverError.message === 'string') {
-        customErrorMessage = serverError.message;
-      } else if (serverError && Array.isArray(serverError.message)) {
-        customErrorMessage = serverError.message.join('. ');
-      } else if (error.status === 401) {
-        customErrorMessage =
-          'Credenciales inválidas. Por favor, verifica tu correo y contraseña.';
-      } else if (error.status === 403) {
-        customErrorMessage =
-          'No tienes permiso o la verificación reCAPTCHA ha fallado.';
-      } else if (error.status === 404) {
-        customErrorMessage = 'El recurso solicitado no fue encontrado.';
-      } else if (error.status === 429) {
-        customErrorMessage = 'Demasiadas solicitudes. Por favor, espera un momento antes de intentar de nuevo.';
-      }
-    }
-
-    return throwError(() => ({
-      status: error.status,
-      message: customErrorMessage,
-    }));
   }
 
   getInvitationDetails(token: string): Observable<{ firstName: string }> {
@@ -329,7 +293,7 @@ export class AuthService {
       .get<{ firstName: string }>(url, {
         context: new HttpContext().set(IS_PUBLIC_API, true)
       })
-      .pipe(catchError((err) => this.handleError('getInvitationDetails', err)));
+      .pipe(catchError((err) => this.errorHandlerService.handleError('getInvitationDetails', err)));
   }
 
   // --- NUEVOS MÉTODOS ---
@@ -384,7 +348,7 @@ export class AuthService {
           });
         }),
         map((response) => response.user),
-        catchError((err) => this.handleError('impersonate', err))
+        catchError((err) => this.errorHandlerService.handleError('impersonate', err))
       );
   }
 
@@ -408,7 +372,7 @@ export class AuthService {
           });
         }),
         map((response) => response.user),
-        catchError((err) => this.handleError('stopImpersonation', err))
+        catchError((err) => this.errorHandlerService.handleError('stopImpersonation', err))
       );
   }
 }

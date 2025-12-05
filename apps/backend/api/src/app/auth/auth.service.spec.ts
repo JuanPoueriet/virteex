@@ -16,6 +16,8 @@ import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { RegistrationService } from './services/registration.service';
 import { GeoService } from '../geo/geo.service';
+import { PasswordRecoveryService } from './services/password-recovery.service';
+import { ImpersonationService } from './services/impersonation.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -72,6 +74,19 @@ describe('AuthService', () => {
         { provide: OrganizationsService, useValue: { create: jest.fn() } },
         { provide: RegistrationService, useValue: mockRegistrationService },
         { provide: GeoService, useValue: mockGeoService },
+        {
+          provide: PasswordRecoveryService,
+          useValue: {
+            setPasswordFromInvitation: jest.fn(),
+          },
+        },
+        {
+          provide: ImpersonationService,
+          useValue: {
+            validateImpersonationRequest: jest.fn(),
+            validateStopImpersonation: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
