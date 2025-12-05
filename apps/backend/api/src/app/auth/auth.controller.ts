@@ -53,10 +53,12 @@ export class AuthController {
   @UseGuards(GoogleRecaptchaGuard)
   async register(
     @Body() registerUserDto: RegisterUserDto,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: Response,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string
   ): Promise<{ user: any; accessToken: string }> {
     const { user, accessToken, refreshToken } =
-      await this.authService.register(registerUserDto);
+      await this.authService.register(registerUserDto, ip, userAgent);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 

@@ -26,6 +26,10 @@ export const AuthConfig = {
   get COOKIE_REFRESH_MAX_AGE() { return parseDuration(process.env.JWT_REFRESH_EXPIRATION || '7d'); },
   get COOKIE_REFRESH_REMEMBER_ME_MAX_AGE() { return parseDuration(process.env.JWT_REFRESH_REMEMBER_ME_EXPIRATION || '30d'); },
 
+  // Cache
+  get CACHE_TTL() { return parseDuration(process.env.AUTH_CACHE_TTL || '15m'); },
+  get REFRESH_GRACE_PERIOD() { return parseInt(process.env.AUTH_REFRESH_GRACE_PERIOD || '10000', 10); },
+
   // Throttle
   get THROTTLE_LIMIT() { return parseInt(process.env.AUTH_THROTTLE_LIMIT || '5', 10); },
   get THROTTLE_TTL() { return parseInt(process.env.AUTH_THROTTLE_TTL || '60000', 10); },

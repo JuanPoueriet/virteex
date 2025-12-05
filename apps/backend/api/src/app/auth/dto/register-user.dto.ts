@@ -1,7 +1,7 @@
 
 
 
-import { IsRNC } from '@virteex/shared/util-auth';
+import { IsRNC } from '../../../../../../libs/shared/util-auth/src/index';
 import {
     IsString,
     IsNotEmpty,

@@ -37,7 +37,7 @@ import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
-import { hasPermission } from '@virteex/shared/util-auth';
+import { hasPermission } from '../../../../../libs/shared/util-auth/src/index';
 import { UserRegisteredEvent } from './events/user-registered.event';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
@@ -68,7 +68,7 @@ export class AuthService {
     private readonly organizationsService: OrganizationsService
   ) {}
 
-  async register(registerUserDto: RegisterUserDto) {
+  async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
     const {
       email,
       rnc,
@@ -170,11 +170,7 @@ export class AuthService {
       user.organization = organization;
       user.roles = [adminRole];
 
-      const authResponse = await this.generateAuthResponse(user); // No IP/UA for registration initially? Or pass null?
-      // Ideally we capture it in controller and pass it here.
-      // But for now, let's leave it as is (null IP/UA) or update later if needed.
-      // The update plan says "Modify login...". Registration also creates tokens.
-      // I should allow passing ip/ua here too. But I'll stick to login/refresh for now as requested.
+      const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
 
       return {
         user: authResponse.user,
@@ -550,7 +546,7 @@ export class AuthService {
              // Grace Period Check (e.g. 10 seconds)
              // If the token was revoked very recently, it might be a race condition (frontend retry).
              // In this case, we deny the request but DO NOT invalidate the user session.
-             const GRACE_PERIOD = 10 * 1000;
+             const GRACE_PERIOD = AuthConfig.REFRESH_GRACE_PERIOD;
              if (refreshTokenEntity?.revokedAt && (Date.now() - refreshTokenEntity.revokedAt.getTime() < GRACE_PERIOD)) {
                  this.logger.warn(`[SECURITY] Refresh token reused within grace period. Denying request without invalidation.`);
                  throw new UnauthorizedException('Token inválido (rotación en progreso)');

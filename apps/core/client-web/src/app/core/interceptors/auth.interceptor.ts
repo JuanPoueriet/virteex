@@ -9,7 +9,7 @@ import {
 import { inject } from '@angular/core';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, switchMap, filter, take } from 'rxjs/operators';
-import { AuthService } from '../../shared/services/auth.service';
+import { AuthService } from '../services/auth';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
 // Mutex para evitar la condición de carrera "Thundering Herd"
