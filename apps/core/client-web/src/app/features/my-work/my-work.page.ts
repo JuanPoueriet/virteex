@@ -1,11 +1,12 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, Check, Clock, Bell } from 'lucide-angular';
+import { LucideAngularModule, Check, Clock, Bell, Key } from 'lucide-angular';
 import { MyWorkService, WorkItem } from './my-work.service';
+import { AuthService } from '../../core/services/auth';
 
 type WorkItemStatus = 'pending' | 'in-progress' | 'completed';
-type WorkItemType = 'tasks' | 'approvals' | 'notifications';
+type WorkItemType = 'tasks' | 'approvals' | 'notifications' | 'security';
 
 @Component({
   selector: 'app-my-work-page',
@@ -17,10 +18,12 @@ type WorkItemType = 'tasks' | 'approvals' | 'notifications';
 })
 export class MyWorkPage implements OnInit {
   private myWorkService = inject(MyWorkService);
+  private authService = inject(AuthService);
 
   protected readonly TaskIcon = Check;
   protected readonly ApprovalIcon = Clock;
   protected readonly NotificationIcon = Bell;
+  protected readonly SecurityIcon = Key;
 
   activeTab = signal<WorkItemType>('tasks');
 
@@ -51,5 +54,9 @@ export class MyWorkPage implements OnInit {
       case 'completed': return 'status-completed';
       default: return '';
     }
+  }
+
+  async registerPasskey() {
+    await this.authService.registerPasskey();
   }
 }

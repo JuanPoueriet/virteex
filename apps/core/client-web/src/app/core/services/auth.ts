@@ -9,8 +9,10 @@ import {
   throwError,
   of,
   take,
+  firstValueFrom,
 } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 
 import { API_URL } from '../tokens/api-url.token';
 import { RegisterPayload } from '../../shared/interfaces/register-payload.interface';
@@ -298,6 +300,67 @@ export class AuthService {
         this.router.navigate(['/auth/login']);
       },
     });
+  }
+
+  // ------------------------------------------------------------------
+  // WebAuthn (Passkeys)
+  // ------------------------------------------------------------------
+
+  async registerPasskey(): Promise<void> {
+    try {
+      // 1. Get options from backend
+      const options = await firstValueFrom(this.http.get<any>(`${this.apiUrl}/webauthn/register/options`));
+
+      // 2. Pass options to browser
+      const credential = await startRegistration(options);
+
+      // 3. Send credential to backend
+      await firstValueFrom(this.http.post(`${this.apiUrl}/webauthn/register/verify`, credential));
+
+      this.notificationService.showSuccess('Llave de acceso registrada correctamente');
+    } catch (error) {
+      console.error('Passkey registration failed', error);
+      this.notificationService.showError('Error al registrar la llave de acceso');
+      throw error;
+    }
+  }
+
+  async loginWithPasskey(email?: string): Promise<User | null> {
+    try {
+      // 1. Get options from backend
+      const options = await firstValueFrom(this.http.post<any>(`${this.apiUrl}/webauthn/login/options`, { email }, {
+          context: new HttpContext().set(IS_PUBLIC_API, true)
+      }));
+
+      // 2. Pass options to browser
+      const credential = await startAuthentication(options);
+
+      // 3. Send credential to backend for verification and login
+      // Add challengeId which was returned in options
+      const body = {
+        credential,
+        challengeId: options.challengeId
+      };
+
+      const response = await firstValueFrom(this.http.post<LoginResponse>(`${this.apiUrl}/webauthn/login/verify`, body, {
+          withCredentials: true,
+          context: new HttpContext().set(IS_PUBLIC_API, true)
+      }));
+
+      if (response.user) {
+        this._currentUser.set(response.user);
+        this._authStatus.set(AuthStatus.authenticated);
+
+        this.webSocketService.connect();
+        this.webSocketService.emit('user-status', { isOnline: true });
+        this.listenForForcedLogout();
+      }
+      return response.user;
+    } catch (error) {
+      console.error('Passkey login failed', error);
+      this.notificationService.showError('Error al iniciar sesión con llave de acceso');
+      throw error;
+    }
   }
 
   /**

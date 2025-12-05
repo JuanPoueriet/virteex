@@ -26,6 +26,13 @@
                     <span>Notifications</span>
                     <span class="count-badge">{{ notifications().length }}</span>
                 </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'security'"
+        (click)="setActiveTab('security')">
+        <lucide-icon [img]="SecurityIcon" size="18"></lucide-icon>
+        Security
+      </button>
             </div>
         </div>
 
