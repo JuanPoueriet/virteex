@@ -9,6 +9,7 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToOne,
 } from 'typeorm';
 import { Organization } from '../../../organizations/entities/organization.entity';
 import { Role } from '../../../roles/entities/role.entity';

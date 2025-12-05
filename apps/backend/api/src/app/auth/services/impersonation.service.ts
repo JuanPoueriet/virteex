@@ -2,7 +2,7 @@ import { Injectable, ForbiddenException, NotFoundException, BadRequestException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
-import { UserCacheService } from './user-cache.service';
+import { UserCacheService } from '../modules/user-cache.service';
 import { hasPermission } from '@virteex/shared/util-auth';
 
 @Injectable()

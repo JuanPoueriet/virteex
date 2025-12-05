@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { AuditTrailService } from '../audit/audit.service';
-import { UserCacheService } from './services/user-cache.service';
+import { UserCacheService } from './modules/user-cache.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
@@ -25,6 +25,7 @@ import { SecurityAnalysisService } from './services/security-analysis.service';
 import { TokenService } from './services/token.service';
 import { SocialAuthService } from './services/social-auth.service';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
+import { PasswordService } from './services/password.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -144,6 +145,7 @@ describe('AuthService', () => {
         },
         { provide: SocialAuthService, useValue: mockSocialAuthService },
         { provide: MfaOrchestratorService, useValue: mockMfaOrchestratorService },
+        { provide: PasswordService, useValue: { verify: jest.fn(), verifyDummy: jest.fn() } },
       ],
     }).compile();
 

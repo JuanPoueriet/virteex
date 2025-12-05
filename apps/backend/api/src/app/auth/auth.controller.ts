@@ -121,6 +121,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user and organization' })
   @ApiResponse({ status: 201, description: 'User successfully registered.', type: AuthResponseDto })
   @UseGuards(GoogleRecaptchaGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async register(
     @Body() registerUserDto: RegisterUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -165,7 +166,8 @@ export class AuthController {
     this.cookieService.setAuthCookies(res, accessToken, refreshToken, rememberMe);
 
     return {
-      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true })
+      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
+      accessToken
     };
   }
 
@@ -220,6 +222,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(CsrfGuard)
   logout(@Res({ passthrough: true }) res: Response) {
     this.cookieService.clearAuthCookies(res);
     return { message: 'Logout exitoso' };
@@ -253,6 +256,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(GoogleRecaptchaGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UsePipes(new ValidationPipe())
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.passwordRecoveryService.sendPasswordResetLink(forgotPasswordDto);
@@ -348,6 +352,7 @@ export class AuthController {
 
   @Post('verify-2fa')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(CsrfGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // Rate limit 2FA attempts
   async verify2fa(
       @Body() body: { code: string, tempToken: string },
@@ -392,6 +397,7 @@ export class AuthController {
 
   @Post('webauthn/login/verify')
   @ApiOperation({ summary: 'Verify WebAuthn authentication' })
+  @UseGuards(CsrfGuard)
   async verifyWebAuthnAuthentication(
     @Body() body: any,
     @Res({ passthrough: true }) res: Response
