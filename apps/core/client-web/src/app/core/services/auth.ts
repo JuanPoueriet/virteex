@@ -79,13 +79,9 @@ export class AuthService {
   private listenForForcedLogout(): void {
     // Espera a que la conexión esté lista
     this.webSocketService.connectionReady$.pipe(take(1)).subscribe(() => {
-      console.log(
-        "WebSocket connection is ready. Listening for 'force-logout'."
-      );
       this.webSocketService
         .listen<{ reason: string }>('force-logout')
         .subscribe((data) => {
-          console.log('Forced logout event received:', data.reason);
           this.logout();
           this.modalService
             .open({
@@ -124,7 +120,6 @@ export class AuthService {
           if (response && response.user && response.accessToken) {
             this._currentUser.set(response.user);
             this._authStatus.set(AuthStatus.authenticated);
-            console.log('[AuthService] Token refrescado exitosamente');
           }
         })
       );
@@ -232,7 +227,6 @@ export class AuthService {
             return of(false);
         } else {
             // Error de servidor o de red
-            console.error('Error verificando estado de autenticación:', err);
             // Opcional: Podríamos mantener el estado anterior o poner un estado 'error',
             // pero por seguridad asumimos no autenticado si el backend falla,
             // pero lo logueamos claramente.
@@ -319,7 +313,7 @@ export class AuthService {
 
       this.notificationService.showSuccess('Llave de acceso registrada correctamente');
     } catch (error) {
-      console.error('Passkey registration failed', error);
+      // Passkey registration failed
       this.notificationService.showError('Error al registrar la llave de acceso');
       throw error;
     }
@@ -357,7 +351,7 @@ export class AuthService {
       }
       return response.user;
     } catch (error) {
-      console.error('Passkey login failed', error);
+      // Passkey login failed
       this.notificationService.showError('Error al iniciar sesión con llave de acceso');
       throw error;
     }

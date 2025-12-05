@@ -2,9 +2,7 @@
 import {
   Injectable,
   UnauthorizedException,
-  Logger,
-  Inject,
-  BadRequestException
+  Logger
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,7 +10,6 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
-import { randomInt } from 'crypto';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -31,10 +28,11 @@ import { RegistrationService } from './services/registration.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { ImpersonationService } from './services/impersonation.service';
 import { UsersService } from '../users/users.service';
-import { SmsProvider } from './services/sms.provider';
 import { SessionService } from './services/session.service';
 import { SecurityAnalysisService } from './services/security-analysis.service';
 import { TokenService } from './services/token.service';
+import { SocialAuthService } from './services/social-auth.service';
+import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 
 @Injectable()
 export class AuthService {
@@ -46,8 +44,6 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     @InjectRepository(VerificationCode)
     private readonly verificationCodeRepository: Repository<VerificationCode>,
-    @Inject('SmsProvider')
-    private readonly smsProvider: SmsProvider,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditTrailService,
@@ -58,85 +54,21 @@ export class AuthService {
     private readonly geoService: GeoService,
     private readonly sessionService: SessionService,
     private readonly securityAnalysisService: SecurityAnalysisService,
-    private readonly tokenService: TokenService
+    private readonly tokenService: TokenService,
+    private readonly socialAuthService: SocialAuthService,
+    private readonly mfaOrchestratorService: MfaOrchestratorService
   ) {}
 
   async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
-    const user = await this.usersService.findOneByEmail(socialUser.email);
-
-    if (user) {
-      if (user.authProvider !== socialUser.provider || user.authProviderId !== socialUser.providerId) {
-        await this.usersService.update(user.id, {
-          authProvider: socialUser.provider,
-          authProviderId: socialUser.providerId,
-          avatarUrl: user.avatarUrl || socialUser.picture
-        });
-
-        user.authProvider = socialUser.provider;
-        user.authProviderId = socialUser.providerId;
-      }
-
-       if (user.status !== UserStatus.ACTIVE) {
-         throw new UnauthorizedException('Usuario inactivo o bloqueado.');
-       }
-
-      await this.securityAnalysisService.checkImpossibleTravel(user.id, ipAddress);
-
-      await this.auditService.record(
-        user.id,
-        'User',
-        user.id,
-        ActionType.LOGIN,
-        { email: user.email, provider: socialUser.provider, ipAddress, userAgent },
-        undefined,
-      );
-
-       const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
-       return { user, tokens: authResponse };
-    }
-
-    return { user: null };
+    return this.socialAuthService.validateOAuthLogin(socialUser, ipAddress, userAgent);
   }
 
   async generateRegisterToken(socialUser: SocialUser): Promise<string> {
-    return this.jwtService.sign(
-      {
-        email: socialUser.email,
-        firstName: socialUser.firstName,
-        lastName: socialUser.lastName,
-        provider: socialUser.provider,
-        picture: socialUser.picture,
-        type: 'social-register'
-      },
-      {
-        secret: this.configService.getOrThrow('JWT_SECRET'),
-        expiresIn: '10m'
-      }
-    );
+    return this.socialAuthService.generateRegisterToken(socialUser);
   }
 
   async getSocialRegisterInfo(token: string): Promise<SocialUser> {
-    try {
-      const payload = this.jwtService.verify(token, {
-        secret: this.configService.getOrThrow('JWT_SECRET'),
-      });
-
-      if (payload.type !== 'social-register') {
-        throw new UnauthorizedException('Token inválido para registro.');
-      }
-
-      return {
-        email: payload.email,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        provider: payload.provider,
-        picture: payload.picture,
-        providerId: '',
-        accessToken: ''
-      };
-    } catch (e) {
-      throw new UnauthorizedException('Token de registro inválido o expirado.');
-    }
+    return this.socialAuthService.getSocialRegisterInfo(token);
   }
 
   async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
@@ -223,7 +155,7 @@ export class AuthService {
          );
 
          if (user.isPhoneVerified && user.phone) {
-             await this.sendLoginOtp(user);
+             await this.mfaOrchestratorService.sendLoginOtp(user);
          }
 
          return {
@@ -233,19 +165,8 @@ export class AuthService {
          };
       }
 
-      const isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, twoFactorCode);
-
-      if (!isValid2FA) {
-         await this.auditService.record(
-            user.id,
-            'User',
-            user.id,
-            ActionType.LOGIN_FAILED,
-            { email: user.email, reason: 'Invalid 2FA Code' },
-            undefined
-         );
-         throw new UnauthorizedException('Código 2FA inválido');
-      }
+      // Delegate to MFA Orchestrator for code validation
+      return await this.mfaOrchestratorService.complete2faLogin(user, twoFactorCode, ipAddress, userAgent);
     }
 
     await this.resetLoginAttempts(user);
@@ -407,104 +328,19 @@ export class AuthService {
   }
 
   async sendPhoneOtp(userId: string, phoneNumber: string) {
-    const code = randomInt(100000, 999999).toString();
-    const hash = await argon2.hash(code);
-
-    await this.verificationCodeRepository.delete({ userId, type: VerificationType.PHONE_VERIFY });
-
-    const verificationCode = this.verificationCodeRepository.create({
-      userId,
-      code: hash,
-      payload: phoneNumber, // Bind code to specific phone number
-      type: VerificationType.PHONE_VERIFY,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
-
-    await this.verificationCodeRepository.save(verificationCode);
-
-    await this.smsProvider.send(phoneNumber, `Your verification code is: ${code}`);
+    return this.mfaOrchestratorService.sendPhoneOtp(userId, phoneNumber);
   }
 
   async verifyPhoneOtp(userId: string, code: string, phoneNumber: string) {
-    const record = await this.verificationCodeRepository.findOne({
-      where: { userId, type: VerificationType.PHONE_VERIFY },
-    });
-
-    if (!record) {
-      throw new BadRequestException('No verification code found or expired.');
-    }
-
-    if (new Date() > record.expiresAt) {
-      await this.verificationCodeRepository.delete(record.id);
-      throw new BadRequestException('Verification code expired.');
-    }
-
-    // Security: Check if phone number matches the one the code was sent to
-    if (record.payload && record.payload !== phoneNumber) {
-        throw new BadRequestException('Invalid phone number for this verification code.');
-    }
-
-    const isValid = await argon2.verify(record.code, code);
-    if (!isValid) {
-      throw new BadRequestException('Invalid verification code.');
-    }
-
-    await this.usersService.update(userId, {
-      phone: phoneNumber,
-      isPhoneVerified: true
-    });
-
-    await this.verificationCodeRepository.delete(record.id);
-
-    return { message: 'Phone number verified successfully.' };
+    return this.mfaOrchestratorService.verifyPhoneOtp(userId, code, phoneNumber);
   }
 
   async sendLoginOtp(user: User) {
-      const code = randomInt(100000, 999999).toString();
-      const hash = await argon2.hash(code);
-
-      await this.verificationCodeRepository.delete({ userId: user.id, type: VerificationType.LOGIN_2FA });
-
-      await this.verificationCodeRepository.save({
-          userId: user.id,
-          code: hash,
-          type: VerificationType.LOGIN_2FA,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-      });
-
-      if (user.phone) {
-          await this.smsProvider.send(user.phone, `Your Login Code: ${code}`);
-      }
+      return this.mfaOrchestratorService.sendLoginOtp(user);
   }
 
   async complete2faLogin(user: User, code: string, ipAddress?: string, userAgent?: string) {
-      const isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, code);
-
-      if (!isValid2FA) {
-         await this.auditService.record(
-            user.id,
-            'User',
-            user.id,
-            ActionType.LOGIN_FAILED,
-            { email: user.email, reason: 'Invalid 2FA Code' },
-            undefined
-         );
-         throw new UnauthorizedException('Código 2FA inválido');
-      }
-
-    // Reset attempts on successful 2FA
-    await this.resetLoginAttempts(user);
-
-    await this.auditService.record(
-        user.id,
-        'User',
-        user.id,
-        ActionType.LOGIN,
-        { email: user.email, ipAddress, userAgent, method: '2FA' },
-        undefined,
-    );
-
-    return await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
+     return this.mfaOrchestratorService.complete2faLogin(user, code, ipAddress, userAgent);
   }
 
   private convertToMs(time: string): number {

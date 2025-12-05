@@ -7,8 +7,8 @@ import {
     HttpErrorResponse
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, switchMap, filter, take } from 'rxjs/operators';
+import { Observable, throwError, BehaviorSubject, timer } from 'rxjs';
+import { catchError, switchMap, filter, take, retry } from 'rxjs/operators';
 import { AuthService } from '../services/auth';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
@@ -38,12 +38,20 @@ export const authInterceptor: HttpInterceptorFn = (
                 if (!isRefreshing) {
                     isRefreshing = true;
                     refreshTokenSubject.next(null);
-                    console.log('[Interceptor] Token expirado detectado. Iniciando refresco único...');
 
                     return authService.refreshAccessToken().pipe(
+                        // Reintentar si falla por error de red (status 0) o 5xx
+                        retry({
+                            count: 3,
+                            delay: (error, retryCount) => {
+                                if (error.status === 0 || error.status >= 500) {
+                                    return timer(retryCount * 1000); // Exponential backoff-ish: 1s, 2s, 3s
+                                }
+                                return throwError(() => error);
+                            }
+                        }),
                         switchMap((response) => {
                             isRefreshing = false;
-                            console.log('[Interceptor] Token refrescado exitosamente.');
                             refreshTokenSubject.next(true); // Emitir valor para liberar la cola
 
                             // Clonar la petición original con el nuevo token si estuviera disponible en la respuesta
@@ -54,12 +62,10 @@ export const authInterceptor: HttpInterceptorFn = (
                         }),
                         catchError((refreshError) => {
                             isRefreshing = false;
-                            console.error('[Interceptor] Fallo al refrescar el token. Deslogueando usuario.', refreshError);
                             refreshTokenSubject.next(false); // Emitir false para indicar fallo
 
                             // Check if the error is a network error (status 0) to avoid logging out on temporary connection loss.
                             if (refreshError.status === 0) {
-                                console.warn('[Interceptor] Network error during refresh. Not logging out yet.');
                                 return throwError(() => refreshError);
                             }
 
@@ -71,7 +77,6 @@ export const authInterceptor: HttpInterceptorFn = (
                         })
                     );
                 } else {
-                    console.log('[Interceptor] Refresco en progreso. Poniendo petición en cola...');
                     // Esperar a que el subject emita un valor que no sea null (null = inicial/en proceso)
                     return refreshTokenSubject.pipe(
                         filter(token => token !== null),
@@ -81,7 +86,6 @@ export const authInterceptor: HttpInterceptorFn = (
                             if (token === false) {
                                 return throwError(() => new Error('Token refresh failed'));
                             }
-                            console.log('[Interceptor] Cola liberada. Reintentando petición.');
                             return next(authReq);
                         })
                     );
