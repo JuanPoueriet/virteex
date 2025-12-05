@@ -15,6 +15,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { RegistrationService } from './services/registration.service';
+import { GeoService } from '../geo/geo.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -49,6 +50,10 @@ describe('AuthService', () => {
       register: jest.fn(),
   }
 
+  const mockGeoService = {
+      getLocation: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -66,6 +71,7 @@ describe('AuthService', () => {
         { provide: CryptoUtil, useValue: { decrypt: jest.fn(), encrypt: jest.fn() } },
         { provide: OrganizationsService, useValue: { create: jest.fn() } },
         { provide: RegistrationService, useValue: mockRegistrationService },
+        { provide: GeoService, useValue: mockGeoService },
       ],
     }).compile();
 

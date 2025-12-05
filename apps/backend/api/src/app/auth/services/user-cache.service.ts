@@ -12,6 +12,14 @@ export class UserCacheService {
     await this.cacheManager.del(`user_session:${userId}`);
   }
 
+  async getUser(userId: string): Promise<any | null> {
+    return this.cacheManager.get(`user_session:${userId}`);
+  }
+
+  async setUser(userId: string, user: any, ttl?: number): Promise<void> {
+    await this.cacheManager.set(`user_session:${userId}`, user, ttl);
+  }
+
   /**
    * Invalidates the user cache explicitly.
    * Call this whenever critical user data (roles, status) changes.
