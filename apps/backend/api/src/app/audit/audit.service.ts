@@ -28,7 +28,11 @@ export class AuditTrailService {
       previousValue,
       ipAddress,
     });
-    await this.auditLogRepository.save(auditLog);
+    // Fire-and-forget: No esperamos a que se guarde para no bloquear la request.
+    // Capturamos errores para no romper el flujo principal.
+    this.auditLogRepository.save(auditLog).catch(err => {
+      console.error('Error saving audit log', err);
+    });
   }
 
   async find(entity?: string, entityId?: string): Promise<AuditLog[]> {

@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { GoogleRecaptchaModule, GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
@@ -62,14 +63,25 @@ import { OrganizationsModule } from '../organizations/organizations.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService): ThrottlerModuleOptions => ({
-        throttlers: [
-          {
-            ttl: Number(config.get('THROTTLE_TTL', 60)),
-            limit: Number(config.get('THROTTLE_LIMIT', 10)),
-          },
-        ],
-      }),
+      useFactory: (config: ConfigService): ThrottlerModuleOptions => {
+        const redisHost = config.get<string>('REDIS_HOST');
+        const storage = redisHost
+          ? new ThrottlerStorageRedisService({
+              host: redisHost,
+              port: config.get<number>('REDIS_PORT', 6379),
+            })
+          : undefined;
+
+        return {
+          throttlers: [
+            {
+              ttl: Number(config.get('THROTTLE_TTL', 60000)),
+              limit: Number(config.get('THROTTLE_LIMIT', 10)),
+            },
+          ],
+          storage,
+        };
+      },
     }),
     GoogleRecaptchaModule.forRootAsync({
       imports: [ConfigModule],

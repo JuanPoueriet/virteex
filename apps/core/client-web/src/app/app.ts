@@ -25,8 +25,6 @@ export class App implements OnInit {
   private router = inject(Router);
 
   ngOnInit(): void {
-    // this.authService.checkAuthStatus().subscribe();
-
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         // If we are navigating to settings and we are already in settings, let the settings loader handle it.

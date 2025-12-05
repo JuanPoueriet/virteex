@@ -1,7 +1,7 @@
 
 
 
-import { IsRNC } from '../../../../../../libs/shared/util-auth/src/index';
+import { IsRNC } from '../../../../../../../libs/shared/util-auth/src/index';
 import {
     IsString,
     IsNotEmpty,
