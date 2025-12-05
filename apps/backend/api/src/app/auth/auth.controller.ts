@@ -148,9 +148,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
-  ): Promise<{ user: UserResponseDto }> {
-    const { user, accessToken, refreshToken } =
-      await this.authService.login(loginUserDto, ip, userAgent);
+  ): Promise<any> {
+    const result = await this.authService.login(loginUserDto, ip, userAgent);
+
+    // Check if 2FA is required
+    if ('require2fa' in result && result.require2fa) {
+        return result;
+    }
+
+    const { user, accessToken, refreshToken } = result;
     const rememberMe = loginUserDto.rememberMe || false;
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken, rememberMe);
@@ -316,6 +322,43 @@ export class AuthController {
   @ApiOperation({ summary: 'Disable 2FA' })
   async disableTwoFactor(@CurrentUser() user: User) {
     return this.twoFactorAuthService.disableTwoFactor(user);
+  }
+
+  @Post('send-phone-otp')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // Rate limit: 3 per minute
+  async sendPhoneOtp(@CurrentUser() user: User, @Body('phoneNumber') phoneNumber: string) {
+      if (!phoneNumber) {
+          throw new BadRequestException('Phone number is required');
+      }
+      await this.authService.sendPhoneOtp(user.id, phoneNumber);
+      return { message: 'OTP sent successfully' };
+  }
+
+  @Post('verify-phone')
+  @UseGuards(JwtAuthGuard)
+  async verifyPhoneOtp(@CurrentUser() user: User, @Body() body: { code: string, phoneNumber: string }) {
+      return this.authService.verifyPhoneOtp(user.id, body.code, body.phoneNumber);
+  }
+
+  @Post('verify-2fa')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Rate limit 2FA attempts
+  async verify2fa(
+      @Body() body: { code: string, tempToken: string },
+      @Res({ passthrough: true }) res: Response,
+      @Ip() ip: string,
+      @Headers('user-agent') userAgent: string
+  ) {
+      const user = await this.authService.verifyUserFromToken(body.tempToken);
+      if (!user) {
+          throw new UnauthorizedException('Invalid or expired session');
+      }
+
+      const result = await this.authService.complete2faLogin(user, body.code, ip, userAgent);
+
+      this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
+      return { user: result.user };
   }
 
   // ------------------------------------------------------------------

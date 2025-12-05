@@ -24,6 +24,7 @@ import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { OktaStrategy } from './strategies/okta.strategy';
 
 import { RefreshToken } from './entities/refresh-token.entity';
+import { VerificationCode } from './entities/verification-code.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
@@ -31,6 +32,7 @@ import { AuditModule } from '../audit/audit.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { GeoModule } from '../geo/geo.module';
 import { UsersModule } from '../users/users.module';
+import { TwilioSmsProvider } from './services/sms.provider';
 
 @Module({
   imports: [
@@ -58,7 +60,7 @@ import { UsersModule } from '../users/users.module';
             };
         },
     }),
-    TypeOrmModule.forFeature([RefreshToken, Organization]), // Removed User
+    TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode]), // Removed User
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -117,7 +119,12 @@ import { UsersModule } from '../users/users.module';
     GoogleRecaptchaGuard,
     GoogleStrategy,
     MicrosoftStrategy,
-    OktaStrategy
+    OktaStrategy,
+    TwilioSmsProvider,
+    {
+      provide: 'SmsProvider',
+      useClass: TwilioSmsProvider
+    }
   ],
   exports: [
     AuthService,

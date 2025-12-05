@@ -148,6 +148,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^20.0.0",
+    "twilio": "^5.10.7",
     "typeorm": "^0.3.26",
     "ua-parser-js": "^2.0.6",
     "web-push": "^3.6.7",
