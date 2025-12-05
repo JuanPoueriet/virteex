@@ -1,5 +1,5 @@
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
@@ -23,7 +23,6 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { OktaStrategy } from './strategies/okta.strategy';
 
-import { User } from '../users/entities/user.entity/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { MailModule } from '../mail/mail.module';
@@ -31,6 +30,7 @@ import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { GeoModule } from '../geo/geo.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -38,6 +38,7 @@ import { GeoModule } from '../geo/geo.module';
     AuditModule,
     OrganizationsModule,
     GeoModule,
+    forwardRef(() => UsersModule), // Import UsersModule to use UsersService
     // Cache configuration: Redis if available, Memory fallback
     CacheModule.registerAsync({
         imports: [ConfigModule],
@@ -57,7 +58,7 @@ import { GeoModule } from '../geo/geo.module';
             };
         },
     }),
-    TypeOrmModule.forFeature([User, RefreshToken, Organization]),
+    TypeOrmModule.forFeature([RefreshToken, Organization]), // Removed User
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

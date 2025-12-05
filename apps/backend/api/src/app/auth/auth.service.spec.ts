@@ -18,6 +18,7 @@ import { RegistrationService } from './services/registration.service';
 import { GeoService } from '../geo/geo.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { ImpersonationService } from './services/impersonation.service';
+import { UsersService } from '../users/users.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -56,11 +57,20 @@ describe('AuthService', () => {
       getLocation: jest.fn(),
   }
 
+  const mockUsersService = {
+      findUserForAuth: jest.fn(),
+      findUserByIdForAuth: jest.fn(),
+      findOneByEmail: jest.fn(),
+      save: jest.fn(),
+      update: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: getRepositoryToken(User), useValue: mockRepository },
+        { provide: UsersService, useValue: mockUsersService }, // Added UsersService
+        { provide: getRepositoryToken(User), useValue: mockRepository }, // Can remove this if AuthService doesn't use it anymore, but other services might need it if mocked poorly
         { provide: getRepositoryToken(Organization), useValue: mockRepository },
         { provide: getRepositoryToken(RefreshToken), useValue: mockRepository },
         { provide: JwtService, useValue: { sign: jest.fn(), verify: jest.fn() } },
