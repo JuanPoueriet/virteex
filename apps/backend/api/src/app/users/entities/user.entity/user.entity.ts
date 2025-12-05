@@ -117,7 +117,7 @@ export class User {
   @Column({ name: 'preferred_language', length: 5, nullable: true, default: 'es' })
   preferredLanguage?: string;
 
-  @Column({ length: 20, unique: true, nullable: true })
+ @Column({ type: 'varchar', length: 20, unique: true, nullable: true }) // [!code ++]
   phone?: string | null;
 
   @Column({ name: 'is_phone_verified', default: false })
