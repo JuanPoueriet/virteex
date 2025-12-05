@@ -5,8 +5,10 @@ export interface RegisterPayload {
     password: string;
     organizationName: string;
     fiscalRegionId: string;
-    rnc?: string;
+    taxId?: string; // Renamed from rnc
     recaptchaToken?: string;
     plan?: string;
-    
+    industry?: string;
+    companySize?: string;
+    address?: string;
 }

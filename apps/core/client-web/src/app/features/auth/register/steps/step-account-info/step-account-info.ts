@@ -73,7 +73,13 @@ export class StepAccountInfo implements OnInit, OnChanges {
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      this.parentForm.patchValue({ avatarUrl: file });
+      // Check if control exists before setting, as it might be removed in parent
+      const avatarControl = this.parentForm.get('avatarUrl');
+      if (avatarControl) {
+        avatarControl.setValue(file);
+        avatarControl.markAsDirty();
+      }
+
       const reader = new FileReader();
       reader.onload = () => this.avatarPreview.set(reader.result);
       reader.readAsDataURL(file);

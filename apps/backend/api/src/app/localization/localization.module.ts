@@ -2,6 +2,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
+import { HttpModule } from '@nestjs/axios';
 import { LocalizationService } from './services/localization.service';
 import { LocalizationAdminController } from './controllers/localization-admin.controller';
 import { FiscalRegion } from './entities/fiscal-region.entity';
@@ -18,6 +19,8 @@ import { ReportDefinition } from './entities/report-definition.entity';
 import { EInvoiceProviderConfig } from './entities/einvoice-provider-config.entity';
 import { LocalizationController } from './controllers/localization.controller';
 import { LocalizationListener } from './listeners/localization.listener';
+import { DominicanRepublicStrategy } from './drivers/dominican-republic/dominican-republic.strategy';
+import { GenericFiscalStrategy } from './drivers/generic-fiscal.strategy';
 
 @Module({
   imports: [
@@ -37,8 +40,15 @@ import { LocalizationListener } from './listeners/localization.listener';
     forwardRef(() => ChartOfAccountsModule),
     TaxesModule,
     SharedModule,
+    HttpModule
   ],
-  providers: [LocalizationService, LocalizationConsumer, LocalizationListener],
+  providers: [
+    LocalizationService,
+    LocalizationConsumer,
+    LocalizationListener,
+    DominicanRepublicStrategy,
+    GenericFiscalStrategy
+  ],
   controllers: [LocalizationAdminController, LocalizationController],
   exports: [LocalizationService],
 })

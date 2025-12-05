@@ -26,18 +26,21 @@ export class RegistrationService {
     private readonly mailService: MailService,
     private readonly eventEmitter: EventEmitter2,
     @InjectRepository(Organization)
-    private readonly organizationRepository: Repository<Organization> // Kept for any direct checks if needed
+    private readonly organizationRepository: Repository<Organization>
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
     const {
       email,
-      rnc,
+      taxId, // Renamed from rnc
       password,
       organizationName,
       firstName,
       lastName,
       fiscalRegionId,
+      industry, // New field
+      companySize, // New field
+      address // New field
     } = registerUserDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -49,7 +52,6 @@ export class RegistrationService {
         where: { email },
       });
       if (existingUser) {
-        // Prevent User Enumeration
         try {
           await this.mailService.sendDuplicateRegistrationEmail(email, existingUser.firstName);
         } catch (e) {
@@ -59,19 +61,23 @@ export class RegistrationService {
         throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
       }
 
-      if (rnc) {
+      if (taxId) {
         const existingOrg = await queryRunner.manager.findOne(Organization, {
-          where: { taxId: rnc },
+          where: { taxId: taxId },
         });
         if (existingOrg) {
           throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
         }
       }
 
+      // Create Organization with additional fields if entity supports them, or just basic
       const organization = await this.organizationsService.create({
         legalName: organizationName,
-        taxId: rnc || null,
+        taxId: taxId || null,
         fiscalRegionId: fiscalRegionId,
+        industry: industry, // Pass industry for provisioning
+        companySize: companySize,
+        address: address
       }, queryRunner.manager);
 
       const defaultRoles = this.getDefaultRolesForOrganization(organization.id);
@@ -102,6 +108,7 @@ export class RegistrationService {
       });
       await queryRunner.manager.save(user);
 
+      // Trigger event which will handle Localization Application (Provisioning)
       await this.eventEmitter.emitAsync(
         'user.registered',
         new UserRegisteredEvent(user, organization, queryRunner.manager)
@@ -109,7 +116,6 @@ export class RegistrationService {
 
       await queryRunner.commitTransaction();
 
-      // Ensure relations are set for the return object
       user.organization = organization;
       user.roles = [adminRole];
 
