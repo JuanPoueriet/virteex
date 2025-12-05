@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode, APP_INITIALIZER, inject } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -14,11 +14,20 @@ import { APP_ROUTES } from './app.routes';
 import { RECAPTCHA_SETTINGS, RECAPTCHA_V3_SITE_KEY, RecaptchaSettings, RecaptchaV3Module } from 'ng-recaptcha-19';
 import { environment } from '../environments/environment';
 import { ThemeService } from './core/services/theme';
+import { AuthService } from './core/services/auth';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 import { API_URL } from './core/tokens/api-url.token';
 
 const CORE_PROVIDERS = [
+  {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+          const authService = inject(AuthService);
+          return () => authService.checkAuthStatus();
+      },
+      multi: true
+  },
   { provide: API_URL, useValue: environment.apiUrl || 'http://localhost:3000/api/v1' },
   provideBrowserGlobalErrorListeners(),
   provideZonelessChangeDetection(),

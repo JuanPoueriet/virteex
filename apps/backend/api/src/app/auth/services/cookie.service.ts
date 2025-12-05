@@ -19,9 +19,9 @@ export class CookieService {
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      // Usamos 'strict' para máxima seguridad en API propia.
-      // Si se requiere cross-site (ej. login social o apps externas), podría necesitarse 'none'.
-      sameSite: (isProduction ? 'strict' : 'lax') as 'strict' | 'lax' | 'none',
+      // Usamos 'lax' para permitir redirecciones desde sitios externos (ej. emails, pasarelas de pago)
+      // mientras mantenemos un nivel aceptable de seguridad contra CSRF.
+      sameSite: 'lax' as 'strict' | 'lax' | 'none',
     };
 
     // Access Token

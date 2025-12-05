@@ -5,7 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -111,7 +112,24 @@ const envValidation = Joi.object({
           : false,
       }),
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 20 }]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): ThrottlerModuleOptions => {
+        const redisHost = config.get<string>('REDIS_HOST');
+        const storage = redisHost
+          ? new ThrottlerStorageRedisService({
+              host: redisHost,
+              port: config.get<number>('REDIS_PORT', 6379),
+            })
+          : undefined; // Default to memory if no Redis host
+
+        return {
+          throttlers: [{ ttl: 60000, limit: 20 }],
+          storage,
+        };
+      },
+    }),
     GoogleRecaptchaModule.forRoot({
       secretKey: process.env.RECAPTCHA_V3_SECRET_KEY,
       response: (req) => req.body.recaptchaToken,

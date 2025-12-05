@@ -37,7 +37,7 @@ import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
-import { hasPermission } from '../../../../../libs/shared/util-auth/src/index';
+import { hasPermission } from '../../../../../../libs/shared/util-auth/src/index';
 import { UserRegisteredEvent } from './events/user-registered.event';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { OrganizationsService } from '../organizations/organizations.service';
