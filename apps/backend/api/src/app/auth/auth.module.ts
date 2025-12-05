@@ -39,6 +39,9 @@ import { OrganizationsModule } from '../organizations/organizations.module';
 import { GeoModule } from '../geo/geo.module';
 import { UsersModule } from '../users/users.module';
 import { TwilioSmsProvider } from './services/sms.provider';
+import { AbstractSmsProvider } from './services/abstract-sms.provider';
+import { SocialAuthService } from './services/social-auth.service';
+import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 
 @Module({
   imports: [
@@ -130,9 +133,10 @@ import { TwilioSmsProvider } from './services/sms.provider';
     GoogleStrategy,
     MicrosoftStrategy,
     OktaStrategy,
-    TwilioSmsProvider,
+    SocialAuthService,
+    MfaOrchestratorService,
     {
-      provide: 'SmsProvider',
+      provide: AbstractSmsProvider,
       useClass: TwilioSmsProvider
     }
   ],
@@ -146,7 +150,9 @@ import { TwilioSmsProvider } from './services/sms.provider';
     JwtModule,
     JwtStrategy,
     CookieService,
-    UserCacheService
+    UserCacheService,
+    SocialAuthService,
+    MfaOrchestratorService
   ],
 })
 export class AuthModule {}

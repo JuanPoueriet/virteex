@@ -23,6 +23,8 @@ import { UsersService } from '../users/users.service';
 import { SessionService } from './services/session.service';
 import { SecurityAnalysisService } from './services/security-analysis.service';
 import { TokenService } from './services/token.service';
+import { SocialAuthService } from './services/social-auth.service';
+import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -69,12 +71,25 @@ describe('AuthService', () => {
       update: jest.fn(),
   }
 
+  const mockSocialAuthService = {
+      validateOAuthLogin: jest.fn(),
+      generateRegisterToken: jest.fn(),
+      getSocialRegisterInfo: jest.fn(),
+  }
+
+  const mockMfaOrchestratorService = {
+      sendPhoneOtp: jest.fn(),
+      verifyPhoneOtp: jest.fn(),
+      sendLoginOtp: jest.fn(),
+      complete2faLogin: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: UsersService, useValue: mockUsersService }, // Added UsersService
-        { provide: getRepositoryToken(User), useValue: mockRepository }, // Can remove this if AuthService doesn't use it anymore, but other services might need it if mocked poorly
+        { provide: UsersService, useValue: mockUsersService },
+        { provide: getRepositoryToken(User), useValue: mockRepository },
         { provide: getRepositoryToken(Organization), useValue: mockRepository },
         { provide: getRepositoryToken(RefreshToken), useValue: mockRepository },
         { provide: getRepositoryToken(VerificationCode), useValue: mockRepository },
@@ -127,6 +142,8 @@ describe('AuthService', () => {
             buildPayload: jest.fn(),
           },
         },
+        { provide: SocialAuthService, useValue: mockSocialAuthService },
+        { provide: MfaOrchestratorService, useValue: mockMfaOrchestratorService },
       ],
     }).compile();
 
