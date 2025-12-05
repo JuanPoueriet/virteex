@@ -4,10 +4,11 @@ import {
   Injectable,
   UnauthorizedException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
@@ -92,6 +93,49 @@ export class AuthService {
 
     // User does not exist
     return { user: null };
+  }
+
+  async generateRegisterToken(socialUser: SocialUser): Promise<string> {
+    // Generate a short-lived token containing the social user info
+    // This avoids passing PII in the URL
+    return this.jwtService.sign(
+      {
+        email: socialUser.email,
+        firstName: socialUser.firstName,
+        lastName: socialUser.lastName,
+        provider: socialUser.provider,
+        picture: socialUser.picture,
+        type: 'social-register'
+      },
+      {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+        expiresIn: '10m' // Valid for 10 minutes
+      }
+    );
+  }
+
+  async getSocialRegisterInfo(token: string): Promise<SocialUser> {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+      });
+
+      if (payload.type !== 'social-register') {
+        throw new UnauthorizedException('Token inválido para registro.');
+      }
+
+      return {
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        provider: payload.provider,
+        picture: payload.picture,
+        providerId: '', // Not needed for form pre-fill usually, or encoded in token if needed
+        accessToken: ''
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Token de registro inválido o expirado.');
+    }
   }
 
   async register(registerUserDto: RegisterUserDto, ipAddress?: string, userAgent?: string) {
@@ -363,11 +407,14 @@ export class AuthService {
 
             // Fingerprint Validation (only for active tokens)
             if (refreshTokenEntity.userAgent && userAgent && refreshTokenEntity.userAgent !== userAgent) {
-                this.logger.warn(`[SECURITY] User Agent mismatch. Token created with ${refreshTokenEntity.userAgent}, used with ${userAgent}. Revoking.`);
-                refreshTokenEntity.isRevoked = true;
-                refreshTokenEntity.revokedAt = new Date();
-                await this.refreshTokenRepository.save(refreshTokenEntity);
-                throw new UnauthorizedException('Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.');
+                // Improved UX: Fuzzy Matching / Relaxed Validation
+                // Browsers update frequently (minor versions), changing the UA string.
+                // Instead of strictly invalidating, we log a warning.
+                // Ideally, we should parse the UA to compare only OS and Browser Family.
+                this.logger.warn(`[SECURITY] User Agent mismatch detected (likely browser update). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Allowing session to continue.`);
+
+                // Only revoke if completely suspicious (optional implementation left for future robust fingerprinting)
+                // For now, we allow it to prevent user frustration on browser updates.
             }
 
             // IP Validation

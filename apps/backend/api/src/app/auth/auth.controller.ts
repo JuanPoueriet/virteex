@@ -15,6 +15,7 @@ import {
   Param,
   Ip,
   Headers,
+  Query,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
@@ -92,23 +93,25 @@ export class AuthController {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     if (!user) {
-        // Redirect to registration with pre-filled data
-        const params = new URLSearchParams({
-            email: socialUser.email,
-            firstName: socialUser.firstName,
-            lastName: socialUser.lastName,
-            provider: socialUser.provider
-        });
+        // Generate a secure, short-lived token to transfer PII safely
+        const registerToken = await this.authService.generateRegisterToken(socialUser);
 
-        const redirectUrl = new URL(`${frontendUrl}/auth/register`);
-        redirectUrl.search = params.toString();
-
-        return res.redirect(redirectUrl.toString());
+        // Redirect with token only
+        return res.redirect(`${frontendUrl}/auth/register?token=${registerToken}`);
     }
 
     // Login successful
     this.cookieService.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
     return res.redirect(`${frontendUrl}/dashboard`);
+  }
+
+  @Get('social-register-info')
+  @ApiOperation({ summary: 'Decode social register token to pre-fill form' })
+  async getSocialRegisterInfo(@Query('token') token: string) {
+      if (!token) {
+          throw new BadRequestException('Token required');
+      }
+      return this.authService.getSocialRegisterInfo(token);
   }
 
   @Post('register')
