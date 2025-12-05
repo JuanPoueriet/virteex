@@ -312,6 +312,8 @@ export class AuthService {
           'No tienes permiso o la verificación reCAPTCHA ha fallado.';
       } else if (error.status === 404) {
         customErrorMessage = 'El recurso solicitado no fue encontrado.';
+      } else if (error.status === 429) {
+        customErrorMessage = 'Demasiadas solicitudes. Por favor, espera un momento antes de intentar de nuevo.';
       }
     }
 

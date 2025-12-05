@@ -36,6 +36,8 @@ import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filt
 import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { plainToInstance } from 'class-transformer';
 import { AuthGuard } from '@nestjs/passport';
 import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 
@@ -81,6 +83,7 @@ export class AuthController {
 
   private async handleSocialCallback(socialUser: any, res: Response) {
     const { user, tokens } = await this.authService.validateOAuthLogin(socialUser);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     if (!user) {
         // Redirect to registration with pre-filled data
@@ -90,36 +93,42 @@ export class AuthController {
             lastName: socialUser.lastName,
             provider: socialUser.provider
         });
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/register?${params.toString()}`);
+
+        const redirectUrl = new URL(`${frontendUrl}/auth/register`);
+        redirectUrl.search = params.toString();
+
+        return res.redirect(redirectUrl.toString());
     }
 
     // Login successful
     this.cookieService.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    return res.redirect(`${this.configService.get('FRONTEND_URL')}/dashboard`);
+    return res.redirect(`${frontendUrl}/dashboard`);
   }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user and organization' })
-  @ApiResponse({ status: 201, description: 'User successfully registered.' })
+  @ApiResponse({ status: 201, description: 'User successfully registered.', type: AuthResponseDto })
   @UseGuards(GoogleRecaptchaGuard)
   async register(
     @Body() registerUserDto: RegisterUserDto,
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
-  ): Promise<{ user: any; accessToken: string }> {
+  ): Promise<AuthResponseDto> {
     const { user, accessToken, refreshToken } =
       await this.authService.register(registerUserDto, ip, userAgent);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
-    // Return accessToken as well for clients not using cookies
-    return { user, accessToken };
+    return {
+      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
+      accessToken,
+    };
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 200, description: 'Login successful', type: AuthResponseDto })
   @HttpCode(HttpStatus.OK)
   @Throttle({
     default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL },
@@ -130,18 +139,21 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
-  ): Promise<{ user: any }> {
+  ): Promise<{ user: UserResponseDto }> {
     const { user, accessToken, refreshToken } =
       await this.authService.login(loginUserDto, ip, userAgent);
     const rememberMe = loginUserDto.rememberMe || false;
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken, rememberMe);
 
-    return { user };
+    return {
+      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true })
+    };
   }
 
   @Post('set-password-from-invitation')
   @HttpCode(HttpStatus.OK)
+  @ApiResponse({ type: AuthResponseDto })
   async setPasswordFromInvitation(
     @Body() setPasswordDto: SetPasswordFromInvitationDto,
     @Res({ passthrough: true }) res: Response
@@ -151,7 +163,10 @@ export class AuthController {
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
-    return { user };
+    return {
+      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
+      accessToken // Included for consistency with AuthResponseDto
+    };
   }
 
   @Get('invitation/:token')
@@ -162,39 +177,26 @@ export class AuthController {
 
   @Get('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiResponse({ type: AuthResponseDto })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
-  ): Promise<{ accessToken: string; user: any }> {
+  ): Promise<AuthResponseDto> {
     const refreshToken = req.cookies?.refresh_token;
     if (!refreshToken) {
       throw new BadRequestException('Refresh token no encontrado en cookies');
     }
 
-    const { accessToken, user } =
-      await this.authService.refreshAccessToken(refreshToken, ip, userAgent);
-
-    // For refresh, we update access token.
-    // The service now returns new tokens if rotated, but let's assume it returns accessToken and user at minimum.
-    // If authService returns refreshToken too (it does), we should update cookie.
-
-    // Actually authService returns { accessToken, refreshToken, user } now.
-    // Let's typecast safely or update logic.
-    // Wait, in previous step I updated refreshAccessToken to return { user, accessToken, refreshToken }.
-    // So I can just use it.
-
-    // Wait, the destructuring was: `const { accessToken, user } = ...`. I should add refreshToken.
-    // However, the original code had `const { accessToken, user }` only. I must check what I changed in AuthService.
-    // In AuthService: `return { user: authResponse.user, accessToken: ..., refreshToken: ... };`
-    // So I can get refreshToken.
-
     const result = await this.authService.refreshAccessToken(refreshToken, ip, userAgent);
 
     this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
 
-    return { accessToken: result.accessToken, user: result.user };
+    return {
+      accessToken: result.accessToken,
+      user: plainToInstance(UserResponseDto, result.user, { excludeExtraneousValues: true })
+    };
   }
 
   @Post('logout')
@@ -225,7 +227,7 @@ export class AuthController {
 
     return {
       isAuthenticated: true,
-      user: statusResponse.user,
+      user: plainToInstance(UserResponseDto, statusResponse.user, { excludeExtraneousValues: true }),
     };
   }
 

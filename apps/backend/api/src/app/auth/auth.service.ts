@@ -72,13 +72,13 @@ export class AuthService {
     if (user) {
       // User exists, update provider info if not set or different (link account)
       if (user.authProvider !== socialUser.provider || user.authProviderId !== socialUser.providerId) {
-        // Asynchronous update (Fire and forget)
-        this.userRepository.update(user.id, {
+        // Asynchronous update (Fire and forget) - Fixed to await for data consistency
+        await this.userRepository.update(user.id, {
           authProvider: socialUser.provider,
           authProviderId: socialUser.providerId,
           // Optional: Update avatar if missing
           avatarUrl: user.avatarUrl || socialUser.picture
-        }).catch(err => this.logger.error('Failed to update social user info', err));
+        });
 
         // Update in memory for response
         user.authProvider = socialUser.provider;
@@ -89,15 +89,15 @@ export class AuthService {
          throw new UnauthorizedException('Usuario inactivo o bloqueado.');
        }
 
-      // Log Login (Non-blocking)
-      this.auditService.record(
+      // Log Login (Non-blocking) - Fixed to await for data consistency
+      await this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.LOGIN,
         { email: user.email, provider: socialUser.provider, ipAddress, userAgent },
         undefined,
-      ).catch(err => this.logger.error('Failed to record audit log', err));
+      );
 
        const authResponse = await this.generateAuthResponse(user, {}, ipAddress, userAgent);
        return { user, tokens: authResponse };
@@ -153,28 +153,28 @@ export class AuthService {
     if (!user || !isPasswordValid) {
       if (user) {
           await this.handleFailedLoginAttempt(user);
-          this.auditService.record(
+          await this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'Invalid Credentials' },
             undefined
-          ).catch(err => this.logger.error('Audit log error', err));
+          );
       }
       await this.simulateDelay(); // Additional Safe delay
       throw new UnauthorizedException('Credenciales no válidas');
     }
 
     if (user.status !== UserStatus.ACTIVE) {
-       this.auditService.record(
+       await this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'User Inactive/Blocked' },
             undefined
-       ).catch(err => this.logger.error('Audit log error', err));
+       );
       throw new UnauthorizedException(
         'Usuario inactivo o pendiente, por favor contacte al administrador.',
       );
@@ -204,28 +204,28 @@ export class AuthService {
       });
 
       if (!isValid2FA) {
-         this.auditService.record(
+         await this.auditService.record(
             user.id,
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
             { email: user.email, reason: 'Invalid 2FA Code' },
             undefined
-         ).catch(err => this.logger.error('Audit log error', err));
+         );
          throw new UnauthorizedException('Código 2FA inválido');
       }
     }
 
     await this.resetLoginAttempts(user);
 
-    this.auditService.record(
+    await this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.LOGIN,
         { email: user.email, ipAddress, userAgent },
         undefined,
-    ).catch(err => this.logger.error('Audit log error', err));
+    );
 
     return await this.generateAuthResponse(user, {}, ipAddress, userAgent);
   }
@@ -554,13 +554,13 @@ export class AuthService {
           });
       }
 
-      this.auditService.record(
+      await this.auditService.record(
         user.id,
         'User',
         user.id,
         ActionType.REFRESH,
         { email: user.email, ipAddress, userAgent },
-      ).catch(err => this.logger.error('Audit log error', err));
+      );
 
       return {
         user: authResponse.user,
