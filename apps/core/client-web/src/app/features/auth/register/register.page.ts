@@ -156,11 +156,15 @@ export class RegisterPage implements OnInit {
     });
 
 
-    // Check for social registration token
+    // Check for social registration token or social_registration flag
     this.activatedRoute.queryParams.subscribe(params => {
       const token = params['token'];
-      if (token) {
-        this.authService.getSocialRegisterInfo(token).subscribe({
+      const socialRegistration = params['social_registration'];
+
+      if (token || socialRegistration === 'true') {
+        // If social_registration is true, we call with empty token, forcing backend to check cookie
+        const tokenToUse = token || '';
+        this.authService.getSocialRegisterInfo(tokenToUse).subscribe({
           next: (info) => {
             this.registerForm.patchValue({
               accountInfo: {
@@ -172,6 +176,7 @@ export class RegisterPage implements OnInit {
           },
           error: (err) => {
             console.error('Invalid social token', err);
+            // Optionally clear the URL or show an error
           }
         });
       }

@@ -115,6 +115,8 @@ export class UsersService {
         throw new NotFoundException(`Rol con ID ${roleId} no encontrado.`);
       }
       user.roles = [role];
+      // Increment token version to invalidate sessions on role change
+      user.tokenVersion = (user.tokenVersion || 0) + 1;
       await this.userCacheService.clearUserSession(id);
     } else {
       await this.userCacheService.clearUserSession(id);
@@ -175,6 +177,8 @@ export class UsersService {
       throw new NotFoundException(`Usuario no encontrado`);
     }
     user.status = status;
+    // Invalidate sessions on status change (e.g., blocking)
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);
   }
@@ -193,6 +197,15 @@ export class UsersService {
       .digest('hex');
 
     user.passwordResetExpires = new Date(Date.now() + 3600000);
+
+    // Invalidate sessions on password reset request?
+    // Usually not needed until password is actually changed, but good practice if account is compromised.
+    // However, the actual change happens in PasswordRecoveryService which DOES bump version.
+    // Here we are just sending the email.
+
+    // BUT, if this is an ADMIN resetting a user's password, it usually just sends the email?
+    // "resetPassword" here seems to initiate the flow.
+    // So no tokenVersion bump here.
 
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(id);

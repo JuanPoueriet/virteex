@@ -55,6 +55,16 @@ export class CookieService {
     });
   }
 
+  setRegisterTokenCookie(res: Response, token: string): void {
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
+    res.cookie('register_token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 15, // 15 minutes
+    });
+  }
+
   clearAuthCookies(res: Response): void {
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
