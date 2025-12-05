@@ -9,6 +9,7 @@ import { ModalComponent } from './shared/components/modal/modal.component';
 import { CommonModule } from '@angular/common';
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { GeoMismatchModalComponent } from './shared/components/geo-mismatch-modal/geo-mismatch-modal.component';
+import { IdleService } from './core/services/idle.service';
 
 @Component({
   selector: 'app-root',
@@ -23,6 +24,7 @@ export class App implements OnInit {
   public modalService = inject(ModalService);
   public loaderService = inject(LoaderService);
   private router = inject(Router);
+  private idleService = inject(IdleService); // Initialize Idle Service
 
   ngOnInit(): void {
     this.router.events.subscribe(event => {

@@ -173,14 +173,32 @@ export class AuthService {
           return false;
         }
       }),
-      catchError(() => {
-        // En caso de error 500 real u otros problemas de red
-        this._currentUser.set(null);
-        this._authStatus.set(AuthStatus.unauthenticated);
-        this.webSocketService.disconnect();
-        return of(false);
+      catchError((err: HttpErrorResponse) => {
+        // Mejor manejo de errores: Distinguir entre 401/403 (No autorizado) y 500+ (Error del servidor)
+        if (err.status === 401 || err.status === 403) {
+            this._currentUser.set(null);
+            this._authStatus.set(AuthStatus.unauthenticated);
+            this.webSocketService.disconnect();
+            return of(false);
+        } else {
+            // Error de servidor o de red
+            console.error('Error verificando estado de autenticación:', err);
+            // Opcional: Podríamos mantener el estado anterior o poner un estado 'error',
+            // pero por seguridad asumimos no autenticado si el backend falla,
+            // pero lo logueamos claramente.
+            this._currentUser.set(null);
+            this._authStatus.set(AuthStatus.unauthenticated);
+             this.webSocketService.disconnect();
+            return of(false);
+        }
       })
     );
+  }
+
+  getSocialRegisterInfo(token: string): Observable<any> {
+      return this.http.get(`${this.apiUrl}/social-register-info?token=${token}`, {
+          context: new HttpContext().set(IS_PUBLIC_API, true)
+      });
   }
 
   // 🔥 Añadir método para obtener permisos como observable
