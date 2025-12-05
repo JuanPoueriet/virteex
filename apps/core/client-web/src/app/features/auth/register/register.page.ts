@@ -2,7 +2,7 @@
 
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AlertCircle, ArrowLeft, ArrowRight, BarChart2, Check, CheckCircle, LucideAngularModule, Package, Rocket } from 'lucide-angular';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -72,7 +72,7 @@ export class RegisterPage implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private activatedRoute = inject(import('@angular/router').ActivatedRoute);
+  private activatedRoute = inject(ActivatedRoute);
   private recaptchaV3Service = inject(ReCaptchaV3Service);
   public countryService = inject(CountryService);
   public languageService = inject(LanguageService);

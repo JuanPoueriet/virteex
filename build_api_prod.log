@@ -1,0 +1,23 @@
+
+> nx run api:build  [local cache]
+
+> webpack-cli build --node-env=production
+
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.11 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (c52cb08d6c3a5c3d)
+
+
+
+ NX   Successfully ran target build for project api
+
+Nx read the output from the cache instead of running the command for 1 out of 1 tasks.
+
+
+ NX   Nx detected a flaky task
+
+  api:build
+
+
+ NX   Nx Cloud encountered some problems
+
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)

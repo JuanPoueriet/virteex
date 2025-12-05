@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { authenticator } from 'otplib';
 import { User } from '../../users/entities/user.entity/user.entity';
-import { CryptoUtil } from '../shared/utils/crypto.util';
+import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UserCacheService } from './user-cache.service';
 
 @Injectable()
