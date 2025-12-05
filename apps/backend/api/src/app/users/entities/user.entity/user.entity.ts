@@ -42,7 +42,13 @@ export class User {
     nullable: true,
     select: false,
   })
-  passwordHash: string;
+  passwordHash?: string | null;
+
+  @Column({ name: 'auth_provider', nullable: true })
+  authProvider?: string;
+
+  @Column({ name: 'auth_provider_id', nullable: true })
+  authProviderId?: string;
 
   @Column({ nullable: true })
   avatarUrl?: string;
