@@ -1,10 +1,8 @@
 
-import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Request } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -12,11 +10,14 @@ import { Cache } from 'cache-manager';
 import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
 import { AuthConfig } from '../../auth.config';
+import { UsersService } from '../../../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
@@ -36,27 +37,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const cacheKey = `user_session:${id}`;
 
     // 1. Try to get user from cache
-    let user = await this.cacheManager.get<User>(cacheKey);
+    let user: User | null = null;
+    try {
+        user = await this.cacheManager.get<User>(cacheKey) ?? null;
+    } catch (e) {
+        this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Falling back to DB.`);
+        // Fallback silently proceeds to DB check below
+    }
 
     if (!user) {
         // 2. Fallback to DB
-        user = await this.userRepository.findOne({
-          where: { id },
-          relations: ['roles'],
-          select: [
-            'id',
-            'email',
-            'firstName',
-            'lastName',
-            'status',
-            'tokenVersion',
-            'organizationId',
-          ],
-        });
+        // Using abstracted service method
+        user = await this.usersService.findUserByIdForAuth(id);
 
         if (user) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
-             await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
+             try {
+                await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
+             } catch (e) {
+                this.logger.warn(`Failed to set user cache during JWT validation: ${(e as Error).message}`);
+             }
         }
     }
 

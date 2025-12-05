@@ -8,6 +8,7 @@ export enum ActionType {
   LOGOUT = 'LOGOUT',
   LOGIN_FAILED = 'LOGIN_FAILED',
   REFRESH = 'REFRESH',
+  IMPERSONATE = 'IMPERSONATE',
 }
 
 @Entity({ name: 'audit_logs' })

@@ -1,11 +1,5 @@
 
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  Inject
-} from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity/user.entity';
@@ -27,14 +21,13 @@ export class UsersService {
     private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
+    @Inject(forwardRef(() => UserCacheService))
     private readonly userCacheService: UserCacheService
   ) {}
 
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<User> {
     const user = await this.findOne(id);
     Object.assign(user, updateProfileDto);
-    // Profile update might change name, but usually doesn't affect auth/roles.
-    // If it did, we should invalidate cache. Safe to invalidate anyway.
     await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);
   }
@@ -100,7 +93,6 @@ export class UsersService {
     return { data, total };
   }
 
-
   async updateUser(
     id: string,
     updateUserDto: UpdateUserDto,
@@ -113,12 +105,9 @@ export class UsersService {
       );
     }
 
-
     const { roleId, ...userData } = updateUserDto;
 
-
     Object.assign(user, userData);
-
 
     if (roleId) {
       const role = await this.rolesService.findOne(roleId, organizationId);
@@ -126,10 +115,8 @@ export class UsersService {
         throw new NotFoundException(`Rol con ID ${roleId} no encontrado.`);
       }
       user.roles = [role];
-      // Critical: Role change implies permission change. Must invalidate cache.
       await this.userCacheService.clearUserSession(id);
     } else {
-      // Even if role didn't change, other data might (status?). Invalidate to be safe.
       await this.userCacheService.clearUserSession(id);
     }
 
@@ -170,9 +157,6 @@ export class UsersService {
     return user;
   }
 
-
-
-
   async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email },
@@ -180,9 +164,6 @@ export class UsersService {
 
     return user;
   }
-
-
-
 
   async updateUserStatus(
     id: string,
@@ -198,9 +179,6 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
-
-
-
   async resetPassword(id: string, organizationId: string): Promise<void> {
     const user = await this.userRepository.findOneBy({ id, organizationId });
     if (!user) {
@@ -209,22 +187,17 @@ export class UsersService {
 
     const resetToken = crypto.randomBytes(32).toString('hex');
 
-
     user.passwordResetToken = crypto
       .createHash('sha256')
       .update(resetToken)
       .digest('hex');
 
-
     user.passwordResetExpires = new Date(Date.now() + 3600000);
 
     await this.userRepository.save(user);
-    // Invalidate cache
     await this.userCacheService.clearUserSession(id);
 
-
     try {
-
       await this.mailService.sendPasswordResetEmail(user, resetToken, '1h');
     } catch (error) {
       console.error(
@@ -242,23 +215,15 @@ export class UsersService {
     }
   }
 
-
-
-
   async getActivityLog(userId: string): Promise<any[]> {
     return [];
   }
-
-
-
-
 
   async inviteUser(
     inviteUserDto: InviteUserDto,
     organizationId: string,
   ): Promise<User> {
     const { email, firstName, lastName, roleId } = inviteUserDto;
-
 
     const existingUser = await this.userRepository.findOne({
       where: { email, organization: { id: organizationId } },
@@ -270,17 +235,14 @@ export class UsersService {
       );
     }
 
-
     const role = await this.rolesService.findOne(roleId, organizationId);
     if (!role) {
       throw new NotFoundException(`Role with ID ${roleId} not found.`);
     }
 
-
     const invitationToken = crypto.randomBytes(32).toString('hex');
     const tokenExpires = new Date();
     tokenExpires.setDate(tokenExpires.getDate() + 7);
-
 
     const newUser = this.userRepository.create({
       firstName,
@@ -293,12 +255,8 @@ export class UsersService {
       invitationTokenExpires: tokenExpires,
     });
 
-
     await this.userRepository.save(newUser);
-
-
     await this.mailService.sendUserInvitation(newUser, invitationToken);
-
 
     delete newUser.invitationToken;
     delete newUser.invitationTokenExpires;
@@ -315,7 +273,6 @@ export class UsersService {
     user.tokenVersion += 1;
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(userId);
-
 
     this.eventsGateway.sendToUser(userId, 'force-logout', {
       reason: 'Su sesión ha sido cerrada por un administrador.',
@@ -335,7 +292,6 @@ export class UsersService {
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(userId);
 
-
     this.eventsGateway.sendToUser(userId, 'force-logout', {
       reason:
         'Su cuenta ha sido bloqueada y su sesión ha sido cerrada por un administrador.',
@@ -350,10 +306,70 @@ export class UsersService {
       throw new NotFoundException('Usuario no encontrado');
     }
     user.isOnline = isOnline;
-    // Online status update probably doesn't need to invalidate auth cache,
-    // as it's a transient state not used in auth checks usually.
     const updatedUser = await this.userRepository.save(user);
     this.eventsGateway.server.emit('user-status-update', { userId, isOnline });
     return updatedUser;
+  }
+
+  // --- Auth Abstraction Methods ---
+
+  async findUserForAuth(email: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'role')
+      .leftJoinAndSelect('user.organization', 'organization')
+      .addSelect('user.twoFactorSecret')
+      .addSelect('user.isTwoFactorEnabled')
+      .where('user.email = :email', { email })
+      .select([
+        'user.id',
+        'user.email',
+        'user.passwordHash',
+        'user.status',
+        'user.organizationId',
+        'user.firstName',
+        'user.lastName',
+        'user.preferredLanguage',
+        'user.failedLoginAttempts',
+        'user.lockoutUntil',
+        'user.tokenVersion',
+        'user.twoFactorSecret',
+        'user.isTwoFactorEnabled',
+        'user.authProvider',
+        'user.authProviderId',
+        'user.avatarUrl',
+        'role.id',
+        'role.name',
+        'role.permissions',
+        'organization.id',
+        'organization.legalName',
+        'organization.taxId',
+      ])
+      .getOne();
+  }
+
+  async findUserByIdForAuth(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ['roles', 'organization'],
+      select: [
+        'id',
+        'email',
+        'firstName',
+        'lastName',
+        'status',
+        'tokenVersion',
+        'organizationId',
+        // Minimal fields for strategy validation
+      ],
+    });
+  }
+
+  async save(user: User): Promise<User> {
+    return this.userRepository.save(user);
+  }
+
+  async update(id: string, partialEntity: any): Promise<void> {
+    await this.userRepository.update(id, partialEntity);
   }
 }
