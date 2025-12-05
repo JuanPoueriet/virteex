@@ -768,6 +768,7 @@
     "PASSWORD_LABEL": "Contraseña",
     "OR": "O",
     "FORGOT_PASSWORD": "¿Olvidaste tu contraseña?",
+    "EMAIL_PLACEHOLDER": "nombre@empresa.com",
     "REMEMBER_ME": "Mantener la sesión iniciada",
     "SUBMIT_BUTTON": "Entrar",
     "NO_ACCOUNT": "¿No tienes una cuenta?",

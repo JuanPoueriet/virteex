@@ -108,7 +108,7 @@
               id="email"
               type="email"
               formControlName="email"
-              placeholder="name@company.com"
+              [placeholder]="'LOGIN.EMAIL_PLACEHOLDER' | translate"
               [class.error]="email?.invalid && email?.touched"
             />
           </div>

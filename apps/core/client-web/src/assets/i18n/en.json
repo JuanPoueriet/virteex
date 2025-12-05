@@ -442,6 +442,7 @@
     "OR": "Or",
     "FORGOT_PASSWORD": "Forgot your password?",
     "REMEMBER_ME": "Keep me logged in",
+    "EMAIL_PLACEHOLDER": "name@company.com",
     "SUBMIT_BUTTON": "Sign In",
     "NO_ACCOUNT": "Don't have an account?",
     "REGISTER_LINK": "Sign up",
