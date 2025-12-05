@@ -18,6 +18,10 @@ import {
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
+import { TwoFactorAuthService } from './services/two-factor-auth.service';
+import { PasswordRecoveryService } from './services/password-recovery.service';
+import { RequestWithUser } from './interfaces/request-with-user.interface';
+import { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt/jwt.guard';
@@ -47,41 +51,43 @@ import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly twoFactorAuthService: TwoFactorAuthService,
+    private readonly passwordRecoveryService: PasswordRecoveryService,
     private readonly configService: ConfigService,
     private readonly cookieService: CookieService
   ) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {}
+  async googleAuth(@Req() req: Request) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+  async googleAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
       await this.handleSocialCallback(req.user, res);
   }
 
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuth(@Req() req) {}
+  async microsoftAuth(@Req() req: Request) {}
 
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+  async microsoftAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
       await this.handleSocialCallback(req.user, res);
   }
 
   @Get('okta')
   @UseGuards(AuthGuard('okta'))
-  async oktaAuth(@Req() req) {}
+  async oktaAuth(@Req() req: Request) {}
 
   @Get('okta/callback')
   @UseGuards(AuthGuard('okta'))
-  async oktaAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+  async oktaAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
       await this.handleSocialCallback(req.user, res);
   }
 
-  private async handleSocialCallback(socialUser: any, res: Response) {
+  private async handleSocialCallback(socialUser: SocialUser, res: Response) {
     const { user, tokens } = await this.authService.validateOAuthLogin(socialUser);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
@@ -172,7 +178,7 @@ export class AuthController {
   @Get('invitation/:token')
   @HttpCode(HttpStatus.OK)
   async getInvitationDetails(@Param('token') token: string) {
-    return this.authService.getInvitationDetails(token);
+    return this.passwordRecoveryService.getInvitationDetails(token);
   }
 
   @Get('refresh')
@@ -236,7 +242,7 @@ export class AuthController {
   @UseGuards(GoogleRecaptchaGuard)
   @UsePipes(new ValidationPipe())
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    await this.authService.sendPasswordResetLink(forgotPasswordDto);
+    await this.passwordRecoveryService.sendPasswordResetLink(forgotPasswordDto);
     return {
       message:
         'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.',
@@ -247,7 +253,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe())
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    const user = await this.authService.resetPassword(resetPasswordDto);
+    const user = await this.passwordRecoveryService.resetPassword(resetPasswordDto);
     const { passwordHash, ...userResult } = user;
     return userResult;
   }
@@ -289,7 +295,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Generate 2FA secret and QR code URL' })
   async generateTwoFactorSecret(@CurrentUser() user: User) {
-    return this.authService.generateTwoFactorSecret(user);
+    return this.twoFactorAuthService.generateTwoFactorSecret(user);
   }
 
   @Post('2fa/enable')
@@ -299,14 +305,14 @@ export class AuthController {
     @CurrentUser() user: User,
     @Body() enableTwoFactorDto: EnableTwoFactorDto,
   ) {
-    return this.authService.enableTwoFactor(user, enableTwoFactorDto.token);
+    return this.twoFactorAuthService.enableTwoFactor(user, enableTwoFactorDto.token);
   }
 
   @Post('2fa/disable')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Disable 2FA' })
   async disableTwoFactor(@CurrentUser() user: User) {
-    return this.authService.disableTwoFactor(user);
+    return this.twoFactorAuthService.disableTwoFactor(user);
   }
 
   // ------------------------------------------------------------------

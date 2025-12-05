@@ -13,6 +13,9 @@ import * as redisStore from 'cache-manager-redis-store';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RegistrationService } from './services/registration.service';
+import { TwoFactorAuthService } from './services/two-factor-auth.service';
+import { PasswordRecoveryService } from './services/password-recovery.service';
+import { ImpersonationService } from './services/impersonation.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
 import { CookieService } from './services/cookie.service';
@@ -104,6 +107,9 @@ import { GeoModule } from '../geo/geo.module';
   providers: [
     AuthService,
     RegistrationService,
+    TwoFactorAuthService,
+    PasswordRecoveryService,
+    ImpersonationService,
     JwtStrategy,
     UserCacheService,
     CookieService,
@@ -112,6 +118,16 @@ import { GeoModule } from '../geo/geo.module';
     MicrosoftStrategy,
     OktaStrategy
   ],
-  exports: [AuthService, PassportModule, JwtModule, JwtStrategy, CookieService, UserCacheService],
+  exports: [
+    AuthService,
+    TwoFactorAuthService,
+    PasswordRecoveryService,
+    ImpersonationService,
+    PassportModule,
+    JwtModule,
+    JwtStrategy,
+    CookieService,
+    UserCacheService
+  ],
 })
 export class AuthModule {}

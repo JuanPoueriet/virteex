@@ -1,49 +1,35 @@
 
 import {
-  BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
-  InternalServerErrorException,
-  NotFoundException,
   UnauthorizedException,
-  Inject,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThan, Repository, LessThan } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
 import { authenticator } from 'otplib';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { User, UserStatus } from '../users/entities/user.entity/user.entity';
-import { Organization } from '../organizations/entities/organization.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { MailService } from '../mail/mail.service';
 import { AuthConfig } from './auth.config';
 import { AuditTrailService } from '../audit/audit.service';
 import { ActionType } from '../audit/entities/audit-log.entity';
 import { UserCacheService } from './services/user-cache.service';
 import { GeoService } from '../geo/geo.service';
-import { hasPermission } from '@virteex/shared/util-auth';
 import { CryptoUtil } from '../shared/utils/crypto.util';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegistrationService } from './services/registration.service';
-
-interface PasswordResetJwtPayload {
-  sub: string;
-  email: string;
-}
+import { PasswordRecoveryService } from './services/password-recovery.service';
+import { ImpersonationService } from './services/impersonation.service';
 
 @Injectable()
 export class AuthService {
@@ -55,11 +41,12 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly mailService: MailService,
     private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
     private readonly cryptoUtil: CryptoUtil,
     private readonly registrationService: RegistrationService,
+    private readonly passwordRecoveryService: PasswordRecoveryService,
+    private readonly impersonationService: ImpersonationService,
     private readonly geoService: GeoService
   ) {}
 
@@ -272,38 +259,6 @@ export class AuthService {
     };
   }
 
-
-  public async sendPasswordResetLink(
-    forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<{ message: string }> {
-    const { email } = forgotPasswordDto;
-    const genericMessage = 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.';
-
-    const user = await this.userRepository.findOneBy({ email });
-    if (!user) {
-      await this.simulateDelay();
-      return { message: genericMessage };
-    }
-
-    const expirationTime = AuthConfig.JWT_RESET_PASSWORD_EXPIRATION;
-
-    const token = await this._generatePasswordResetToken(
-      user.id,
-      user.email,
-      expirationTime,
-    );
-
-    user.passwordResetToken = token;
-    user.passwordResetExpires = new Date(
-      Date.now() + this.convertToMs(expirationTime),
-    );
-    await this.userRepository.save(user);
-
-    await this.mailService.sendPasswordResetEmail(user, token, expirationTime);
-
-    return { message: genericMessage };
-  }
-
   private async simulateDelay() {
     // Retardo fijo de 500ms (configurable) para mitigar timing attacks de forma segura y predecible
     return new Promise((resolve) => setTimeout(resolve, AuthConfig.SIMULATED_DELAY_MS));
@@ -342,128 +297,15 @@ export class AuthService {
       .getOne();
   }
 
-
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<User> {
-    const { token, password } = resetPasswordDto;
-
-    let payload: PasswordResetJwtPayload;
-    try {
-      payload = this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_RESET_PASSWORD_SECRET'),
-      });
-    } catch (error) {
-      throw new UnauthorizedException('Token inválido o expirado');
-    }
-
-    const user = await this.userRepository.findOne({
-      where: {
-        id: payload.sub,
-        passwordResetToken: token,
-        passwordResetExpires: MoreThan(new Date()),
-      },
-      select: [
-        'id',
-        'email',
-        'passwordHash',
-        'passwordResetToken',
-        'passwordResetExpires',
-        'tokenVersion'
-      ],
-    });
-
-    if (!user) {
-      throw new NotFoundException(
-        'El token de restablecimiento es inválido o ha expirado.',
-      );
-    }
-
-    if (password.length < 8) {
-      throw new BadRequestException(
-        'La contraseña debe tener al menos 8 caracteres.',
-      );
-    }
-
-    if (!user.passwordHash) {
-      throw new BadRequestException(
-        'No se encontró una contraseña previa para este usuario.',
-      );
-    }
-
-    const isSamePassword = await argon2.verify(user.passwordHash, password);
-    if (isSamePassword) {
-      throw new BadRequestException(
-        'La nueva contraseña no puede ser igual a la anterior',
-      );
-    }
-
-    user.passwordHash = await argon2.hash(password);
-    user.passwordResetToken = null;
-    user.passwordResetExpires = null;
-
-    // Invalidate all existing sessions on password change
-    user.tokenVersion = (user.tokenVersion || 0) + 1;
-
-    // Invalidate cache explicitly
-    await this.userCacheService.clearUserSession(user.id);
-
-    const updatedUser = await this.userRepository.save(user);
-    const {
-      passwordHash,
-      passwordResetToken,
-      passwordResetExpires,
-      ...safeUser
-    } = updatedUser;
-    return safeUser as User;
-  }
-
-
-  async getInvitationDetails(token: string) {
-    const user = await this.userRepository.findOne({
-      where: {
-        invitationToken: token,
-        status: UserStatus.PENDING,
-        invitationTokenExpires: MoreThan(new Date()),
-      },
-    });
-
-    if (!user) {
-      throw new NotFoundException('Invitación no encontrada o expirada.');
-    }
-
-    return { firstName: user.firstName };
-  }
-
-
   async setPasswordFromInvitation(
     setPasswordDto: SetPasswordFromInvitationDto,
   ) {
-    const { token, password } = setPasswordDto;
+    // Delegate to PasswordRecoveryService for business logic
+    const user = await this.passwordRecoveryService.setPasswordFromInvitation(setPasswordDto);
 
-    const user = await this.userRepository.findOne({
-      where: {
-        invitationToken: token,
-        status: UserStatus.PENDING,
-        invitationTokenExpires: MoreThan(new Date()),
-      },
-      relations: ['roles', 'organization'],
-    });
-
-    if (!user) {
-      throw new UnauthorizedException(
-        'El token de invitación es inválido o ha expirado.',
-      );
-    }
-
-    user.passwordHash = await argon2.hash(password);
-    user.status = UserStatus.ACTIVE;
-    user.invitationToken = undefined;
-    user.invitationTokenExpires = undefined;
-
-    await this.userRepository.save(user);
-
+    // Perform login (generate tokens)
     return await this.generateAuthResponse(user);
   }
-
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
     try {
@@ -632,22 +474,7 @@ export class AuthService {
 
 
   async impersonate(adminUser: User, targetUserId: string) {
-    const permissions = [...new Set(adminUser.roles.flatMap((role) => role.permissions))];
-    if (!hasPermission(permissions, ['users:impersonate'])) {
-      throw new ForbiddenException(
-        'No tienes permisos para suplantar usuarios.',
-      );
-    }
-
-    const targetUser = await this.userRepository.findOne({
-      where: { id: targetUserId, organizationId: adminUser.organizationId },
-      relations: ['roles', 'organization'],
-    });
-    if (!targetUser) {
-      throw new NotFoundException(
-        'El usuario a suplantar no fue encontrado en tu organización.',
-      );
-    }
+    const targetUser = await this.impersonationService.validateImpersonationRequest(adminUser, targetUserId);
 
     return await this.generateAuthResponse(targetUser, {
       isImpersonating: true,
@@ -656,33 +483,7 @@ export class AuthService {
   }
 
   async stopImpersonation(impersonatingUser: User) {
-    if (
-      !impersonatingUser.isImpersonating ||
-      !impersonatingUser.originalUserId
-    ) {
-      throw new BadRequestException(
-        'No se encontró una sesión de suplantación activa para detener.',
-      );
-    }
-
-    const adminUser = await this.userRepository.findOne({
-      where: { id: impersonatingUser.originalUserId },
-      relations: ['roles', 'organization'],
-    });
-
-    if (!adminUser) {
-      throw new NotFoundException(
-        'La cuenta del administrador original no fue encontrada.',
-      );
-    }
-    if (adminUser.status !== UserStatus.ACTIVE) {
-      throw new ForbiddenException(
-        'La cuenta del administrador original ya no está activa.',
-      );
-    }
-
-    // Invalidate the impersonation session cache
-    await this.userCacheService.clearUserSession(impersonatingUser.id);
+    const adminUser = await this.impersonationService.validateStopImpersonation(impersonatingUser);
 
     return await this.generateAuthResponse(adminUser);
   }
@@ -694,54 +495,12 @@ export class AuthService {
     return { message: 'Sesión cerrada exitosamente.' };
   }
 
-  // 2FA Methods Implemented
-  async generateTwoFactorSecret(user: User) {
-    const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(user.email, 'Virteex ERP', secret);
-
-    // Encrypt secret before saving
-    const encryptedSecret = this.cryptoUtil.encrypt(secret);
-    // We save the secret but DO NOT enable it yet. User must verify first.
-    await this.userRepository.update(user.id, { twoFactorSecret: encryptedSecret });
-
-    return { secret, otpauthUrl };
-  }
-
-  async enableTwoFactor(user: User, token: string) {
-    // Need to fetch secret as it might not be in the user object passed in (usually stripped)
-    const freshUser = await this.userRepository.findOne({ where: { id: user.id }, select: ['twoFactorSecret', 'id'] });
-    if (!freshUser?.twoFactorSecret) {
-         throw new BadRequestException('2FA configuration not initiated. Please generate secret first.');
-    }
-
-    // Decrypt secret
-    const decryptedSecret = this.cryptoUtil.decrypt(freshUser.twoFactorSecret);
-
-    const isValid = authenticator.verify({ token, secret: decryptedSecret });
-    if (!isValid) {
-        throw new UnauthorizedException('Invalid 2FA token');
-    }
-
-    await this.userRepository.update(user.id, { isTwoFactorEnabled: true });
-
-    // Invalidate session to force re-login or update user state
-    await this.userCacheService.clearUserSession(user.id);
-
-    return { message: '2FA enabled successfully' };
-  }
-
-  async disableTwoFactor(user: User) {
-      await this.userRepository.update(user.id, { isTwoFactorEnabled: false, twoFactorSecret: null });
-      await this.userCacheService.clearUserSession(user.id);
-      return { message: '2FA disabled successfully' };
-  }
-
   async getUserSessions(userId: string) {
     const sessions = await this.refreshTokenRepository.find({
       where: {
         userId,
         isRevoked: false,
-        expiresAt: MoreThan(new Date()),
+        expiresAt: MoreThan(new Date()), // Use TypeORM 'MoreThan' which needs import, or builder
       },
       order: { createdAt: 'DESC' },
     });
@@ -768,12 +527,6 @@ export class AuthService {
     session.isRevoked = true;
     session.revokedAt = new Date();
     await this.refreshTokenRepository.save(session);
-
-    // Ideally, we should also invalidate the user cache if we want to force immediate check,
-    // but Refresh Token check happens on DB, so it's fine.
-    // However, if the Access Token is still valid, they can still act until it expires (short lived).
-    // This is acceptable trade-off. To be stricter, we could bump tokenVersion, but that kills ALL sessions.
-    // So we just rely on short Access Token TTL (e.g. 15min).
 
     return { message: 'Sesión revocada exitosamente.' };
   }
@@ -909,18 +662,6 @@ export class AuthService {
     } catch (e) {
       return null;
     }
-  }
-
-  private async _generatePasswordResetToken(
-    userId: string,
-    email: string,
-    expiresIn: string,
-  ): Promise<string> {
-    const payload: PasswordResetJwtPayload = { sub: userId, email };
-    return await this.jwtService.signAsync(payload, {
-      secret: this.configService.get<string>('JWT_RESET_PASSWORD_SECRET'),
-      expiresIn,
-    });
   }
 
   private convertToMs(time: string): number {
