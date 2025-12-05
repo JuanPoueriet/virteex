@@ -163,6 +163,11 @@ export class LoginPage implements OnInit {
   isLoggingIn = signal(false);
   passwordVisible = signal(false);
 
+  // 2FA State
+  show2faInput = signal(false);
+  tempToken = signal<string | null>(null);
+  otpCodeControl = this.fb.control('', [Validators.required, Validators.minLength(6)]);
+
   @ViewChild('formElement') formElement!: ElementRef<HTMLFormElement>;
 
   ngOnInit() {
@@ -222,9 +227,17 @@ export class LoginPage implements OnInit {
         };
 
         this.authService.login(credentials).subscribe({
-          next: (user) => {
-            if (user.preferredLanguage) {
-              this.languageService.setLanguage(user.preferredLanguage);
+          next: (response: any) => {
+            if (response && response.require2fa) {
+                this.tempToken.set(response.tempToken);
+                this.show2faInput.set(true);
+                this.isLoggingIn.set(false);
+                return;
+            }
+
+            // User object returned directly
+            if (response && response.preferredLanguage) {
+              this.languageService.setLanguage(response.preferredLanguage);
             }
             this.router.navigate(['/app/dashboard']);
             this.isLoggingIn.set(false);
@@ -256,5 +269,28 @@ export class LoginPage implements OnInit {
       }
     }
     return 'LOGIN.ERRORS.SERVER_ERROR';
+  }
+
+  verify2fa(): void {
+      if (this.otpCodeControl.invalid || !this.tempToken()) {
+          return;
+      }
+
+      this.isLoggingIn.set(true);
+      this.errorMessage.set(null);
+
+      this.authService.verify2fa(this.otpCodeControl.value!, this.tempToken()!).subscribe({
+          next: (user) => {
+              if (user.preferredLanguage) {
+                  this.languageService.setLanguage(user.preferredLanguage);
+              }
+              this.router.navigate(['/app/dashboard']);
+              this.isLoggingIn.set(false);
+          },
+          error: (err) => {
+              this.isLoggingIn.set(false);
+              this.errorMessage.set(err.error?.message || 'Código incorrecto');
+          }
+      });
   }
 }

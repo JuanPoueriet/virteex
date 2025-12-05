@@ -29,6 +29,9 @@ import { hasPermission } from '@virteex/shared/util-auth';
 interface LoginResponse {
   user: User;
   accessToken: string;
+  require2fa?: boolean;
+  tempToken?: string;
+  message?: string;
 }
 
 @Injectable({
@@ -130,25 +133,70 @@ export class AuthService {
    * @param credentials Objeto con email, password y recaptchaToken.
    * @returns Un observable que emite el objeto User en caso de éxito.
    */
-  login(credentials: LoginCredentials): Observable<User> {
+  login(credentials: LoginCredentials): Observable<User | { require2fa: boolean; tempToken: string }> {
     const url = `${this.apiUrl}/login`;
     return this.http
-      .post<{ user: User }>(url, credentials, {
+      .post<LoginResponse>(url, credentials, {
         withCredentials: true,
         context: new HttpContext().set(IS_PUBLIC_API, true)
       })
       .pipe(
         tap((response) => {
-          this._currentUser.set(response.user);
-          this._authStatus.set(AuthStatus.authenticated);
+          if (response.require2fa) {
+             // Do not set authenticated yet
+             return;
+          }
+          if (response.user) {
+             this._currentUser.set(response.user);
+             this._authStatus.set(AuthStatus.authenticated);
 
-          this.webSocketService.connect();
-          this.webSocketService.emit('user-status', { isOnline: true });
-          this.listenForForcedLogout();
+             this.webSocketService.connect();
+             this.webSocketService.emit('user-status', { isOnline: true });
+             this.listenForForcedLogout();
+          }
         }),
-        map((response) => response.user),
+        map((response) => {
+            if (response.require2fa) {
+                return { require2fa: true, tempToken: response.tempToken! };
+            }
+            return response.user;
+        }),
         catchError((err) => this.errorHandlerService.handleError('login', err))
       );
+  }
+
+  verify2fa(code: string, tempToken: string): Observable<User> {
+      return this.http.post<LoginResponse>(`${this.apiUrl}/verify-2fa`, { code, tempToken }, {
+          withCredentials: true,
+          context: new HttpContext().set(IS_PUBLIC_API, true)
+      }).pipe(
+          tap((response) => {
+             this._currentUser.set(response.user);
+             this._authStatus.set(AuthStatus.authenticated);
+
+             this.webSocketService.connect();
+             this.webSocketService.emit('user-status', { isOnline: true });
+             this.listenForForcedLogout();
+          }),
+          map((response) => response.user),
+          catchError((err) => this.errorHandlerService.handleError('verify2fa', err))
+      );
+  }
+
+  sendPhoneOtp(phoneNumber: string): Observable<{ message: string }> {
+      return this.http.post<{ message: string }>(`${this.apiUrl}/send-phone-otp`, { phoneNumber });
+  }
+
+  verifyPhoneOtp(code: string, phoneNumber: string): Observable<{ message: string }> {
+      return this.http.post<{ message: string }>(`${this.apiUrl}/verify-phone`, { code, phoneNumber });
+  }
+
+  enable2fa(token: string): Observable<any> {
+      return this.http.post(`${this.apiUrl}/2fa/enable`, { token });
+  }
+
+  disable2fa(): Observable<any> {
+      return this.http.post(`${this.apiUrl}/2fa/disable`, {});
   }
 
   checkAuthStatus(): Observable<boolean> {

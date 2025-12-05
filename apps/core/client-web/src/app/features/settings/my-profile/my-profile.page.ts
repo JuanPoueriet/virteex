@@ -56,6 +56,13 @@ export class MyProfilePage implements OnInit {
   currentUser = this.authService.currentUser;
   isLoading = false;
 
+  // Phone Verification State
+  showPhoneModal = signal(false);
+  isVerifyingPhone = signal(false);
+  otpSent = signal(false);
+  phoneControl = this.fb.control('', [Validators.required]);
+  otpControl = this.fb.control('', [Validators.required, Validators.minLength(6)]);
+
   ngOnInit(): void {
     const user = this.currentUser();
 
@@ -92,6 +99,60 @@ export class MyProfilePage implements OnInit {
       // Here you would upload the file immediately or wait for save
       // For now, we just preview.
     }
+  }
+
+  // --- Phone Verification Logic ---
+
+  openPhoneVerification() {
+    this.showPhoneModal.set(true);
+    this.otpSent.set(false);
+    this.otpControl.reset();
+    this.phoneControl.reset();
+  }
+
+  closePhoneVerification() {
+    this.showPhoneModal.set(false);
+  }
+
+  sendPhoneOtp() {
+    if (this.phoneControl.invalid) return;
+
+    this.isVerifyingPhone.set(true);
+    this.authService.sendPhoneOtp(this.phoneControl.value!).subscribe({
+        next: () => {
+            this.otpSent.set(true);
+            this.isVerifyingPhone.set(false);
+            this.notificationService.showSuccess('Código enviado.');
+            this.cdr.markForCheck();
+        },
+        error: (err) => {
+            this.isVerifyingPhone.set(false);
+            this.notificationService.showError('Error al enviar código.');
+            this.cdr.markForCheck();
+        }
+    });
+  }
+
+  verifyPhoneOtp() {
+    if (this.otpControl.invalid || this.phoneControl.invalid) return;
+
+    this.isVerifyingPhone.set(true);
+    this.authService.verifyPhoneOtp(this.otpControl.value!, this.phoneControl.value!).subscribe({
+        next: () => {
+            this.isVerifyingPhone.set(false);
+            this.notificationService.showSuccess('Teléfono verificado exitosamente.');
+            this.showPhoneModal.set(false);
+
+            // Reload user info to update UI state
+            this.authService.checkAuthStatus().subscribe();
+            this.cdr.markForCheck();
+        },
+        error: (err) => {
+            this.isVerifyingPhone.set(false);
+            this.notificationService.showError('Código incorrecto.');
+            this.cdr.markForCheck();
+        }
+    });
   }
 
   saveProfile(): void {

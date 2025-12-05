@@ -67,7 +67,18 @@
             <div class="form-grid">
               <div class="form-field">
                 <label for="phone">Teléfono</label>
-                <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1 (000) 000-0000" />
+                <div class="flex gap-2">
+                    <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1 (000) 000-0000" />
+                    @if (!currentUser()?.isPhoneVerified) {
+                        <button type="button" (click)="openPhoneVerification()" class="px-4 py-2 bg-yellow-500/10 text-yellow-500 rounded-xl hover:bg-yellow-500/20 text-sm font-medium whitespace-nowrap">
+                            Verificar
+                        </button>
+                    } @else {
+                        <div class="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-500 rounded-xl">
+                            <span class="text-sm font-medium">Verificado</span>
+                        </div>
+                    }
+                </div>
               </div>
               <div class="form-field">
                 <label for="jobTitle">Cargo</label>
@@ -150,3 +161,46 @@
     </div>
   </div>
 </div>
+
+<!-- Phone Verification Modal -->
+@if (showPhoneModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-card-bg border border-border-color rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
+            <div class="text-center">
+                <h3 class="text-xl font-bold text-text-primary">Verificar Teléfono</h3>
+                <p class="text-text-secondary text-sm mt-1">Ingresa tu número de teléfono para recibir un código SMS.</p>
+            </div>
+
+            <div class="space-y-4">
+                @if (!otpSent()) {
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-text-secondary">Número de Teléfono</label>
+                        <input type="tel" [formControl]="phoneControl" class="w-full form-input" placeholder="+1809...">
+                    </div>
+                } @else {
+                    <div class="space-y-2">
+                         <label class="text-sm font-medium text-text-secondary">Código de Verificación</label>
+                         <input type="text" [formControl]="otpControl" class="w-full form-input text-center text-2xl tracking-widest" maxlength="6">
+                    </div>
+                }
+            </div>
+
+            <div class="flex gap-3">
+                <button (click)="closePhoneVerification()" class="flex-1 px-4 py-2 bg-card-bg hover:bg-hover-bg border border-border-color text-text-primary rounded-xl transition-colors">
+                    Cancelar
+                </button>
+                @if (!otpSent()) {
+                    <button (click)="sendPhoneOtp()" [disabled]="phoneControl.invalid || isVerifyingPhone()" class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl transition-colors flex items-center justify-center">
+                        @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
+                        Enviar Código
+                    </button>
+                } @else {
+                     <button (click)="verifyPhoneOtp()" [disabled]="otpControl.invalid || isVerifyingPhone()" class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl transition-colors flex items-center justify-center">
+                        @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
+                        Verificar
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
