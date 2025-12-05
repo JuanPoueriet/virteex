@@ -15,6 +15,7 @@ import { AuthService } from './auth.service';
 import { RegistrationService } from './services/registration.service';
 import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
+import { WebAuthnService } from './services/webauthn.service';
 import { ImpersonationService } from './services/impersonation.service';
 import { JwtStrategy } from './strategies/jwt.strategy/jwt.strategy';
 import { UserCacheService } from './services/user-cache.service';
@@ -26,6 +27,8 @@ import { OktaStrategy } from './strategies/okta.strategy';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { VerificationCode } from './entities/verification-code.entity';
 import { Organization } from '../organizations/entities/organization.entity';
+import { User } from '../users/entities/user.entity/user.entity';
+import { Passkey } from '../users/entities/passkey.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
@@ -60,7 +63,7 @@ import { TwilioSmsProvider } from './services/sms.provider';
             };
         },
     }),
-    TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode]), // Removed User
+    TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode, User, Passkey]), // Added User and Passkey
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -112,6 +115,7 @@ import { TwilioSmsProvider } from './services/sms.provider';
     RegistrationService,
     TwoFactorAuthService,
     PasswordRecoveryService,
+    WebAuthnService,
     ImpersonationService,
     JwtStrategy,
     UserCacheService,
@@ -130,6 +134,7 @@ import { TwilioSmsProvider } from './services/sms.provider';
     AuthService,
     TwoFactorAuthService,
     PasswordRecoveryService,
+    WebAuthnService,
     ImpersonationService,
     PassportModule,
     JwtModule,

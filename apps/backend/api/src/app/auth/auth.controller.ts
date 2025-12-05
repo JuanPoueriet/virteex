@@ -21,6 +21,7 @@ import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
+import { WebAuthnService } from './services/webauthn.service';
 import { RequestWithUser } from './interfaces/request-with-user.interface';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -54,6 +55,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly twoFactorAuthService: TwoFactorAuthService,
     private readonly passwordRecoveryService: PasswordRecoveryService,
+    private readonly webAuthnService: WebAuthnService,
     private readonly configService: ConfigService,
     private readonly cookieService: CookieService
   ) {}
@@ -359,6 +361,50 @@ export class AuthController {
 
       this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
       return { user: result.user };
+  }
+
+  // ------------------------------------------------------------------
+  // WebAuthn (Passkeys)
+  // ------------------------------------------------------------------
+
+  @Get('webauthn/register/options')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Generate WebAuthn registration options' })
+  async generateWebAuthnRegistrationOptions(@CurrentUser() user: User) {
+    return this.webAuthnService.generateRegistrationOptions(user);
+  }
+
+  @Post('webauthn/register/verify')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Verify WebAuthn registration' })
+  async verifyWebAuthnRegistration(@CurrentUser() user: User, @Body() body: any) {
+    return this.webAuthnService.verifyRegistration(user, body);
+  }
+
+  @Post('webauthn/login/options')
+  @ApiOperation({ summary: 'Generate WebAuthn authentication options' })
+  async generateWebAuthnAuthenticationOptions(@Body('email') email?: string) {
+    return this.webAuthnService.generateAuthenticationOptions(email);
+  }
+
+  @Post('webauthn/login/verify')
+  @ApiOperation({ summary: 'Verify WebAuthn authentication' })
+  async verifyWebAuthnAuthentication(
+    @Body() body: any,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const result = await this.webAuthnService.verifyAuthentication(body);
+
+    // Create session (same as regular login)
+    // We need to use AuthService to generate tokens
+    const { accessToken, refreshToken } = await this.authService.createTokens(result.user);
+
+    this.cookieService.setAuthCookies(res, accessToken, refreshToken);
+
+    return {
+      user: plainToInstance(UserResponseDto, result.user, { excludeExtraneousValues: true }),
+      accessToken
+    };
   }
 
   // ------------------------------------------------------------------

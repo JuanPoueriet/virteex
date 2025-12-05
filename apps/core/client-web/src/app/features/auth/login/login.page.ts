@@ -28,7 +28,8 @@ import {
   ChevronDown,
   ChevronUp,
   Languages,
-  Check
+  Check,
+  Key
 } from 'lucide-angular';
 import { RecaptchaV3Module, ReCaptchaV3Service } from 'ng-recaptcha-19';
 import { LanguageService } from '../../../core/services/language';
@@ -61,6 +62,7 @@ export class LoginPage implements OnInit {
   ChevronDown = ChevronDown;
   ChevronUp = ChevronUp;
   Check = Check;
+  KeyIcon = Key;
 
   // --- Lógica para el menú de idiomas ---
   dropdownOpen = signal(false);
@@ -205,6 +207,34 @@ export class LoginPage implements OnInit {
     // In production this should come from environment
     const apiUrl = '/api/v1/auth'; // Proxy handles this or direct URL
     window.location.href = `${apiUrl}/${provider}`;
+  }
+
+  onLoginWithPasskey(): void {
+    const email = this.loginForm.get('email')?.value;
+
+    // We don't require email for passkey login strictly (can be discoverable),
+    // but sending it if available helps the backend narrow down credentials.
+    // If not available, we send undefined and backend/browser handles resident keys.
+
+    this.isLoggingIn.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.loginWithPasskey(email || undefined)
+      .then((user) => {
+        if (user) {
+          if (user.preferredLanguage) {
+            this.languageService.setLanguage(user.preferredLanguage);
+          }
+          this.router.navigate(['/app/dashboard']);
+        }
+        this.isLoggingIn.set(false);
+      })
+      .catch((err) => {
+        console.error('Passkey login error:', err);
+        // Map common webauthn errors if needed, or generic error
+        this.errorMessage.set('Error al iniciar sesión con llave de acceso. Intente nuevamente o use su contraseña.');
+        this.isLoggingIn.set(false);
+      });
   }
 
   onSubmit(): void {

@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { Organization } from '../../../organizations/entities/organization.entity';
 import { Role } from '../../../roles/entities/role.entity';
+import { Passkey } from '../passkey.entity';
 
 export enum UserStatus {
   PENDING = 'PENDING',
@@ -143,4 +144,7 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @ManyToOne(() => Passkey, (passkey) => passkey.user, { cascade: true })
+  passkeys: Passkey[];
 }
