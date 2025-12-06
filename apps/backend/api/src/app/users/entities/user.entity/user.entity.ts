@@ -98,7 +98,7 @@ export class User {
 
   @OneToOne(() => UserSecurity, (security) => security.user, {
     cascade: true,
-    eager: true,
+    eager: false,
   })
   security: UserSecurity;
 

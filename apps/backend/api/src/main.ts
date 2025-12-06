@@ -4,16 +4,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import { JsonLogger } from './app/common/loggers/json.logger';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
-    logger: new JsonLogger(),
+    bufferLogs: true,
   });
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
 
   // Security Headers using Helmet

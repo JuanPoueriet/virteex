@@ -12,7 +12,6 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { User, UserStatus } from '../users/entities/user.entity/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuthConfig } from './auth.config';
-import { UserCacheService } from './modules/user-cache.service';
 import { UsersService } from '../users/users.service';
 import { SessionService } from './services/session.service';
 import { SecurityAnalysisService } from './services/security-analysis.service';
@@ -35,7 +34,6 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly userCacheService: UserCacheService,
     private readonly sessionService: SessionService,
     private readonly securityAnalysisService: SecurityAnalysisService,
     private readonly tokenService: TokenService,
@@ -136,37 +134,7 @@ export class AuthService {
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    let user = await this.userCacheService.getUser(payload.id);
-
-    if (!user) {
-      user = await this.usersService.findUserByIdForAuth(payload.id);
-
-      if (user) {
-        await this.userCacheService.setUser(payload.id, user, AuthConfig.CACHE_TTL);
-      }
-    }
-
-    if (!user || user.status === UserStatus.BLOCKED) {
-      throw new UnauthorizedException(AuthError.USER_BLOCKED);
-    }
-
-    if (user.status !== UserStatus.ACTIVE) {
-      throw new UnauthorizedException(AuthError.USER_INACTIVE);
-    }
-
-    const tokenVersion = user.security?.tokenVersion || 0;
-
-    if (tokenVersion !== payload.tokenVersion) {
-      throw new UnauthorizedException(AuthError.SESSION_EXPIRED);
-    }
-
-    const safeUser = this.tokenService.buildSafeUser(user);
-
-    return {
-      ...safeUser,
-      isImpersonating: payload.isImpersonating,
-      originalUserId: payload.originalUserId,
-    };
+    return this.tokenService.validateTokenAndGetUser(payload);
   }
 
   private async simulateDelay() {
@@ -178,34 +146,17 @@ export class AuthService {
   }
 
   async status(userFromJwt: AuthenticatedUser) {
-    let freshUser = await this.userCacheService.getUser(userFromJwt.id);
-
-    if (!freshUser) {
-        freshUser = await this.usersService.findUserByIdForAuth(userFromJwt.id);
-
-        if (freshUser) {
-            await this.userCacheService.setUser(userFromJwt.id, freshUser, AuthConfig.CACHE_TTL);
-        }
-    }
-
-    if (!freshUser) {
-      throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
-    }
-
-    const safeUser = this.tokenService.buildSafeUser(freshUser);
-
-    const userWithImpersonationStatus: AuthenticatedUser = {
-      ...safeUser,
-      isImpersonating: userFromJwt.isImpersonating || false,
-      originalUserId: userFromJwt.originalUserId || undefined,
-    };
-
-    return { user: userWithImpersonationStatus };
+    // We delegate status retrieval to TokenService as well, or just use what we have.
+    // However, status often requires a fresh check.
+    // Since we removed userCacheService injection, we need to decide:
+    // 1. Re-inject UserCacheService (but this defeats the refactor purpose if TokenService handles validation)
+    // 2. Move status logic to TokenService (best).
+    return this.tokenService.getFreshUserStatus(userFromJwt);
   }
 
-
   async logout(userId: string) {
-    await this.userCacheService.clearUserSession(userId);
+    // Delegated to SessionService which manages session lifecycle
+    await this.sessionService.terminateAllSessions(userId);
     return { message: 'Sesión cerrada exitosamente.' };
   }
 

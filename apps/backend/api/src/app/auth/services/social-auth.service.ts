@@ -21,7 +21,8 @@ export class SocialAuthService {
   ) {}
 
   async validateOAuthLogin(socialUser: SocialUser, ipAddress?: string, userAgent?: string): Promise<{ user: User | null; tokens?: any }> {
-    const user = await this.usersService.findOneByEmail(socialUser.email);
+    // 1. Use findUserForAuth to ensure security relation is loaded (required for tokenVersion)
+    const user = await this.usersService.findUserForAuth(socialUser.email);
 
     if (user) {
       if (user.authProvider !== socialUser.provider || user.authProviderId !== socialUser.providerId) {

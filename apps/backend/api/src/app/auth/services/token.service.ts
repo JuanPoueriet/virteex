@@ -10,6 +10,12 @@ import { User } from '../../users/entities/user.entity/user.entity';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfig } from '../auth.config';
+import { UserCacheService } from '../modules/user-cache.service';
+import { UsersService } from '../../users/users.service';
+import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { UnauthorizedException } from '@nestjs/common';
+import { AuthError } from '../enums/auth-error.enum';
+import { UserStatus } from '../../users/entities/user.entity/user.entity';
 
 @Injectable()
 export class TokenService {
@@ -17,8 +23,70 @@ export class TokenService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly userCacheService: UserCacheService,
+    private readonly usersService: UsersService
   ) {}
+
+  async validateTokenAndGetUser(payload: JwtPayload): Promise<AuthenticatedUser> {
+    let user = await this.userCacheService.getUser(payload.id);
+
+    if (!user) {
+      user = await this.usersService.findUserByIdForAuth(payload.id);
+
+      if (user) {
+        await this.userCacheService.setUser(payload.id, user, AuthConfig.CACHE_TTL);
+      }
+    }
+
+    if (!user || user.status === UserStatus.BLOCKED) {
+      throw new UnauthorizedException(AuthError.USER_BLOCKED);
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(AuthError.USER_INACTIVE);
+    }
+
+    const tokenVersion = user.security?.tokenVersion || 0;
+
+    if (tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException(AuthError.SESSION_EXPIRED);
+    }
+
+    const safeUser = this.buildSafeUser(user);
+
+    return {
+      ...safeUser,
+      isImpersonating: payload.isImpersonating,
+      originalUserId: payload.originalUserId,
+    };
+  }
+
+  async getFreshUserStatus(userFromJwt: AuthenticatedUser) {
+    let freshUser = await this.userCacheService.getUser(userFromJwt.id);
+
+    if (!freshUser) {
+        freshUser = await this.usersService.findUserByIdForAuth(userFromJwt.id);
+
+        if (freshUser) {
+            await this.userCacheService.setUser(userFromJwt.id, freshUser, AuthConfig.CACHE_TTL);
+        }
+    }
+
+    if (!freshUser) {
+      throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
+    }
+
+    const safeUser = this.buildSafeUser(freshUser);
+
+    const userWithImpersonationStatus: AuthenticatedUser = {
+      ...safeUser,
+      isImpersonating: userFromJwt.isImpersonating || false,
+      originalUserId: userFromJwt.originalUserId || undefined,
+    };
+
+    return { user: userWithImpersonationStatus };
+  }
 
   async generateAuthResponse(
     user: User,

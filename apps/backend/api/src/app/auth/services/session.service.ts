@@ -212,6 +212,12 @@ export class SessionService {
     return { message: 'Sesión revocada exitosamente.' };
   }
 
+  async terminateAllSessions(userId: string) {
+      await this.userCacheService.clearUserSession(userId);
+      // Optional: Revoke all refresh tokens in DB if stricter security is needed
+      // await this.refreshTokenRepository.update({ userId, isRevoked: false }, { isRevoked: true, revokedAt: new Date() });
+  }
+
   async verifyUserFromToken(token: string): Promise<User | null> {
     try {
       const payload = this.jwtService.verify(token, {

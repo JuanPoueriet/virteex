@@ -10,6 +10,8 @@ import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { ScheduleModule } from '@nestjs/schedule';
+import { LoggerModule } from 'nestjs-pino';
+import * as crypto from 'crypto';
 
 
 import { CacheModule } from './cache/cache.module';
@@ -89,6 +91,22 @@ const envValidation = Joi.object({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
       validationSchema: envValidation,
+    }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        return {
+          pinoHttp: {
+            level: config.get<string>('NODE_ENV') !== 'production' ? 'debug' : 'info',
+            transport: config.get<string>('NODE_ENV') !== 'production'
+              ? { target: 'pino-pretty' }
+              : undefined,
+            // 10/10 Observability: Auto-generate/Propagate request IDs
+            genReqId: (req) => req.headers['x-correlation-id'] || crypto.randomUUID(),
+          },
+        };
+      },
     }),
 
 

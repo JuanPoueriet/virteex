@@ -34,17 +34,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  // Simple Circuit Breaker state
+  private lastCacheFailure: number = 0;
+  private readonly CACHE_RETRY_DELAY = 30000; // 30 seconds
+
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const { id, tokenVersion } = payload;
     const cacheKey = `user_session:${id}`;
 
-    // 1. Try to get user from cache
+    // 1. Try to get user from cache (with Circuit Breaker)
     let user: CachedUser | null = null;
-    try {
-        user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
-    } catch (e) {
-        this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Falling back to DB.`);
-        // Fallback silently proceeds to DB check below
+    const now = Date.now();
+
+    if (now - this.lastCacheFailure > this.CACHE_RETRY_DELAY) {
+        try {
+            user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
+        } catch (e) {
+            this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Opening circuit for 30s.`);
+            this.lastCacheFailure = now;
+            // Fallback silently proceeds to DB check below
+        }
+    } else {
+       // Circuit Open - Skip Cache
     }
 
     if (!user) {
@@ -89,6 +100,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 10/10 SECURITY: Organization Context Validation
     // Although User -> Organization is 1:1, we explicitly check if organization data is loaded to prevent headless access.
     // In a future multi-tenant setup (ManyToMany), we would compare payload.orgId with user.organizations.
+    // TODO: When upgrading to Multi-Tenancy (ManyToMany), validate payload.orgId against user.organizations here.
     if (!user.organization) {
          this.logger.warn(`User ${user.id} authenticated but has no linked Organization. This might be a data consistency issue.`);
          // We do not block login for now to allow 'headless' users (e.g. system admins), but we log it.
