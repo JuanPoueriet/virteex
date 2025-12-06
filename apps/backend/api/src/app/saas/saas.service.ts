@@ -1,10 +1,12 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Plan } from './entities/plan.entity';
 import { PlanLimit } from './entities/plan-limit.entity';
+import { UsageMetric } from './entities/usage-metric.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { ConfigService } from '@nestjs/config';
+import { SaasResource } from './enums/saas-resource.enum';
 
 @Injectable()
 export class SaasService implements OnModuleInit {
@@ -14,6 +16,7 @@ export class SaasService implements OnModuleInit {
     @InjectRepository(Plan) private planRepository: Repository<Plan>,
     @InjectRepository(PlanLimit) private limitRepository: Repository<PlanLimit>,
     @InjectRepository(Organization) private orgRepository: Repository<Organization>,
+    @InjectRepository(UsageMetric) private usageRepository: Repository<UsageMetric>,
     private configService: ConfigService
   ) {}
 
@@ -32,12 +35,10 @@ export class SaasService implements OnModuleInit {
         slug: 'starter',
         name: 'Starter',
         stripeProductId: process.env.STRIPE_PRICE_STARTER ? 'prod_starter_placeholder' : null,
-        // Note: Ideally we store Product ID, but Env has Price IDs.
-        // We'll store the Price IDs from Env into the Plan entity.
         monthlyPriceId: process.env.STRIPE_PRICE_STARTER,
         limits: [
-          { resource: 'invoices', limit: 10, period: 'monthly' as const },
-          { resource: 'users', limit: 2, period: 'lifetime' as const }
+          { resource: SaasResource.INVOICES, limit: 10, period: 'monthly' as const },
+          { resource: SaasResource.USERS, limit: 2, period: 'lifetime' as const }
         ]
       },
       {
@@ -45,8 +46,8 @@ export class SaasService implements OnModuleInit {
         name: 'Professional',
         monthlyPriceId: process.env.STRIPE_PRICE_PRO,
         limits: [
-          { resource: 'invoices', limit: 100, period: 'monthly' as const },
-          { resource: 'users', limit: 10, period: 'lifetime' as const }
+          { resource: SaasResource.INVOICES, limit: 100, period: 'monthly' as const },
+          { resource: SaasResource.USERS, limit: 10, period: 'lifetime' as const }
         ]
       },
       {
@@ -54,8 +55,8 @@ export class SaasService implements OnModuleInit {
         name: 'Enterprise',
         monthlyPriceId: process.env.STRIPE_PRICE_ENTERPRISE,
         limits: [
-          { resource: 'invoices', limit: -1, period: 'monthly' as const },
-          { resource: 'users', limit: -1, period: 'lifetime' as const }
+          { resource: SaasResource.INVOICES, limit: -1, period: 'monthly' as const },
+          { resource: SaasResource.USERS, limit: -1, period: 'lifetime' as const }
         ]
       }
     ];
@@ -76,66 +77,140 @@ export class SaasService implements OnModuleInit {
     return this.planRepository.findOne({ where: { slug }, relations: ['limits'] });
   }
 
-  async checkLimit(organizationId: string, resource: string, increment: number): Promise<boolean> {
-    const org = await this.orgRepository.findOne({
+  /**
+   * Enforces plan limits within a transaction context.
+   * This method atomically checks and increments usage, preventing race conditions.
+   * If the limit is reached, it throws a ForbiddenException, which will abort the transaction.
+   */
+  async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
+    const org = await manager.findOne(Organization, {
         where: { id: organizationId },
         relations: ['plan', 'plan.limits']
     });
 
     if (!org || !org.plan) {
-        // Fallback: If no plan assigned, maybe assign default or block?
-        // For existing orgs without plan, let's assume 'starter' limits or block.
-        // Better to allow for now to avoid breaking existing users, or return false to force plan selection.
-        this.logger.warn(`Organization ${organizationId} has no plan assigned.`);
-        return true; // Unsafe, but prevents breakage. Audit says "block", but let's be careful.
-        // Actually, to get 10/10, we should be strict.
-        // return false;
+        throw new ForbiddenException(`Organization ${organizationId} has no plan assigned.`);
     }
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
-    if (!limitDef) return true; // No limit defined for this resource
-
-    if (limitDef.limit === -1) return true; // Unlimited
-
-    // Count usage
-    // We need to query the actual resource table.
-    // This is the tricky part: Generic Service doesn't know about "Invoices" table.
-    // We can inject a "UsageStrategy" or just query directly using a raw query or checking a "Usage" table.
-    // Audit suggested "Metering".
-    // Simple approach: Use a dedicated "Usage" entity that is updated by events, or query the entity directly.
-    // Querying entity directly requires dependency on that module (Circular!).
-    // Solution: Emit an event or use a callback?
-    // Or simpler: The Guard can delegate to the specific service? No, guard uses SaasService.
-
-    // For this implementation, since I can't import InvoicesService (circular), I'll use a dynamic query
-    // or assume we have a 'UsageMetric' table.
-
-    // Let's implement a quick COUNT query using raw SQL for known resources
-    // OR just return true and leave the implementation of "count" for later/user.
-    // BUT the audit asks for "Metering".
-
-    // I will use a simple query builder if table name is known.
-    // resource: 'invoices' -> table 'invoices'
-
-    if (limitDef.period === 'monthly') {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0,0,0,0);
-
-        const tableName = resource; // assume resource name matches table name
-        // Sanitize tableName!
-        const safeTables = ['invoices', 'users'];
-        if (!safeTables.includes(tableName)) return true;
-
-        const result = await this.orgRepository.manager.query(
-            `SELECT COUNT(*) as count FROM "${tableName}" WHERE organization_id = $1 AND created_at >= $2`,
-            [organizationId, startOfMonth]
-        );
-
-        const currentUsage = parseInt(result[0].count, 10);
-        return (currentUsage + increment) <= limitDef.limit;
+    if (!limitDef) {
+        // Assume unrestricted if not in limits.
+        return;
     }
 
-    return true;
+    if (limitDef.limit === -1) {
+        // Unlimited, but we still track usage
+        await this.incrementUsageTransactional(manager, organizationId, resource, limitDef.period, increment);
+        return;
+    }
+
+    // Determine period
+    const periodKey = limitDef.period === 'monthly'
+        ? new Date().toISOString().slice(0, 7)
+        : 'lifetime';
+
+    // Atomic Upsert with Optimistic Check
+    // We attempt the upsert. If it is an INSERT, it succeeds without limit check by SQL logic.
+    // So we must check the returned count to verify if we breached the limit (in case of new insert exceeding limit).
+    // Or we use a lock.
+
+    // Strategy:
+    // INSERT ... RETURNING count.
+    // If INSERT happens, count is increment. We check increment <= limit.
+    // If UPDATE happens, count is new_value. We check new_value <= limit.
+    // BUT we used WHERE clause to prevent UPDATE.
+    // So if UPDATE happens and fails WHERE, we get nothing.
+
+    // To handle "Insert passing limit" properly:
+    // We should NOT use WHERE clause on UPDATE if we want to catch it consistently?
+    // No, if we don't use WHERE, we increment over limit. We want to avoid that.
+
+    // Correct logic:
+    // 1. Try UPDATE ... WHERE ... RETURNING count.
+    // 2. If row updated, great.
+    // 3. If no row updated, it might be (a) Not Exists, or (b) Limit Reached.
+    // 4. Try INSERT ... RETURNING count.
+    // 5. If Insert works, check count <= limit. If not, throw (and rollback).
+    // 6. If Insert fails (Conflict), it means row exists (so step 3 was "Limit Reached"). Throw.
+
+    // Let's refine this 2-step approach.
+
+    // Step 1: Try Update if exists
+    const updateResult = await manager.query(
+        `UPDATE saas_usage_metrics
+         SET count = count + $1, updated_at = NOW()
+         WHERE organization_id = $2 AND resource = $3 AND period = $4 AND count + $1 <= $5
+         RETURNING count`,
+        [increment, organizationId, resource, periodKey, limitDef.limit]
+    );
+
+    if (updateResult[0]) {
+        return; // Updated successfully within limit.
+    }
+
+    // Step 2: Try Insert (if update didn't touch anything)
+    // Note: If update didn't touch, it could be "Limit Reached" or "Row Missing".
+    // We try Insert. If it fails uniqueness, then "Row Existed" -> "Limit Reached".
+
+    try {
+        const insertResult = await manager.query(
+            `INSERT INTO saas_usage_metrics (organization_id, resource, period, count, updated_at)
+             VALUES ($1, $2, $3, $4, NOW())
+             RETURNING count`,
+            [organizationId, resource, periodKey, increment]
+        );
+
+        // Insert succeeded. Check if initial increment exceeds limit (edge case: limit 0 or huge increment).
+        if (insertResult[0].count > limitDef.limit) {
+            throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+        }
+        return;
+
+    } catch (err) {
+        // If Unique Violation (23505), it means row existed, so UPDATE failed because of LIMIT.
+        if (err.code === '23505') {
+             throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+        }
+        throw err;
+    }
+  }
+
+  private async incrementUsageTransactional(manager: EntityManager, organizationId: string, resource: SaasResource, periodType: 'monthly' | 'lifetime', increment: number) {
+      const periodKey = periodType === 'monthly'
+        ? new Date().toISOString().slice(0, 7)
+        : 'lifetime';
+
+      await manager.query(
+        `INSERT INTO saas_usage_metrics (organization_id, resource, period, count, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (organization_id, resource, period)
+         DO UPDATE SET count = saas_usage_metrics.count + $4, updated_at = NOW()`,
+        [organizationId, resource, periodKey, increment]
+      );
+  }
+
+  async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
+    const org = await this.orgRepository.findOne({
+        where: { id: organizationId },
+        relations: ['plan', 'plan.limits']
+    });
+
+    if (!org || !org.plan) return false;
+
+    const limitDef = org.plan.limits.find(l => l.resource === resource);
+    if (!limitDef) return true;
+    if (limitDef.limit === -1) return true;
+
+    // Use limit definition for period
+    const period = limitDef.period === 'monthly'
+        ? new Date().toISOString().slice(0, 7)
+        : 'lifetime';
+
+    const metric = await this.usageRepository.findOne({
+        where: { organizationId, resource, period }
+    });
+
+    const currentUsage = metric ? metric.count : 0;
+    return (currentUsage + increment) <= limitDef.limit;
   }
 }

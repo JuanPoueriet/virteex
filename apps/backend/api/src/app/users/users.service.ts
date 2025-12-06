@@ -1,7 +1,7 @@
 
 import { Injectable, Inject, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity/user.entity';
 import { UserStatus } from './entities/user.entity/user.entity';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
@@ -13,6 +13,9 @@ import * as crypto from 'crypto';
 import { EventsGateway } from '../websockets/events.gateway';
 import { UserCacheService } from '../auth/modules/user-cache.service';
 import { UserSecurity } from './entities/user-security.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SaasService } from '../saas/saas.service';
+import { SaasResource } from '../saas/enums/saas-resource.enum';
 
 @Injectable()
 export class UsersService {
@@ -22,7 +25,10 @@ export class UsersService {
     private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
-    private readonly userCacheService: UserCacheService
+    private readonly userCacheService: UserCacheService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly saasService: SaasService,
+    private readonly dataSource: DataSource
   ) {}
 
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<User> {
@@ -278,13 +284,22 @@ export class UsersService {
       security: new UserSecurity() // Initialize security
     });
 
-    await this.userRepository.save(newUser);
-    await this.mailService.sendUserInvitation(newUser, invitationToken);
+    // Wrap in transaction for atomicity
+    return this.dataSource.transaction(async (manager) => {
+        // Enforce Limit before saving
+        await this.saasService.enforceLimit(manager, organizationId, SaasResource.USERS);
 
-    delete newUser.invitationToken;
-    delete newUser.invitationTokenExpires;
+        // We must associate the user entity with the manager to participate in transaction?
+        // TypeORM's manager.save(entity) handles this.
+        await manager.save(newUser);
 
-    return newUser;
+        await this.mailService.sendUserInvitation(newUser, invitationToken);
+
+        delete newUser.invitationToken;
+        delete newUser.invitationTokenExpires;
+
+        return newUser;
+    });
   }
 
   async forceLogout(userId: string): Promise<{ message: string }> {

@@ -22,6 +22,7 @@ import { PERMISSIONS } from '../shared/permissions';
 import { SubscriptionActiveGuard } from '../saas/guards/subscription-active.guard';
 import { CheckPlanLimit } from '../saas/decorators/plan-limit.decorator';
 import { PlanLimitGuard } from '../saas/guards/plan-limit.guard';
+import { SaasResource } from '../saas/enums/saas-resource.enum';
 
 @Controller('invoices')
 @UseGuards(JwtAuthGuard, SubscriptionActiveGuard)
@@ -31,7 +32,7 @@ export class InvoicesController {
   @Post()
   @UseGuards(PeriodLockGuard, PlanLimitGuard)
   @HasPermission(PERMISSIONS.INVOICES_CREATE)
-  @CheckPlanLimit('invoices', 1)
+  @CheckPlanLimit(SaasResource.INVOICES, 1)
   create(
     @Body() createInvoiceDto: CreateInvoiceDto,
     @CurrentUser() user: User,

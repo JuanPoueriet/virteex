@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
+import { SaasResource } from '../enums/saas-resource.enum';
 
 @Injectable()
 export class PlanLimitGuard implements CanActivate {
@@ -11,7 +12,7 @@ export class PlanLimitGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const limitMetadata = this.reflector.get<{ resource: string; increment: number }>(
+    const limitMetadata = this.reflector.get<{ resource: SaasResource; increment: number }>(
       PLAN_LIMIT_KEY,
       context.getHandler(),
     );
@@ -20,10 +21,13 @@ export class PlanLimitGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+
     if (!user || !user.organization) {
-       // Allow if no user context (public) or throw?
-       // If this guard is used, it implies we want to check limits for an org.
+       // Defensively check for organization context.
+       // If public endpoint needs this guard, it must be handled carefully.
+       // Here we enforce it.
        throw new ForbiddenException('Organization context required for limit check');
     }
 
