@@ -1,6 +1,8 @@
 
 import { Controller, Get, Body, Patch, UseGuards, Put } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
+import { CheckPermissions } from '../auth/decorators/check-permissions.decorator';
+import { IsOrganizationOwnerPolicy } from '../auth/policies/is-organization-owner.policy';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
@@ -20,6 +22,7 @@ export class OrganizationsController {
   }
 
   @Patch('profile')
+  @CheckPermissions(IsOrganizationOwnerPolicy)
   async updateProfile(
     @CurrentUser() user: User,
     @Body() updateOrganizationDto: UpdateOrganizationDto,

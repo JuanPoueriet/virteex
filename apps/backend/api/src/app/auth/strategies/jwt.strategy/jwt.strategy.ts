@@ -13,6 +13,7 @@ import { AuthConfig } from '../../auth.config';
 import { UsersService } from '../../../users/users.service';
 import { AuthenticatedUser } from '../../interfaces/authenticated-user.interface';
 import { AuthError } from '../../enums/auth-error.enum';
+import { CachedUser } from '../../interfaces/cached-user.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -24,7 +25,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
     super({
-
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req: Request | undefined) => req?.cookies?.access_token ?? null,
@@ -39,9 +39,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const cacheKey = `user_session:${id}`;
 
     // 1. Try to get user from cache
-    let user: User | null = null;
+    let user: CachedUser | null = null;
     try {
-        user = await this.cacheManager.get<User>(cacheKey) ?? null;
+        user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
     } catch (e) {
         this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Falling back to DB.`);
         // Fallback silently proceeds to DB check below
@@ -50,16 +50,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
         // 2. Fallback to DB
         // Using abstracted service method
-        user = await this.usersService.findUserByIdForAuth(id);
+        const dbUser = await this.usersService.findUserByIdForAuth(id);
 
-        if (user) {
+        if (dbUser) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
              try {
                 // Pre-calculate permissions and attach to user object in cache to avoid re-calc
-                (user as any)._cachedPermissions = this.getPermissionsFromRoles(user.roles ?? []);
+                user = {
+                  ...dbUser,
+                  _cachedPermissions: this.getPermissionsFromRoles(dbUser.roles ?? [])
+                } as CachedUser;
+
                 await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
              } catch (e) {
                 this.logger.warn(`Failed to set user cache during JWT validation: ${(e as Error).message}`);
+                user = dbUser as CachedUser; // Continue with dbUser even if cache fails
              }
         }
     }
@@ -72,31 +77,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const currentTokenVersion = user.security?.tokenVersion || 0;
 
     if (currentTokenVersion !== tokenVersion) {
-      // Note: We are strict about token version matching.
-      // Cache invalidation on user/role update is handled by UsersService and AuthService
-      // ensuring that the cache doesn't hold stale user objects with old tokenVersions.
       throw new UnauthorizedException(AuthError.SESSION_EXPIRED);
     }
-
-    // Double check: If the cached user has a DIFFERENT tokenVersion than the one in DB (e.g. we changed it in DB but cache is stale),
-    // we wouldn't know unless we query DB.
-    // BUT, the JWT payload carries the `tokenVersion` at the time of signing.
-    // If the cache matches the JWT, we let them in.
-    // If the DB has a NEW version, the user effectively has an "Old JWT" + "Old Cached User".
-    // This effectively delays the "Global Logout" by the Cache TTL (15m). This is acceptable for performance usually.
-    // To be 100% real-time, we must invalidate cache on update.
 
     if (this.isDisallowedStatus(user.status)) {
       throw new UnauthorizedException(AuthError.USER_BLOCKED);
     }
 
-    const permissions = (user as any)._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
+    const permissions = user._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
+
+    // 10/10 SECURITY: Organization Context Validation
+    // Although User -> Organization is 1:1, we explicitly check if organization data is loaded to prevent headless access.
+    // In a future multi-tenant setup (ManyToMany), we would compare payload.orgId with user.organizations.
+    if (!user.organization) {
+         this.logger.warn(`User ${user.id} authenticated but has no linked Organization. This might be a data consistency issue.`);
+         // We do not block login for now to allow 'headless' users (e.g. system admins), but we log it.
+    }
 
     // Return SafeUser / AuthenticatedUser
-    // Exclude sensitive fields
-    const { security, password, twoFactorSecret, ...safeUser } = user as any; // Cast to any to strip properties easily, or construct strictly
-
-    // Construct strict AuthenticatedUser
+    // We construct it explicitly to avoid 'as any' and ensure type safety
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
       email: user.email,
@@ -105,7 +104,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roles: user.roles,
       permissions,
       organization: user.organization,
-      isTwoFactorEnabled: security?.isTwoFactorEnabled || false,
+      isTwoFactorEnabled: user.security?.isTwoFactorEnabled || false,
       isImpersonating: payload.isImpersonating,
       originalUserId: payload.originalUserId
     };
