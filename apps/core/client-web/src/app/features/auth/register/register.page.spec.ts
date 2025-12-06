@@ -42,6 +42,7 @@ class MockLanguageService {
 
 class MockGeoLocationService {
     getGeoLocation = jest.fn().mockReturnValue(of({ country: 'DO' }));
+    mismatchSignal = jest.fn().mockReturnValue(null);
 }
 
 describe('RegisterPage', () => {

@@ -93,6 +93,12 @@ export class SessionService {
             }
 
             await this.userCacheService.clearUserSession(user.id);
+            // Also explicitly revoke all refresh tokens in DB for audit purposes
+            await this.refreshTokenRepository.update(
+                { userId: user.id, isRevoked: false },
+                { isRevoked: true, revokedAt: new Date() }
+            );
+
             throw new UnauthorizedException(AuthError.REFRESH_TOKEN_REVOKED);
           }
         } else {
