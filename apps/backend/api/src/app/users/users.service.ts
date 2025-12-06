@@ -365,7 +365,7 @@ export class UsersService {
   async findUserByIdForAuth(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      relations: ['roles', 'organization', 'security'],
+      relations: ['roles', 'organization', 'security', 'organizations'],
     });
   }
 

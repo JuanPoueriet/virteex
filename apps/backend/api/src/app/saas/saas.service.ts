@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Plan } from './entities/plan.entity';
@@ -14,6 +14,7 @@ import { DateTime } from 'luxon';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
 import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class SaasService implements OnModuleInit {
@@ -28,7 +29,9 @@ export class SaasService implements OnModuleInit {
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
     private usageMetricRepository: UsageMetricRepository,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    private dataSource: DataSource,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private metricsService: MetricsService
   ) {}
 
   async onModuleInit() {
@@ -43,9 +46,6 @@ export class SaasService implements OnModuleInit {
 
     for (const pConfig of SAAS_PLANS) {
         const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
-
-        // Skip if price ID missing in prod? No, maybe just log warning or create without it.
-        // For seeding, we create structure.
 
         const plan = this.planRepository.create({
             slug: pConfig.slug,
@@ -75,41 +75,43 @@ export class SaasService implements OnModuleInit {
 
   /**
    * Upgrades or changes the plan for an organization and records the history.
-   * NOTE: This should be called within a transaction if possible, or manages its own.
+   * Uses a transaction to ensure atomicity.
    */
   async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
-      const org = await this.orgRepository.findOne({ where: { id: organizationId }, relations: ['plan'] });
-      if (!org) {
-          throw new Error('Organization not found');
-      }
+      await this.dataSource.transaction(async (manager) => {
+          const org = await manager.findOne(Organization, { where: { id: organizationId }, relations: ['plan'] });
+          if (!org) {
+              throw new Error('Organization not found');
+          }
 
-      const newPlan = await this.planRepository.findOne({ where: { slug: newPlanSlug } });
-      if (!newPlan) {
-          throw new Error('Plan not found');
-      }
+          const newPlan = await manager.findOne(Plan, { where: { slug: newPlanSlug } });
+          if (!newPlan) {
+              throw new Error('Plan not found');
+          }
 
-      if (org.plan && org.plan.id === newPlan.id) {
-          return; // No change
-      }
+          if (org.plan && org.plan.id === newPlan.id) {
+              return; // No change
+          }
 
-      const previousPlan = org.plan;
+          const previousPlan = org.plan;
 
-      // Update Org
-      org.plan = newPlan;
-      await this.orgRepository.save(org);
+          // Update Org
+          org.plan = newPlan;
+          await manager.save(org);
 
-      // Record History
-      const history = this.subscriptionHistoryRepository.create({
-          organizationId: org.id,
-          previousPlanId: previousPlan?.id,
-          newPlanId: newPlan.id,
-          changedBy: userId,
-          reason: reason
+          // Record History
+          const history = this.subscriptionHistoryRepository.create({
+              organizationId: org.id,
+              previousPlanId: previousPlan?.id,
+              newPlanId: newPlan.id,
+              changedBy: userId,
+              reason: reason
+          });
+
+          await manager.save(history); // Use manager to save history within transaction
+
+          this.logger.log(`Organization ${organizationId} changed plan from ${previousPlan?.slug ?? 'none'} to ${newPlan.slug}`);
       });
-
-      await this.subscriptionHistoryRepository.save(history);
-
-      this.logger.log(`Organization ${organizationId} changed plan from ${previousPlan?.slug ?? 'none'} to ${newPlan.slug}`);
   }
 
   /**
@@ -137,22 +139,27 @@ export class SaasService implements OnModuleInit {
 
     // Handle BOOLEAN limits (Entitlements)
     if (limitDef.valueType === LimitType.BOOLEAN) {
-       // If limit is boolean, we typically check 'isEnabled' or 'limit > 0'
-       // If isEnabled is false, we throw.
        if (!limitDef.isEnabled) {
            throw new ForbiddenException(`FEATURE_NOT_ENABLED: ${resource}`);
        }
-       // For Boolean features, 'increment' is usually irrelevant, but we might want to track usage count ANYWAY?
-       // Usually Entitlements just check access.
-       // We can return here without incrementing anything.
        return;
     }
 
-    // Determine period key using Organization Timezone (Robust Billing Cycle)
+    // Determine period key using Organization Billing Cycle if available
     let periodKey = 'lifetime';
     if (limitDef.period === 'monthly') {
-        // Use UTC to normalize billing periods, ignoring local timezone shifts for billing accounting
-        periodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
+        if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
+             // Align with Stripe billing cycle (end date)
+             // Format: "YYYY-MM-DD" of the end of the current period to ensure uniqueness per cycle
+             // Or better: Use the start date YYYY-MM-DD as the key.
+             // If we use just YYYY-MM, we might overlap if billing date is not 1st.
+             // So we use the specific cycle key derived from the subscription end date.
+             // e.g. "2023-10-15" (meaning the cycle ending on Oct 15).
+             periodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
+        } else {
+             // Fallback to calendar month (UTC) if no subscription data
+             periodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
+        }
     }
 
     const allowOverage = limitDef.allowOverage;
@@ -169,17 +176,14 @@ export class SaasService implements OnModuleInit {
     );
 
     // Invalidate/Update Cache on Usage Change
-    // We invalidate the cache so the next Guard check fetches fresh data or updates the cache.
-    // Or we could update it directly if we knew the logic, but invalidation is safer.
     const cacheKey = `plan_limit:${organizationId}:${resource}`;
 
     if (result.limitReached) {
         await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000); // Cache "Blocked"
+        this.metricsService.limitHitCounter.labels(organizationId, resource).inc();
         this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
         throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
     } else {
-        // If we are close to limit, maybe we shouldn't cache "True" for long?
-        // For now, just invalidate so next read is fresh.
         await this.cacheManager.del(cacheKey);
 
         if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
@@ -187,8 +191,6 @@ export class SaasService implements OnModuleInit {
         }
     }
   }
-
-  // Removed private incrementUsageTransactional as it is now handled by usageMetricRepository
 
   async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
     const org = await this.orgRepository.findOne({
@@ -212,8 +214,12 @@ export class SaasService implements OnModuleInit {
     // Use limit definition for period
     let period = 'lifetime';
     if (limitDef.period === 'monthly') {
-         const timezone = org.timezone || 'UTC';
-         period = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
+         if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
+             period = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
+         } else {
+             const timezone = org.timezone || 'UTC';
+             period = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
+         }
     }
 
     const metric = await this.usageRepository.findOne({

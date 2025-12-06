@@ -47,6 +47,12 @@ export class Organization {
   @Column({ name: 'subscription_status', nullable: true })
   subscriptionStatus: string;
 
+  @Column({ name: 'subscription_period_start', type: 'timestamptz', nullable: true })
+  subscriptionPeriodStart: Date;
+
+  @Column({ name: 'subscription_period_end', type: 'timestamptz', nullable: true })
+  subscriptionPeriodEnd: Date;
+
   @Column({ default: 'UTC' })
   timezone: string;
 
