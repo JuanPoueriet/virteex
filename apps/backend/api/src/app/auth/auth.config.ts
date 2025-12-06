@@ -42,6 +42,9 @@ export const AuthConfig = {
   get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$argon2id$v=19$m=65536,t=3,p=4$nQX58JdpAHj04FlImXHVGg$KqRBXlHTOlTtTorAd6friuDAvPPmpa+0E7cDUf/5p9I'; },
   get SIMULATED_DELAY_MS() { return parseInt(process.env.AUTH_SIMULATED_DELAY_MS || '500', 10); },
 
+  // Circuit Breaker
+  get CACHE_RETRY_DELAY() { return parseInt(process.env.AUTH_CACHE_RETRY_DELAY || '30000', 10); },
+
   // Twilio
   get TWILIO_ACCOUNT_SID() { return process.env.TWILIO_ACCOUNT_SID; },
   get TWILIO_AUTH_TOKEN() { return process.env.TWILIO_AUTH_TOKEN; },

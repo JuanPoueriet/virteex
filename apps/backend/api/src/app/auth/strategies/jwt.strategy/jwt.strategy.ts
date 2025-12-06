@@ -36,7 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // Simple Circuit Breaker state
   private lastCacheFailure: number = 0;
-  private readonly CACHE_RETRY_DELAY = 30000; // 30 seconds
+  private readonly CACHE_RETRY_DELAY = AuthConfig.CACHE_RETRY_DELAY;
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const { id, tokenVersion } = payload;
@@ -50,7 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         try {
             user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
         } catch (e) {
-            this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Opening circuit for 30s.`);
+            this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Opening circuit for ${this.CACHE_RETRY_DELAY}ms.`);
             this.lastCacheFailure = now;
             // Fallback silently proceeds to DB check below
         }

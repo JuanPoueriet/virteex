@@ -253,17 +253,54 @@ export class SessionService {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
 
-    const result = await this.refreshTokenRepository.delete({
-      expiresAt: LessThan(expirationDate),
-    });
+    // Optimized: Batched deletion to prevent table locking and transaction log overflow
+    const BATCH_SIZE = 1000;
+    let totalDeleted = 0;
+    let deletedCount = 0;
 
-    const resultRevoked = await this.refreshTokenRepository.delete({
-      isRevoked: true,
-      revokedAt: LessThan(expirationDate),
-    });
+    // 1. Cleanup Expired Tokens
+    do {
+      const expiredTokens = await this.refreshTokenRepository.find({
+        where: { expiresAt: LessThan(expirationDate) },
+        take: BATCH_SIZE,
+        select: ['id'], // Only select ID for performance
+      });
+
+      if (expiredTokens.length > 0) {
+        const ids = expiredTokens.map((t) => t.id);
+        const result = await this.refreshTokenRepository.delete(ids);
+        deletedCount = result.affected || 0;
+        totalDeleted += deletedCount;
+        // Small delay to allow other transactions
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        deletedCount = 0;
+      }
+    } while (deletedCount > 0);
+
+    // 2. Cleanup Revoked Tokens (older than retention)
+    let totalRevokedDeleted = 0;
+    deletedCount = 0;
+    do {
+      const revokedTokens = await this.refreshTokenRepository.find({
+        where: { isRevoked: true, revokedAt: LessThan(expirationDate) },
+        take: BATCH_SIZE,
+        select: ['id'],
+      });
+
+      if (revokedTokens.length > 0) {
+        const ids = revokedTokens.map((t) => t.id);
+        const result = await this.refreshTokenRepository.delete(ids);
+        deletedCount = result.affected || 0;
+        totalRevokedDeleted += deletedCount;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        deletedCount = 0;
+      }
+    } while (deletedCount > 0);
 
     this.logger.log(
-      `Cleanup complete. Deleted ${result.affected} expired tokens and ${resultRevoked.affected} revoked tokens.`
+      `Cleanup complete. Deleted ${totalDeleted} expired tokens and ${totalRevokedDeleted} revoked tokens.`
     );
   }
 

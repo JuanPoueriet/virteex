@@ -12,6 +12,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { SocialUserDecorator } from './decorators/social-user.decorator';
 import { User } from '../users/entities/user.entity/user.entity';
 import { Throttle } from '@nestjs/throttler';
 import { GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
@@ -54,8 +55,8 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
-      await this.handleSocialCallback(req.user, res);
+  async googleAuthRedirect(@SocialUserDecorator() socialUser: SocialUser, @Res() res: Response) {
+      await this.handleSocialCallback(socialUser, res);
   }
 
   @Get('microsoft')
@@ -64,8 +65,8 @@ export class AuthController {
 
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
-      await this.handleSocialCallback(req.user, res);
+  async microsoftAuthRedirect(@SocialUserDecorator() socialUser: SocialUser, @Res() res: Response) {
+      await this.handleSocialCallback(socialUser, res);
   }
 
   @Get('okta')
@@ -74,8 +75,8 @@ export class AuthController {
 
   @Get('okta/callback')
   @UseGuards(AuthGuard('okta'))
-  async oktaAuthRedirect(@Req() req: Request & { user: SocialUser }, @Res() res: Response) {
-      await this.handleSocialCallback(req.user, res);
+  async oktaAuthRedirect(@SocialUserDecorator() socialUser: SocialUser, @Res() res: Response) {
+      await this.handleSocialCallback(socialUser, res);
   }
 
   private async handleSocialCallback(socialUser: SocialUser, res: Response) {
