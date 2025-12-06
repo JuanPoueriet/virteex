@@ -11,8 +11,12 @@ export interface IPolicy {
 
 export type PermissionOrPolicy = Permission | Type<IPolicy>;
 
+import { Logger } from '@nestjs/common';
+
 @Injectable()
 export class PermissionsGuard implements CanActivate {
+  private readonly logger = new Logger(PermissionsGuard.name);
+
   constructor(
       private reflector: Reflector,
       private moduleRef: ModuleRef
@@ -55,7 +59,7 @@ export class PermissionsGuard implements CanActivate {
                 } catch (e) {
                     // If not found in DI container, we log error and fail secure.
                     // We do NOT manually instantiate, as that breaks DI contract.
-                     console.error(`Policy ${requirement.name} not found in DI container. Make sure it is decorated with @Injectable() and provided in the module.`);
+                     this.logger.error(`Policy ${requirement.name} not found in DI container. Make sure it is decorated with @Injectable() and provided in the module.`);
                      throw new ForbiddenException('Configuration Error: Policy not found.');
                 }
 
@@ -67,7 +71,7 @@ export class PermissionsGuard implements CanActivate {
                 }
              } catch (e) {
                  if (e instanceof ForbiddenException) throw e;
-                 console.error('Policy check failed', e);
+                 this.logger.error(`Policy check failed: ${(e as Error).message}`, (e as Error).stack);
                  throw new ForbiddenException('Error validando política de seguridad.');
              }
         }
