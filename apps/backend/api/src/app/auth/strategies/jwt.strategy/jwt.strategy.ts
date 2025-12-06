@@ -53,6 +53,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         if (user) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
              try {
+                // Pre-calculate permissions and attach to user object in cache to avoid re-calc
+                (user as any)._cachedPermissions = this.getPermissionsFromRoles(user.roles ?? []);
                 await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
              } catch (e) {
                 this.logger.warn(`Failed to set user cache during JWT validation: ${(e as Error).message}`);
@@ -91,7 +93,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
 
-    const permissions = this.getPermissionsFromRoles(user.roles ?? []);
+    const permissions = (user as any)._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
 
 
     return { ...user, permissions };
