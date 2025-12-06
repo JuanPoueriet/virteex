@@ -55,7 +55,8 @@ export const authInterceptor: HttpInterceptorFn = (
                                 const isIdempotent = ['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS'].includes(req.method);
 
                                 if (error.status === 0 || (error.status >= 500 && isIdempotent)) {
-                                    return timer(retryCount * 1000);
+                                    // Exponential Backoff: 1s, 2s, 4s
+                                    return timer(1000 * Math.pow(2, retryCount - 1));
                                 }
                                 return throwError(() => error);
                             }

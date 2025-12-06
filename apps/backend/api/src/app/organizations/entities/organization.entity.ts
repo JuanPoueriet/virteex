@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
 import { User } from '../../users/entities/user.entity/user.entity';
 
@@ -51,6 +51,9 @@ export class Organization {
 
   @OneToMany(() => User, user => user.organization)
   users: User[];
+
+  @ManyToMany(() => User, (user) => user.organizations)
+  allUsers: User[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
