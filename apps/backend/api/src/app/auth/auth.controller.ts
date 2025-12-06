@@ -262,6 +262,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe())
   @UseGuards(CsrfGuard)
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     const user = await this.passwordRecoveryService.resetPassword(resetPasswordDto);
     const { passwordHash, ...userResult } = user;
