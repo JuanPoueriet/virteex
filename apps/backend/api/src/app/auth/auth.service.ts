@@ -116,9 +116,13 @@ export class AuthService {
       const result = await this.mfaOrchestratorService.complete2faLogin(user, twoFactorCode, ipAddress, userAgent);
       await this.securityAnalysisService.checkImpossibleTravel(user.id, ipAddress);
 
-      // Explicitly construct the result to satisfy type system without 'as unknown as' if possible
-      // Assuming result structure matches the intersection, which it should if complete2faLogin returns correct DTO
-      return result as LoginResult;
+    // Explicitly construct the result to satisfy type system without casting
+    return {
+        user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        refreshTokenId: result.refreshTokenId
+    };
     }
 
     await this.securityAnalysisService.checkImpossibleTravel(user.id, ipAddress);
@@ -131,7 +135,12 @@ export class AuthService {
     );
 
     const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
-    return authResponse as LoginResult;
+  return {
+      user: authResponse.user,
+      accessToken: authResponse.accessToken,
+      refreshToken: authResponse.refreshToken,
+      refreshTokenId: authResponse.refreshTokenId
+  };
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {

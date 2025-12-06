@@ -128,6 +128,7 @@
     "highcharts": "^12.4.0",
     "highcharts-angular": "^5.2.0",
     "ioredis": "^5.7.0",
+    "ipaddr.js": "^2.3.0",
     "joi": "^17.13.3",
     "lucide-angular": "^0.555.0",
     "ms": "^2.1.3",
