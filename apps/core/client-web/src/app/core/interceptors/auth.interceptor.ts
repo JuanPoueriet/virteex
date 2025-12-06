@@ -7,20 +7,19 @@ import {
     HttpErrorResponse
 } from '@angular/common/http';
 import { inject, Injector } from '@angular/core';
-import { Observable, throwError, BehaviorSubject, timer } from 'rxjs';
-import { catchError, switchMap, filter, take, retry } from 'rxjs/operators';
+import { Observable, throwError, timer } from 'rxjs';
+import { catchError, switchMap, retry } from 'rxjs/operators';
 import { AuthService } from '../services/auth';
+import { AuthQueueService } from '../services/auth-queue.service';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
-
-// Mutex para evitar la condición de carrera "Thundering Herd"
-let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<boolean | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (
     req: HttpRequest<unknown>,
     next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
     const injector = inject(Injector);
+    // Inject AuthQueueService (Singleton) to manage state across requests
+    const authQueueService = inject(AuthQueueService);
 
     const authReq = req.clone({
         withCredentials: true
@@ -34,9 +33,8 @@ export const authInterceptor: HttpInterceptorFn = (
             const isPublicAuthApiRoute = req.context.get(IS_PUBLIC_API);
 
             if (isUnauthorized && !isPublicAuthApiRoute) {
-                if (!isRefreshing) {
-                    isRefreshing = true;
-                    refreshTokenSubject.next(null);
+                if (!authQueueService.isRefreshingToken) {
+                    authQueueService.startRefresh();
 
                     // Lazy injection to avoid circular dependency
                     const authService = injector.get(AuthService);
@@ -45,30 +43,22 @@ export const authInterceptor: HttpInterceptorFn = (
                         // Reintentar si falla por error de red (status 0) o 5xx
                         retry({
                             count: 3,
-                            delay: (error, retryCount) => {
-                                // IMPROVEMENT: Only retry network errors or server errors on Idempotent methods
-                                // If the original request was POST/PATCH/DELETE, we do NOT retry the refresh blindly on 500,
-                                // because the user might have already clicked "Submit" and we don't want to risk weird state if the refresh server is flapping.
-                                // Actually, retrying the REFRESH call is usually idempotent, but the Reviewer insisted on this pattern.
-                                // The key is: if the refresh succeeds, we retry the ORIGINAL request.
-                                // If the refresh fails with 500, we stop.
+                            delay: (err, retryCount) => {
                                 const isIdempotent = ['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS'].includes(req.method);
 
-                                if (error.status === 0 || (error.status >= 500 && isIdempotent)) {
+                                if (err.status === 0 || (err.status >= 500 && isIdempotent)) {
                                     // Exponential Backoff: 1s, 2s, 4s
                                     return timer(1000 * Math.pow(2, retryCount - 1));
                                 }
-                                return throwError(() => error);
+                                return throwError(() => err);
                             }
                         }),
                         switchMap((response) => {
-                            isRefreshing = false;
-                            refreshTokenSubject.next(true); // Emitir valor para liberar la cola
+                            authQueueService.finishRefreshSuccess(); // Emitir valor para liberar la cola
                             return next(authReq);
                         }),
                         catchError((refreshError) => {
-                            isRefreshing = false;
-                            refreshTokenSubject.next(false); // Emitir false para indicar fallo
+                            authQueueService.finishRefreshError(); // Emitir false para indicar fallo
 
                             if (refreshError.status === 0) {
                                 return throwError(() => refreshError);
@@ -81,11 +71,9 @@ export const authInterceptor: HttpInterceptorFn = (
                         })
                     );
                 } else {
-                    return refreshTokenSubject.pipe(
-                        filter(token => token !== null),
-                        take(1),
-                        switchMap((token) => {
-                            if (token === false) {
+                    return authQueueService.waitForTokenRefresh().pipe(
+                        switchMap((tokenSuccess) => {
+                            if (tokenSuccess === false) {
                                 return throwError(() => new Error('Token refresh failed'));
                             }
                             return next(authReq);

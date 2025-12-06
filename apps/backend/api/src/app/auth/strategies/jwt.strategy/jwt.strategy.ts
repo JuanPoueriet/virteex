@@ -39,7 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly CACHE_RETRY_DELAY = AuthConfig.CACHE_RETRY_DELAY;
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    const { id, tokenVersion } = payload;
+    const { id, tokenVersion, organizationId } = payload;
     const cacheKey = `user_session:${id}`;
 
     // 1. Try to get user from cache (with Circuit Breaker)
@@ -104,6 +104,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user.organization) {
          this.logger.error(`User ${user.id} authenticated but has no linked Organization. Access Denied.`);
          throw new UnauthorizedException(AuthError.USER_NOT_FOUND); // Or a specific error code like ORG_NOT_FOUND
+    }
+
+    // Strict validation: The token's organization context must match the user's current organization
+    // We use optional chaining for user.organization just to be safe, though the check above handles null.
+    // If organizationId is present in the token (context-aware token), it must match.
+    if (organizationId && user.organization?.id !== organizationId) {
+        this.logger.warn(`User ${user.id} attempted to access with token for Organization ${organizationId} but belongs to ${user.organization?.id}`);
+        throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
     }
 
     // Return SafeUser / AuthenticatedUser

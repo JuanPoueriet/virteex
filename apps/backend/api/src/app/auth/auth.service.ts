@@ -93,7 +93,10 @@ export class AuthService {
       if (!twoFactorCode) {
          const tempToken = this.jwtService.sign(
             { id: user.id, type: '2fa_pending', tokenVersion: user.security.tokenVersion },
-            { expiresIn: '5m', secret: this.configService.getOrThrow('JWT_SECRET') }
+            {
+              expiresIn: `${AuthConfig.MFA_CODE_EXPIRATION / 1000}s`, // Convert to seconds for JWT payload or use ms string if supported
+              secret: this.configService.getOrThrow('JWT_SECRET')
+            }
          );
 
          if (user.isPhoneVerified && user.phone) {
