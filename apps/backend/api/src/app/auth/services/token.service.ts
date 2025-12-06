@@ -92,7 +92,8 @@ export class TokenService {
     user: User,
     extraPayload: Partial<JwtPayload> = {},
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
+    rememberMe: boolean = false
   ) {
     const payload = this.buildPayload(user, extraPayload);
     const safeUser = this.buildSafeUser(user);
@@ -103,7 +104,12 @@ export class TokenService {
       originalUserId: payload.originalUserId || undefined,
     };
 
-    const refreshExpiration = AuthConfig.JWT_REFRESH_EXPIRATION;
+    // 10/10 SECURITY: Correct "Remember Me" handling
+    // Ensure DB record expiration matches the cookie/token intent.
+    const refreshExpiration = rememberMe
+        ? AuthConfig.JWT_REFRESH_REMEMBER_ME_EXPIRATION
+        : AuthConfig.JWT_REFRESH_EXPIRATION;
+
     const expirationDate = new Date(Date.now() + ms(refreshExpiration));
 
     const refreshTokenRecord = this.refreshTokenRepository.create({

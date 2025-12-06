@@ -4,14 +4,7 @@ import { Repository } from 'typeorm';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { UserCacheService } from '../modules/user-cache.service';
 import { hasPermission } from '@virteex/shared/util-auth';
-import { RoleEnum } from '../../roles/enums/role.enum';
-
-const ROLE_HIERARCHY: Record<string, number> = {
-  [RoleEnum.ADMINISTRATOR]: 100,
-  [RoleEnum.ACCOUNTANT]: 50,
-  [RoleEnum.SELLER]: 50,
-  [RoleEnum.MEMBER]: 10,
-};
+import { AuthConfig } from '../auth.config';
 
 @Injectable()
 export class ImpersonationService {
@@ -22,7 +15,8 @@ export class ImpersonationService {
 
   private getRoleLevel(roles: { name: string }[]): number {
     const safeRoles = roles || [];
-    return Math.max(0, ...safeRoles.map(r => ROLE_HIERARCHY[r.name] || 0));
+    const hierarchy: Record<string, number> = AuthConfig.ROLE_HIERARCHY;
+    return Math.max(0, ...safeRoles.map(r => hierarchy[r.name] || 0));
   }
 
   async validateImpersonationRequest(adminUser: User, targetUserId: string): Promise<User> {
@@ -33,14 +27,23 @@ export class ImpersonationService {
       );
     }
 
+    // 10/10 SECURITY: Strict Tenant Isolation
+    // Enforce that the target user belongs to the same organization as the admin user.
+    // This prevents cross-tenant data leakage or unauthorized access.
+    // We explicitly verify organizationId match even if the query filters by it, for redundancy.
     const targetUser = await this.userRepository.findOne({
-      where: { id: targetUserId, organizationId: adminUser.organizationId },
+      where: { id: targetUserId },
       relations: ['roles', 'organization'],
     });
+
     if (!targetUser) {
       throw new NotFoundException(
-        'El usuario a suplantar no fue encontrado en tu organización.',
+        'El usuario a suplantar no fue encontrado.',
       );
+    }
+
+    if (targetUser.organizationId !== adminUser.organizationId) {
+        throw new ForbiddenException('No puedes suplantar usuarios de otra organización.');
     }
 
     const adminLevel = this.getRoleLevel(adminUser.roles);

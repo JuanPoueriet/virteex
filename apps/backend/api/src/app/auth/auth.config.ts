@@ -20,6 +20,7 @@ export const AuthConfig = {
   get JWT_ACCESS_EXPIRATION() { return process.env.JWT_ACCESS_EXPIRATION || '15m'; },
   get JWT_REFRESH_EXPIRATION() { return process.env.JWT_REFRESH_EXPIRATION || '7d'; },
   get JWT_RESET_PASSWORD_EXPIRATION() { return process.env.JWT_RESET_PASSWORD_EXPIRATION || '15m'; },
+  get JWT_REFRESH_REMEMBER_ME_EXPIRATION() { return process.env.JWT_REFRESH_REMEMBER_ME_EXPIRATION || '30d'; },
 
   // Cookie Max Age (Milliseconds)
   get COOKIE_ACCESS_MAX_AGE() { return parseDuration(process.env.JWT_ACCESS_EXPIRATION || '15m'); },
@@ -53,4 +54,14 @@ export const AuthConfig = {
   // Impossible Travel
   get IMPOSSIBLE_TRAVEL_MAX_SPEED() { return parseInt(process.env.AUTH_IMPOSSIBLE_TRAVEL_MAX_SPEED || '1500', 10); }, // km/h
   get IMPOSSIBLE_TRAVEL_MIN_DISTANCE() { return parseInt(process.env.AUTH_IMPOSSIBLE_TRAVEL_MIN_DISTANCE || '100', 10); }, // km
+
+  // Role Hierarchy
+  get ROLE_HIERARCHY() {
+    return {
+      'ADMINISTRATOR': 100,
+      'ACCOUNTANT': 50,
+      'SELLER': 50,
+      'MEMBER': 10,
+    };
+  }
 };
