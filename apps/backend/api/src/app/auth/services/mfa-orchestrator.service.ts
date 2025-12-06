@@ -15,6 +15,7 @@ import { ActionType } from '../../audit/entities/audit-log.entity';
 import { TokenService } from './token.service';
 import { UsersService } from '../../users/users.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
+import { TwoFactorAuthService } from './two-factor-auth.service';
 
 @Injectable()
 export class MfaOrchestratorService {
@@ -29,7 +30,8 @@ export class MfaOrchestratorService {
     private readonly securityAnalysisService: SecurityAnalysisService,
     private readonly auditService: AuditTrailService,
     private readonly tokenService: TokenService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly twoFactorAuthService: TwoFactorAuthService
   ) {}
 
   async sendPhoneOtp(userId: string, phoneNumber: string) {
@@ -104,7 +106,20 @@ export class MfaOrchestratorService {
   }
 
   async complete2faLogin(user: User, code: string, ipAddress?: string, userAgent?: string) {
-      const isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, code);
+      // 1. Try Standard TOTP
+      let isValid2FA = await this.securityAnalysisService.validateTwoFactorCode(user, code);
+      let method = '2FA';
+
+      // 2. If TOTP failed, try Backup Code
+      if (!isValid2FA) {
+          // Check format of backup code (e.g., 8 chars) to avoid unnecessary DB hits?
+          // Nah, just try verify.
+          const isBackupCode = await this.twoFactorAuthService.verifyBackupCode(user, code);
+          if (isBackupCode) {
+              isValid2FA = true;
+              method = 'BACKUP_CODE';
+          }
+      }
 
       if (!isValid2FA) {
          await this.auditService.record(
@@ -112,10 +127,10 @@ export class MfaOrchestratorService {
             'User',
             user.id,
             ActionType.LOGIN_FAILED,
-            { email: user.email, reason: 'Invalid 2FA Code' },
+            { email: user.email, reason: 'Invalid 2FA/Backup Code' },
             undefined
          );
-         throw new UnauthorizedException('Código 2FA inválido');
+         throw new UnauthorizedException('Código 2FA o de recuperación inválido');
       }
 
     // Reset attempts on successful 2FA
@@ -130,7 +145,7 @@ export class MfaOrchestratorService {
         'User',
         user.id,
         ActionType.LOGIN,
-        { email: user.email, ipAddress, userAgent, method: '2FA' },
+        { email: user.email, ipAddress, userAgent, method },
         undefined,
     );
 

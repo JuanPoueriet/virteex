@@ -40,6 +40,7 @@ export class CookieService {
         maxAge: rememberMe
           ? AuthConfig.COOKIE_REFRESH_REMEMBER_ME_MAX_AGE
           : AuthConfig.COOKIE_REFRESH_MAX_AGE,
+        path: '/api/v1/auth/refresh', // 10/10 SECURITY: Limit scope of refresh token
       });
     }
 
@@ -66,7 +67,7 @@ export class CookieService {
 
   clearAuthCookies(res: Response): void {
     res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
     res.clearCookie('XSRF-TOKEN');
   }
 }

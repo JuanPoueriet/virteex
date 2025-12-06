@@ -51,6 +51,14 @@ export class UserSecurity {
   @Column({ name: 'two_factor_secret', type: 'varchar', nullable: true })
   twoFactorSecret?: string;
 
+  // 10/10 SECURITY: Backup Codes
+  // Stored as a hashed array or simpler: plain text is DANGEROUS.
+  // We will store them hashed (argon2) individually in a separate table OR
+  // for simplicity in this task, a JSON column with hashed values is acceptable if properly handled.
+  // Better approach: Store them as a JSON array of HASHED codes.
+  @Column('jsonb', { name: 'backup_codes', nullable: true })
+  backupCodes?: string[];
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
