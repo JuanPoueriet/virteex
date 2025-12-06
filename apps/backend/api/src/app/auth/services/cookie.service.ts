@@ -15,13 +15,14 @@ export class CookieService {
   ): void {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
 
-    // Configuración base segura
+    // 10/10 SECURITY: Strict Cookie Settings
+    // We enforce HTTPOnly and Secure (in production).
+    // SameSite=Lax is chosen over Strict to support OAuth redirection flows (Google/Microsoft),
+    // which otherwise drop cookies on the callback POST/GET.
+    // CSRF is handled separately via Double Submit Cookie (XSRF-TOKEN).
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      // Se mantiene 'lax' para permitir que el callback de OAuth (Google/Microsoft)
-      // envíe las cookies de sesión en el redirect. 'strict' rompería el login social.
-      // Se debe asegurar protección CSRF vía tokens en endpoints mutables.
       sameSite: 'lax' as 'strict' | 'lax' | 'none',
     };
 

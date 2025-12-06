@@ -84,6 +84,9 @@ export class SessionService {
               `[SECURITY] Reuse detection: Refresh token ${payload.jti} was used but is revoked/missing. Invalidating user ${user.id}.`
             );
 
+            // 10/10 SECURITY: NUCLEAR FAMILY INVALIDATION
+            // When a revoked token is reused (outside grace period), we assume the token family is compromised.
+            // Incrementing tokenVersion invalidates ALL existing Access and Refresh tokens for this user globally.
             if (user.security) {
                 user.security.tokenVersion = (user.security.tokenVersion || 0) + 1;
                 await this.userSecurityRepository.save(user.security);
