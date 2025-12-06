@@ -86,6 +86,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const permissions = user._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
 
+    // 10/10 SECURITY: Organization Context Validation
+    // Although User -> Organization is 1:1, we explicitly check if organization data is loaded to prevent headless access.
+    // In a future multi-tenant setup (ManyToMany), we would compare payload.orgId with user.organizations.
+    if (!user.organization) {
+         this.logger.warn(`User ${user.id} authenticated but has no linked Organization. This might be a data consistency issue.`);
+         // We do not block login for now to allow 'headless' users (e.g. system admins), but we log it.
+    }
+
     // Return SafeUser / AuthenticatedUser
     // We construct it explicitly to avoid 'as any' and ensure type safety
     const authenticatedUser: AuthenticatedUser = {

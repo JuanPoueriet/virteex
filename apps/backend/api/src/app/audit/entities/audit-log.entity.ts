@@ -17,29 +17,29 @@ export class AuditLog {
   id: string;
 
   @Index()
-  @Column({ name: 'user_id', type: 'uuid' })
+  @Column({ name: 'user_id', type: 'uuid', updatable: false })
   userId: string;
 
   @Index()
-  @Column()
+  @Column({ updatable: false })
   entity: string;
 
   @Index()
-  @Column({ name: 'entity_id' })
+  @Column({ name: 'entity_id', updatable: false })
   entityId: string;
 
-  @Column({ type: 'enum', enum: ActionType })
+  @Column({ type: 'enum', enum: ActionType, updatable: false })
   actionType: ActionType;
 
-  @Column({ name: 'ip_address', nullable: true })
+  @Column({ name: 'ip_address', nullable: true, updatable: false })
   ipAddress?: string;
 
-  @Column({ type: 'jsonb', name: 'previous_value', nullable: true })
+  @Column({ type: 'jsonb', name: 'previous_value', nullable: true, updatable: false })
   previousValue?: object;
 
-  @Column({ type: 'jsonb', name: 'new_value', nullable: true })
+  @Column({ type: 'jsonb', name: 'new_value', nullable: true, updatable: false })
   newValue: object | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz', updatable: false })
   timestamp: Date;
 }

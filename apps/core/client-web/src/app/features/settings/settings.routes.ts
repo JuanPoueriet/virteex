@@ -13,6 +13,11 @@ export const SETTINGS_ROUTES: Routes = [
                 title: 'Mi Perfil',
                 loadComponent: () => import('./my-profile/my-profile.page').then(m => m.MyProfilePage)
             },
+            {
+                path: 'sessions',
+                title: 'Sesiones Activas',
+                loadComponent: () => import('./pages/sessions/sessions.component').then(m => m.SessionsComponent)
+            },
             // { path: 'notifications', ... } // Futuro
 
             // --- GRUPO 2: ORGANIZACIÓN (Global) ---
