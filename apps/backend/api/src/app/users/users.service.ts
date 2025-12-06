@@ -156,7 +156,6 @@ export class UsersService {
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id: id as any },
-      relations: ['security']
     });
 
     if (!user) {
@@ -168,7 +167,6 @@ export class UsersService {
   async findOneByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email },
-      relations: ['security']
     });
 
     return user;
