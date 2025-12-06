@@ -23,10 +23,9 @@ import { AuthEvents, AuthLoginFailedEvent, AuthLoginSuccessEvent } from './event
 import { SafeUser, AuthenticatedUser } from './interfaces/authenticated-user.interface';
 import { AuthError } from './enums/auth-error.enum';
 import { AuthException } from './exceptions/auth.exception';
+import { LoginResultDto, LoginResponseDto, TwoFactorRequiredResponseDto } from './dto/login-response.dto';
 
-export type LoginResult =
-  | { user: AuthenticatedUser; accessToken: string; refreshToken: string; refreshTokenId: string }
-  | { require2fa: true; tempToken: string; message: string };
+export type LoginResult = LoginResultDto;
 
 @Injectable()
 export class AuthService {

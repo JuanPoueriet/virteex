@@ -1,6 +1,8 @@
-import { Injectable, OnModuleInit, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Plan } from './entities/plan.entity';
 import { PlanLimit } from './entities/plan-limit.entity';
 import { UsageMetric } from './entities/usage-metric.entity';
@@ -25,7 +27,8 @@ export class SaasService implements OnModuleInit {
     @InjectRepository(OrganizationSubscriptionHistory) private subscriptionHistoryRepository: Repository<OrganizationSubscriptionHistory>,
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
-    private usageMetricRepository: UsageMetricRepository
+    private usageMetricRepository: UsageMetricRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async onModuleInit() {
@@ -152,11 +155,23 @@ export class SaasService implements OnModuleInit {
         allowOverage
     );
 
+    // Invalidate/Update Cache on Usage Change
+    // We invalidate the cache so the next Guard check fetches fresh data or updates the cache.
+    // Or we could update it directly if we knew the logic, but invalidation is safer.
+    const cacheKey = `plan_limit:${organizationId}:${resource}`;
+
     if (result.limitReached) {
+        await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000); // Cache "Blocked"
         this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
         throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
-    } else if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
-        this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
+    } else {
+        // If we are close to limit, maybe we shouldn't cache "True" for long?
+        // For now, just invalidate so next read is fresh.
+        await this.cacheManager.del(cacheKey);
+
+        if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
+            this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
+        }
     }
   }
 

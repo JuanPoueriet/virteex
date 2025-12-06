@@ -199,7 +199,19 @@ export class PaymentService {
     const organization = await manager.findOne(Organization, { where: { stripeSubscriptionId: subscription.id } });
 
     if (organization) {
+        // Grace Period Logic:
+        // If status is 'past_due', we might want to keep the service active or notify user.
+        // For now, we update the status, but 'past_due' usually means "Retry period" in Stripe.
+        // We log it as a warning.
+        // If we wanted to enforce a custom grace period, we would check 'current_period_end' + X days.
+
         organization.subscriptionStatus = subscription.status;
+
+        if (subscription.status === 'past_due') {
+             this.logger.warn(`Organization ${organization.id} subscription is past_due. Check payment method.`);
+             // Ideally send email to admin here via Event Emitter
+        }
+
         await manager.save(organization);
         this.logger.log(`Updated organization ${organization.id} subscription status to ${subscription.status}`);
     }
