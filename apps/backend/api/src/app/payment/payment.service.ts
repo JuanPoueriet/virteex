@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Stripe from 'stripe';
 import { Organization } from '../organizations/entities/organization.entity';
+import { SaasService } from '../saas/saas.service';
 
 @Injectable()
 export class PaymentService {
@@ -14,6 +15,7 @@ export class PaymentService {
     private configService: ConfigService,
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
+    private saasService: SaasService
   ) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (secretKey) {
@@ -115,6 +117,25 @@ export class PaymentService {
     if (organization) {
         organization.stripeSubscriptionId = subscriptionId;
         organization.subscriptionStatus = 'active'; // Assume active on success
+
+        // Link Plan based on subscription price?
+        // This is complex because Stripe subscription has items.
+        // For now, let's try to infer plan from the subscription item's price.
+        // We need to retrieve subscription details.
+        try {
+            const sub = await this.stripe.subscriptions.retrieve(subscriptionId);
+            const priceId = sub.items.data[0]?.price.id;
+            if (priceId) {
+                const plans = await this.saasService.getPlans();
+                const matchedPlan = plans.find(p => p.monthlyPriceId === priceId || p.annualPriceId === priceId);
+                if (matchedPlan) {
+                    organization.plan = matchedPlan;
+                }
+            }
+        } catch (e) {
+            this.logger.error(`Failed to sync plan for org ${organization.id}: ${e.message}`);
+        }
+
         await this.organizationRepository.save(organization);
         this.logger.log(`Updated organization ${organization.id} with subscription ${subscriptionId}`);
     } else {

@@ -1,11 +1,13 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
+import { Plan } from '../models/plan.model';
 
 export interface Subscription {
-  planName: 'Profesional' | 'Explorador' | 'Empresarial';
-  planId: 'pro' | 'trial' | 'enterprise';
-  status: 'Activo' | 'Prueba' | 'Cancelado';
+  planName: string;
+  planId: string;
+  status: string;
   price: number;
   billingCycle: 'mensual' | 'anual';
   nextBillingDate: string;
@@ -13,7 +15,7 @@ export interface Subscription {
 }
 
 export interface PaymentMethod {
-  type: 'Visa' | 'MasterCard';
+  type: string;
   last4: string;
   expiryDate: string;
 }
@@ -27,8 +29,14 @@ export interface PaymentHistoryItem {
 
 @Injectable({ providedIn: 'root' })
 export class BillingService {
+  private http = inject(HttpClient);
+  private apiUrl = '/api/v1'; // Assuming global prefix
 
-  // Simulación de datos del usuario actual
+  // Signals for state
+  plans = signal<Plan[]>([]);
+
+  // TODO: Fetch real subscription from Organization details or dedicated endpoint
+  // For now, keeping mock structure but ready to integrate
   currentSubscription = signal<Subscription>({
     planName: 'Profesional',
     planId: 'pro',
@@ -47,25 +55,57 @@ export class BillingService {
   paymentHistory = signal<PaymentHistoryItem[]>([
     { id: 'pay_1', date: '2025-07-20', description: 'Suscripción Mensual - Plan Profesional', amount: 49.00 },
     { id: 'pay_2', date: '2025-06-20', description: 'Suscripción Mensual - Plan Profesional', amount: 49.00 },
-    { id: 'pay_3', date: '2025-05-20', description: 'Suscripción Mensual - Plan Profesional', amount: 49.00 },
   ]);
 
-  // Métodos que simulan llamadas a una API
+  constructor() {
+    this.loadPlans();
+  }
+
+  loadPlans() {
+    this.http.get<Plan[]>(`${this.apiUrl}/saas/plans`).pipe(
+      tap(plans => this.plans.set(plans)),
+      catchError(err => {
+        console.error('Failed to load plans', err);
+        return of([]);
+      })
+    ).subscribe();
+  }
+
   getSubscription(): Observable<Subscription> {
-    return of(this.currentSubscription()).pipe(delay(300));
+    return of(this.currentSubscription());
   }
 
   getPaymentMethod(): Observable<PaymentMethod> {
-    return of(this.paymentMethod()).pipe(delay(300));
+    return of(this.paymentMethod());
   }
 
   getPaymentHistory(): Observable<PaymentHistoryItem[]> {
-    return of(this.paymentHistory()).pipe(delay(500));
+    return of(this.paymentHistory());
   }
 
-  changePlan(newPlanId: 'pro' | 'trial' | 'enterprise'): Observable<boolean> {
+  changePlan(newPlanId: string): Observable<boolean> {
     console.log('Cambiando al plan:', newPlanId);
-    // Aquí iría la lógica para actualizar la suscripción en el backend
-    return of(true).pipe(delay(1000));
+    // In a real app, this would call POST /payment/checkout-session with the priceId from the plan
+    const plan = this.plans().find(p => p.slug === newPlanId || p.id === newPlanId);
+    if (!plan) return of(false);
+
+    // We would trigger the checkout flow here
+    return this.http.post<{ sessionId: string, url: string }>(`${this.apiUrl}/payment/checkout-session`, {
+        priceId: plan.monthlyPriceId, // Defaulting to monthly for now
+        successUrl: window.location.href,
+        cancelUrl: window.location.href
+    }).pipe(
+        map(res => {
+            if (res.url) {
+                window.location.href = res.url;
+                return true;
+            }
+            return false;
+        }),
+        catchError(err => {
+            console.error('Checkout failed', err);
+            return of(false);
+        })
+    );
   }
 }
