@@ -10,19 +10,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as ms from 'ms';
 
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfig } from '../auth.config';
-import { AuditTrailService } from '../../audit/audit.service';
+// AuditTrailService removed from here, used via event
 import { ActionType } from '../../audit/entities/audit-log.entity';
 import { UserCacheService } from '../modules/user-cache.service';
 import { UsersService } from '../../users/users.service';
 import { SecurityAnalysisService } from './security-analysis.service';
 import { TokenService } from './token.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
+import { AuthEvents, AuthAuditActionEvent } from '../events/auth.events';
+import { AuthError } from '../enums/auth-error.enum';
 
 @Injectable()
 export class SessionService {
@@ -36,10 +39,10 @@ export class SessionService {
     private readonly userSecurityRepository: Repository<UserSecurity>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly auditService: AuditTrailService,
     private readonly userCacheService: UserCacheService,
     private readonly securityAnalysisService: SecurityAnalysisService,
-    private readonly tokenService: TokenService
+    private readonly tokenService: TokenService,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
@@ -51,10 +54,10 @@ export class SessionService {
       const user = await this.usersService.findUserByIdForAuth(payload.id);
 
       if (!user) {
-        throw new UnauthorizedException('El usuario del token ya no existe.');
+        throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
       }
       if (user.status !== UserStatus.ACTIVE) {
-        throw new UnauthorizedException('El usuario del token está inactivo.');
+        throw new UnauthorizedException(AuthError.USER_INACTIVE);
       }
 
       if (payload.jti) {
@@ -87,7 +90,7 @@ export class SessionService {
             }
 
             await this.userCacheService.clearUserSession(user.id);
-            throw new UnauthorizedException('Refresh token reutilizado. Sesión invalidada.');
+            throw new UnauthorizedException(AuthError.REFRESH_TOKEN_REVOKED);
           }
         } else {
           // User Agent Analysis (using new SecurityAnalysisService)
@@ -109,7 +112,7 @@ export class SessionService {
                 `[SECURITY] User Agent mismatch detected (OS/Browser changed). Stored: '${refreshTokenEntity.userAgent}', Current: '${userAgent}'. Potential session hijacking.`
               );
               throw new UnauthorizedException(
-                'Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.'
+                AuthError.DEVICE_MISMATCH
               );
             } else {
               this.logger.warn(
@@ -145,12 +148,15 @@ export class SessionService {
         });
       }
 
-      await this.auditService.record(
-        user.id,
-        'User',
-        user.id,
-        ActionType.REFRESH,
-        { email: user.email, ipAddress, userAgent }
+      this.eventEmitter.emit(
+          AuthEvents.AUDIT_ACTION,
+          new AuthAuditActionEvent(
+              user.id,
+              'User',
+              user.id,
+              ActionType.REFRESH,
+              { email: user.email, ipAddress, userAgent }
+          )
       );
 
       return {
@@ -163,7 +169,7 @@ export class SessionService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new UnauthorizedException('Refresh token inválido o expirado');
+      throw new UnauthorizedException(AuthError.REFRESH_TOKEN_INVALID);
     }
   }
 

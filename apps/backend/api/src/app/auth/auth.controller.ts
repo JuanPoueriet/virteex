@@ -1,22 +1,5 @@
 
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-  Res,
-  Get,
-  UseGuards,
-  Req,
-  UsePipes,
-  ValidationPipe,
-  BadRequestException,
-  Param,
-  Ip,
-  Headers,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Res, Get, UseGuards, Req, UsePipes, ValidationPipe, BadRequestException, Param, Ip, Headers, Query, UseFilters } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { AuthFacade } from './auth.facade';
@@ -38,7 +21,6 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from './auth.config';
-import { UseFilters } from '@nestjs/common';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
@@ -49,6 +31,7 @@ import { plainToInstance } from 'class-transformer';
 import { AuthGuard } from '@nestjs/passport';
 import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 import { CsrfGuard } from './guards/csrf.guard';
+import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -61,7 +44,8 @@ export class AuthController {
     private readonly passwordRecoveryService: PasswordRecoveryService,
     private readonly webAuthnService: WebAuthnService,
     private readonly configService: ConfigService,
-    private readonly cookieService: CookieService
+    private readonly cookieService: CookieService,
+    private readonly mfaOrchestratorService: MfaOrchestratorService
   ) {}
 
   @Get('google')
@@ -156,7 +140,7 @@ export class AuthController {
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
   ): Promise<LoginResponseDto> {
-    const result = await this.authFacade.login(loginUserDto, ip, userAgent);
+    const result = await this.authService.login(loginUserDto, ip, userAgent);
 
     // Check if 2FA is required
     if ('require2fa' in result && result.require2fa) {
@@ -348,14 +332,16 @@ export class AuthController {
       if (!phoneNumber) {
           throw new BadRequestException('Phone number is required');
       }
-      await this.authService.sendPhoneOtp(user.id, phoneNumber);
+      // Use MfaOrchestratorService directly instead of AuthService pass-through
+      await this.mfaOrchestratorService.sendPhoneOtp(user.id, phoneNumber);
       return { message: 'OTP sent successfully' };
   }
 
   @Post('verify-phone')
   @UseGuards(JwtAuthGuard, CsrfGuard)
   async verifyPhoneOtp(@CurrentUser() user: User, @Body() body: { code: string, phoneNumber: string }) {
-      return this.authService.verifyPhoneOtp(user.id, body.code, body.phoneNumber);
+      // Use MfaOrchestratorService directly instead of AuthService pass-through
+      return this.mfaOrchestratorService.verifyPhoneOtp(user.id, body.code, body.phoneNumber);
   }
 
   @Post('verify-2fa')
@@ -373,10 +359,13 @@ export class AuthController {
           throw new UnauthorizedException('Invalid or expired session');
       }
 
-      const result = await this.authService.complete2faLogin(user, body.code, ip, userAgent);
+      // Use MfaOrchestratorService directly instead of AuthService pass-through
+      const authResult = await this.mfaOrchestratorService.complete2faLogin(user, body.code, ip, userAgent);
 
-      this.cookieService.setAuthCookies(res, result.accessToken, result.refreshToken);
-      return { user: result.user };
+      const { user: authUser, accessToken, refreshToken } = authResult;
+
+      this.cookieService.setAuthCookies(res, accessToken, refreshToken);
+      return { user: authUser };
   }
 
   // ------------------------------------------------------------------
