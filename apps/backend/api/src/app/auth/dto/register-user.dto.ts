@@ -80,4 +80,9 @@ export class RegisterUserDto {
     @IsString()
     @IsOptional()
     address?: string;
+
+    @ApiProperty({ description: 'Honeypot field (should be empty)', required: false })
+    @IsString()
+    @IsOptional()
+    fax?: string;
 }

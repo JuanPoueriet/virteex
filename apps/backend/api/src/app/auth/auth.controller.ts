@@ -395,6 +395,7 @@ export class AuthController {
 
   @Post('webauthn/login/verify')
   @ApiOperation({ summary: 'Verify WebAuthn authentication' })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   @UseGuards(CsrfGuard)
   async verifyWebAuthnAuthentication(
     @Body() body: any,

@@ -82,7 +82,7 @@ export class AuthService {
               );
           }
           await this.simulateDelay();
-          throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+          throw new UnauthorizedException('Credenciales inválidas');
     }
 
     if (user.status !== UserStatus.ACTIVE) {
@@ -90,7 +90,8 @@ export class AuthService {
            AuthEvents.LOGIN_FAILED,
            new AuthLoginFailedEvent(user.id, user.email, 'User Inactive/Blocked', ipAddress, userAgent)
        );
-      throw new UnauthorizedException(AuthError.USER_INACTIVE);
+      // Obfuscated error message to prevent enumeration
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
     // 2FA Check

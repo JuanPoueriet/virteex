@@ -115,6 +115,7 @@ export class RegisterPage implements OnInit {
     this.countryService.detectAndSetCountry();
 
     this.registerForm = this.fb.group({
+      fax: [''], // Honeypot
       // Step 1: Account Info
       accountInfo: this.fb.group({
         firstName: ['', [Validators.required]],

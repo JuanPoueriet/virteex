@@ -18,6 +18,11 @@
 
   <div class="form-panel">
     <div class="form-container">
+      <!-- Honeypot -->
+      <form [formGroup]="registerForm">
+        <input type="text" formControlName="fax" style="display:none" autocomplete="off" tabindex="-1">
+      </form>
+
       <div class="form-header">
         <p>¿Ya tienes una cuenta? <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']" class="link">Inicia sesión</a></p>
       </div>
