@@ -2,6 +2,11 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 't
 import { Plan } from './plan.entity';
 import { SaasResource } from '../enums/saas-resource.enum';
 
+export enum LimitType {
+  NUMERIC = 'NUMERIC',
+  BOOLEAN = 'BOOLEAN'
+}
+
 @Entity('saas_plan_limits')
 export class PlanLimit {
   @PrimaryGeneratedColumn('uuid')
@@ -13,11 +18,21 @@ export class PlanLimit {
   })
   resource: SaasResource;
 
-  @Column({ type: 'int' })
-  limit: number; // -1 for unlimited
+  @Column({
+    type: 'enum',
+    enum: LimitType,
+    default: LimitType.NUMERIC
+  })
+  valueType: LimitType;
+
+  @Column({ type: 'int', default: 0 })
+  limit: number; // -1 for unlimited, 0/1 for boolean if preferred, but isEnabled handles boolean better or just limit=1
 
   @Column({ name: 'is_unlimited', default: false })
   isUnlimited: boolean;
+
+  @Column({ name: 'is_enabled', default: true })
+  isEnabled: boolean; // For Boolean limits (Feature Flags)
 
   @Column({ default: 'monthly' })
   period: 'monthly' | 'lifetime';

@@ -5,6 +5,7 @@ import { Cache } from 'cache-manager';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
 import { SaasResource } from '../enums/saas-resource.enum';
+import { LimitType } from '../entities/plan-limit.entity';
 
 @Injectable()
 export class PlanLimitGuard implements CanActivate {
@@ -47,6 +48,9 @@ export class PlanLimitGuard implements CanActivate {
       return true;
     }
 
+    // Need to handle different limit types in Service, but for Guard optimization we can check generic "canProceed"
+    // However, PlanLimit entity now supports BOOLEAN type.
+    // We should rely on SaasService to interpret the type.
     const canProceed = await this.saasService.checkLimit(
       user.organization.id,
       limitMetadata.resource,

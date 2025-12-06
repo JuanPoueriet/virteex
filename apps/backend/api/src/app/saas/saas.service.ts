@@ -4,7 +4,7 @@ import { Repository, EntityManager } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Plan } from './entities/plan.entity';
-import { PlanLimit } from './entities/plan-limit.entity';
+import { PlanLimit, LimitType } from './entities/plan-limit.entity';
 import { UsageMetric } from './entities/usage-metric.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { ConfigService } from '@nestjs/config';
@@ -135,6 +135,19 @@ export class SaasService implements OnModuleInit {
         return;
     }
 
+    // Handle BOOLEAN limits (Entitlements)
+    if (limitDef.valueType === LimitType.BOOLEAN) {
+       // If limit is boolean, we typically check 'isEnabled' or 'limit > 0'
+       // If isEnabled is false, we throw.
+       if (!limitDef.isEnabled) {
+           throw new ForbiddenException(`FEATURE_NOT_ENABLED: ${resource}`);
+       }
+       // For Boolean features, 'increment' is usually irrelevant, but we might want to track usage count ANYWAY?
+       // Usually Entitlements just check access.
+       // We can return here without incrementing anything.
+       return;
+    }
+
     // Determine period key using Organization Timezone (Robust Billing Cycle)
     let periodKey = 'lifetime';
     if (limitDef.period === 'monthly') {
@@ -187,6 +200,12 @@ export class SaasService implements OnModuleInit {
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) return true;
+
+    // Handle BOOLEAN Entitlement check
+    if (limitDef.valueType === LimitType.BOOLEAN) {
+        return limitDef.isEnabled;
+    }
+
     if (limitDef.limit === -1) return true;
     if (limitDef.allowOverage) return true;
 
