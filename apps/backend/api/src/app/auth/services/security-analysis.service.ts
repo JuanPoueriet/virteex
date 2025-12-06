@@ -9,6 +9,7 @@ import { AuthConfig } from '../auth.config';
 import { User } from '../../users/entities/user.entity/user.entity';
 import { VerificationCode, VerificationType } from '../entities/verification-code.entity';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class SecurityAnalysisService {
@@ -17,6 +18,7 @@ export class SecurityAnalysisService {
   constructor(
     private readonly geoService: GeoService,
     private readonly auditService: AuditTrailService,
+    private readonly usersService: UsersService,
     @InjectRepository(VerificationCode)
     private readonly verificationCodeRepository: Repository<VerificationCode>,
     private readonly cryptoUtil: CryptoUtil
@@ -130,5 +132,30 @@ export class SecurityAnalysisService {
     else if (/iphone|ipad|ipod/i.test(userAgent)) os = 'iOS';
 
     return { browser, os };
+  }
+
+  async handleFailedLoginAttempt(user: User) {
+    if (!user.security) return;
+
+    const MAX_FAILED_ATTEMPTS = 5;
+    const LOCKOUT_MINUTES = 15;
+
+    user.security.failedLoginAttempts = (user.security.failedLoginAttempts || 0) + 1;
+
+    if (user.security.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+      const lockoutTime = new Date();
+      lockoutTime.setMinutes(lockoutTime.getMinutes() + LOCKOUT_MINUTES);
+      user.security.lockoutUntil = lockoutTime;
+    }
+
+    await this.usersService.save(user);
+  }
+
+  async resetLoginAttempts(user: User) {
+    if (user.security && (user.security.failedLoginAttempts > 0 || user.security.lockoutUntil)) {
+      user.security.failedLoginAttempts = 0;
+      user.security.lockoutUntil = null;
+      await this.usersService.save(user);
+    }
   }
 }

@@ -11,6 +11,8 @@ import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
 import { AuthConfig } from '../../auth.config';
 import { UsersService } from '../../../users/users.service';
+import { AuthenticatedUser } from '../../interfaces/authenticated-user.interface';
+import { AuthError } from '../../enums/auth-error.enum';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -32,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<Partial<User>> {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const { id, tokenVersion } = payload;
     const cacheKey = `user_session:${id}`;
 
@@ -63,7 +65,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     if (!user) {
-      throw new UnauthorizedException('Token inválido: el usuario no existe.');
+      throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
     }
 
     // Handle security entity access safely
@@ -73,9 +75,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // Note: We are strict about token version matching.
       // Cache invalidation on user/role update is handled by UsersService and AuthService
       // ensuring that the cache doesn't hold stale user objects with old tokenVersions.
-      throw new UnauthorizedException(
-        'La sesión ha sido invalidada. Por favor, inicia sesión de nuevo.',
-      );
+      throw new UnauthorizedException(AuthError.SESSION_EXPIRED);
     }
 
     // Double check: If the cached user has a DIFFERENT tokenVersion than the one in DB (e.g. we changed it in DB but cache is stale),
@@ -87,16 +87,30 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // To be 100% real-time, we must invalidate cache on update.
 
     if (this.isDisallowedStatus(user.status)) {
-      throw new UnauthorizedException(
-        `El usuario se encuentra ${user.status.toLowerCase()}.`,
-      );
+      throw new UnauthorizedException(AuthError.USER_BLOCKED);
     }
-
 
     const permissions = (user as any)._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
 
+    // Return SafeUser / AuthenticatedUser
+    // Exclude sensitive fields
+    const { security, password, twoFactorSecret, ...safeUser } = user as any; // Cast to any to strip properties easily, or construct strictly
 
-    return { ...user, permissions };
+    // Construct strict AuthenticatedUser
+    const authenticatedUser: AuthenticatedUser = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      roles: user.roles,
+      permissions,
+      organization: user.organization,
+      isTwoFactorEnabled: security?.isTwoFactorEnabled || false,
+      isImpersonating: payload.isImpersonating,
+      originalUserId: payload.originalUserId
+    };
+
+    return authenticatedUser;
   }
 
   private isDisallowedStatus(status: UserStatus | undefined): boolean {

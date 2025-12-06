@@ -11,6 +11,7 @@ export enum AuthEvents {
     LOGOUT = 'auth.logout',
     TWO_FACTOR_ENABLED = 'auth.2fa.enabled',
     TWO_FACTOR_DISABLED = 'auth.2fa.disabled',
+    AUDIT_ACTION = 'auth.audit.action',
 }
 
 export class AuthLoginSuccessEvent {
@@ -38,6 +39,16 @@ export class AuthImpersonateEvent {
         public readonly targetUserId: string,
         public readonly adminEmail: string,
         public readonly targetUserEmail: string
+    ) {}
+}
+
+export class AuthAuditActionEvent {
+    constructor(
+        public readonly userId: string,
+        public readonly entityType: string,
+        public readonly entityId: string,
+        public readonly action: ActionType,
+        public readonly details?: Record<string, any>
     ) {}
 }
 
@@ -86,5 +97,21 @@ export class AuthSubscriber {
             },
             undefined
         );
+    }
+
+    @OnEvent(AuthEvents.AUDIT_ACTION)
+    async handleAuditAction(payload: AuthAuditActionEvent) {
+        try {
+            await this.auditService.record(
+                payload.userId,
+                payload.entityType,
+                payload.entityId,
+                payload.action,
+                payload.details,
+                undefined
+            );
+        } catch (error) {
+            this.logger.error(`Failed to record audit log asynchronously: ${(error as Error).message}`);
+        }
     }
 }

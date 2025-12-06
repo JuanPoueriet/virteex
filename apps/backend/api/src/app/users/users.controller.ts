@@ -21,7 +21,7 @@ import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UserCacheService } from '../auth/services/user-cache.service';
+import { UserCacheService } from '../auth/modules/user-cache.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
