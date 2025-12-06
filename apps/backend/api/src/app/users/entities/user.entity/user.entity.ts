@@ -71,6 +71,14 @@ export class User {
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;
 
+  @ManyToMany(() => Organization, (org) => org.users)
+  @JoinTable({
+    name: 'user_organizations',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'organization_id', referencedColumnName: 'id' },
+  })
+  organizations: Organization[];
+
   @ManyToMany(() => Role, { eager: false })
   @JoinTable({
     name: 'user_roles',

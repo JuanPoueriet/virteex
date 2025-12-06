@@ -79,8 +79,12 @@ export class AuthService {
            AuthEvents.LOGIN_FAILED,
            new AuthLoginFailedEvent(user.id, user.email, 'User Inactive/Blocked', ipAddress, userAgent)
        );
-      // Obfuscated error message to prevent enumeration
-      throw new AuthException(AuthError.INVALID_CREDENTIALS);
+
+       if (user.status === UserStatus.BLOCKED) {
+           throw new AuthException(AuthError.USER_BLOCKED);
+       } else {
+           throw new AuthException(AuthError.USER_INACTIVE);
+       }
     }
 
     // 2FA Check
