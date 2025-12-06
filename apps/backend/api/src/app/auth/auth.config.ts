@@ -42,6 +42,7 @@ export const AuthConfig = {
   // Security
   get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$argon2id$v=19$m=65536,t=3,p=4$nQX58JdpAHj04FlImXHVGg$KqRBXlHTOlTtTorAd6friuDAvPPmpa+0E7cDUf/5p9I'; },
   get SIMULATED_DELAY_MS() { return parseInt(process.env.AUTH_SIMULATED_DELAY_MS || '500', 10); },
+  get MFA_CODE_EXPIRATION() { return parseInt(process.env.AUTH_MFA_CODE_EXPIRATION || '300000', 10); }, // 5 mins
 
   // Circuit Breaker
   get CACHE_RETRY_DELAY() { return parseInt(process.env.AUTH_CACHE_RETRY_DELAY || '30000', 10); },

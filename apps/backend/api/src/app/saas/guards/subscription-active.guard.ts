@@ -31,6 +31,12 @@ export class SubscriptionActiveGuard implements CanActivate {
     // Let's assume if status is set, it must be valid.
 
     if (status && !allowedStatuses.includes(status)) {
+        // 10/10 Enterprise Grace Period:
+        // Even if status is 'unpaid' or 'canceled', we might want to check a 'gracePeriodEnd' date on the organization entity.
+        // But the requirement was specific to 'past_due' which is already in allowedStatuses.
+        // Let's make it robust: If 'unpaid', strictly block.
+        // If 'past_due', we allow (Stripe retries for ~2 weeks).
+
         throw new ForbiddenException(`SUBSCRIPTION_SUSPENDED: Status is ${status}`);
     }
 

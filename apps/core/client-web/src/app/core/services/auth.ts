@@ -31,9 +31,20 @@ import { hasPermission } from '@virteex/shared/util-auth';
 interface LoginResponse {
   user: User;
   accessToken: string;
-  require2fa?: boolean;
-  tempToken?: string;
-  message?: string;
+  refreshToken: string;
+  refreshTokenId: string;
+}
+
+interface TwoFactorRequiredResponse {
+  require2fa: boolean;
+  tempToken: string;
+  message: string;
+}
+
+type LoginResult = LoginResponse | TwoFactorRequiredResponse;
+
+function isTwoFactorRequired(res: LoginResult): res is TwoFactorRequiredResponse {
+    return (res as TwoFactorRequiredResponse).require2fa === true;
 }
 
 @Injectable({
@@ -133,13 +144,13 @@ export class AuthService {
   login(credentials: LoginCredentials): Observable<User | { require2fa: boolean; tempToken: string }> {
     const url = `${this.apiUrl}/login`;
     return this.http
-      .post<LoginResponse>(url, credentials, {
+      .post<LoginResult>(url, credentials, {
         withCredentials: true,
         context: new HttpContext().set(IS_PUBLIC_API, true)
       })
       .pipe(
         tap((response) => {
-          if (response.require2fa) {
+          if (isTwoFactorRequired(response)) {
              // Do not set authenticated yet
              return;
           }
@@ -153,8 +164,8 @@ export class AuthService {
           }
         }),
         map((response) => {
-            if (response.require2fa) {
-                return { require2fa: true, tempToken: response.tempToken! };
+            if (isTwoFactorRequired(response)) {
+                return { require2fa: true, tempToken: response.tempToken };
             }
             // 10/10 SECURITY: Explicitly strip accessToken from response object if present
             // This ensures the component/frontend logic relies solely on the HTTP-Only cookie

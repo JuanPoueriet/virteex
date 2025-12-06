@@ -45,7 +45,7 @@ export class MfaOrchestratorService {
       code: hash,
       payload: phoneNumber, // Bind code to specific phone number
       type: VerificationType.PHONE_VERIFY,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      expiresAt: new Date(Date.now() + AuthConfig.MFA_CODE_EXPIRATION),
     });
 
     await this.verificationCodeRepository.save(verificationCode);
@@ -97,7 +97,7 @@ export class MfaOrchestratorService {
           userId: user.id,
           code: hash,
           type: VerificationType.LOGIN_2FA,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+          expiresAt: new Date(Date.now() + AuthConfig.MFA_CODE_EXPIRATION)
       });
 
       if (user.phone) {

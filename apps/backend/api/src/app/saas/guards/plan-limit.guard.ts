@@ -1,14 +1,19 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Inject, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
 import { SaasResource } from '../enums/saas-resource.enum';
 
 @Injectable()
 export class PlanLimitGuard implements CanActivate {
+  private readonly logger = new Logger(PlanLimitGuard.name);
+
   constructor(
     private reflector: Reflector,
-    private saasService: SaasService
+    private saasService: SaasService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,11 +36,30 @@ export class PlanLimitGuard implements CanActivate {
        throw new ForbiddenException('Organization context required for limit check');
     }
 
+    const cacheKey = `plan_limit:${user.organization.id}:${limitMetadata.resource}`;
+
+    // 1. Try Cache first
+    const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
+    if (cachedResult !== undefined) {
+      if (!cachedResult) {
+        throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${limitMetadata.resource}`);
+      }
+      return true;
+    }
+
     const canProceed = await this.saasService.checkLimit(
       user.organization.id,
       limitMetadata.resource,
       limitMetadata.increment
     );
+
+    // 2. Cache the result for a short period (fail-fast buffer)
+    // We cache for 60 seconds. This reduces DB hits.
+    // If the user hits the limit during this time, the Service layer will still block it (enforceLimit),
+    // and subsequent requests might pass the guard until cache expires or is invalidated, but they will fail at service.
+    // To be safer, if canProceed is false, we cache it longer. If true, shorter.
+    const ttl = canProceed ? 60 * 1000 : 5 * 60 * 1000;
+    await this.cacheManager.set(cacheKey, canProceed, ttl);
 
     if (!canProceed) {
       // Note: This Guard is primarily for UX feedback and fail-fast.
