@@ -47,6 +47,9 @@ export class Organization {
   @Column({ name: 'subscription_status', nullable: true })
   subscriptionStatus: string;
 
+  @Column({ default: 'UTC' })
+  timezone: string;
+
   @ManyToOne(() => Plan)
   @JoinColumn({ name: 'plan_id' })
   plan: Plan;

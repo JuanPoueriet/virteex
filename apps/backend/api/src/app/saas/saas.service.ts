@@ -7,6 +7,9 @@ import { UsageMetric } from './entities/usage-metric.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { ConfigService } from '@nestjs/config';
 import { SaasResource } from './enums/saas-resource.enum';
+import { SAAS_PLANS } from './saas.config';
+import { DateTime } from 'luxon';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SaasService implements OnModuleInit {
@@ -17,7 +20,8 @@ export class SaasService implements OnModuleInit {
     @InjectRepository(PlanLimit) private limitRepository: Repository<PlanLimit>,
     @InjectRepository(Organization) private orgRepository: Repository<Organization>,
     @InjectRepository(UsageMetric) private usageRepository: Repository<UsageMetric>,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private eventEmitter: EventEmitter2
   ) {}
 
   async onModuleInit() {
@@ -28,42 +32,27 @@ export class SaasService implements OnModuleInit {
     const count = await this.planRepository.count();
     if (count > 0) return;
 
-    this.logger.log('Seeding SaaS Plans...');
+    this.logger.log('Seeding SaaS Plans from Config...');
 
-    const plans = [
-      {
-        slug: 'starter',
-        name: 'Starter',
-        stripeProductId: process.env.STRIPE_PRICE_STARTER ? 'prod_starter_placeholder' : null,
-        monthlyPriceId: process.env.STRIPE_PRICE_STARTER,
-        limits: [
-          { resource: SaasResource.INVOICES, limit: 10, period: 'monthly' as const },
-          { resource: SaasResource.USERS, limit: 2, period: 'lifetime' as const }
-        ]
-      },
-      {
-        slug: 'pro',
-        name: 'Professional',
-        monthlyPriceId: process.env.STRIPE_PRICE_PRO,
-        limits: [
-          { resource: SaasResource.INVOICES, limit: 100, period: 'monthly' as const },
-          { resource: SaasResource.USERS, limit: 10, period: 'lifetime' as const }
-        ]
-      },
-      {
-        slug: 'enterprise',
-        name: 'Enterprise',
-        monthlyPriceId: process.env.STRIPE_PRICE_ENTERPRISE,
-        limits: [
-          { resource: SaasResource.INVOICES, limit: -1, period: 'monthly' as const },
-          { resource: SaasResource.USERS, limit: -1, period: 'lifetime' as const }
-        ]
-      }
-    ];
+    for (const pConfig of SAAS_PLANS) {
+        const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
 
-    for (const p of plans) {
-      const plan = this.planRepository.create(p);
-      await this.planRepository.save(plan);
+        // Skip if price ID missing in prod? No, maybe just log warning or create without it.
+        // For seeding, we create structure.
+
+        const plan = this.planRepository.create({
+            slug: pConfig.slug,
+            name: pConfig.name,
+            monthlyPriceId: monthlyPriceId,
+            limits: pConfig.limits.map(l => ({
+                resource: l.resource,
+                limit: l.limit,
+                period: l.period,
+                allowOverage: l.allowOverage ?? false
+            }))
+        });
+
+        await this.planRepository.save(plan);
     }
 
     this.logger.log('SaaS Plans seeded.');
@@ -80,7 +69,9 @@ export class SaasService implements OnModuleInit {
   /**
    * Enforces plan limits within a transaction context.
    * This method atomically checks and increments usage, preventing race conditions.
-   * If the limit is reached, it throws a ForbiddenException, which will abort the transaction.
+   * If the limit is reached, it throws a ForbiddenException (unless overage is allowed), which will abort the transaction.
+   *
+   * WARNING: Must be called within a transaction manager.
    */
   async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
     const org = await manager.findOne(Organization, {
@@ -98,59 +89,58 @@ export class SaasService implements OnModuleInit {
         return;
     }
 
+    // Determine period key using Organization Timezone
+    let periodKey = 'lifetime';
+    if (limitDef.period === 'monthly') {
+        const timezone = org.timezone || 'UTC';
+        periodKey = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
+    }
+
     if (limitDef.limit === -1) {
         // Unlimited, but we still track usage
-        await this.incrementUsageTransactional(manager, organizationId, resource, limitDef.period, increment);
+        await this.incrementUsageTransactional(manager, organizationId, resource, periodKey, increment);
         return;
     }
 
-    // Determine period
-    const periodKey = limitDef.period === 'monthly'
-        ? new Date().toISOString().slice(0, 7)
-        : 'lifetime';
+    // Check Overage
+    const allowOverage = limitDef.allowOverage;
 
     // Atomic Upsert with Optimistic Check
-    // We attempt the upsert. If it is an INSERT, it succeeds without limit check by SQL logic.
-    // So we must check the returned count to verify if we breached the limit (in case of new insert exceeding limit).
-    // Or we use a lock.
-
-    // Strategy:
-    // INSERT ... RETURNING count.
-    // If INSERT happens, count is increment. We check increment <= limit.
-    // If UPDATE happens, count is new_value. We check new_value <= limit.
-    // BUT we used WHERE clause to prevent UPDATE.
-    // So if UPDATE happens and fails WHERE, we get nothing.
-
-    // To handle "Insert passing limit" properly:
-    // We should NOT use WHERE clause on UPDATE if we want to catch it consistently?
-    // No, if we don't use WHERE, we increment over limit. We want to avoid that.
-
-    // Correct logic:
-    // 1. Try UPDATE ... WHERE ... RETURNING count.
-    // 2. If row updated, great.
-    // 3. If no row updated, it might be (a) Not Exists, or (b) Limit Reached.
-    // 4. Try INSERT ... RETURNING count.
-    // 5. If Insert works, check count <= limit. If not, throw (and rollback).
-    // 6. If Insert fails (Conflict), it means row exists (so step 3 was "Limit Reached"). Throw.
-
-    // Let's refine this 2-step approach.
 
     // Step 1: Try Update if exists
-    const updateResult = await manager.query(
-        `UPDATE saas_usage_metrics
+    // We update count regardless of limit first (to lock row), or check limit in WHERE?
+    // If we want to allow overage, we don't check limit in WHERE.
+    // If we deny overage, we check limit in WHERE.
+
+    let updateQuery = `
+         UPDATE saas_usage_metrics
          SET count = count + $1, updated_at = NOW()
-         WHERE organization_id = $2 AND resource = $3 AND period = $4 AND count + $1 <= $5
-         RETURNING count`,
-        [increment, organizationId, resource, periodKey, limitDef.limit]
-    );
+         WHERE organization_id = $2 AND resource = $3 AND period = $4
+    `;
+
+    const params = [increment, organizationId, resource, periodKey];
+
+    if (!allowOverage) {
+        // Only update if it stays within limit
+        updateQuery += ` AND count + $1 <= $5`;
+        params.push(limitDef.limit);
+    }
+
+    updateQuery += ` RETURNING count`;
+
+    const updateResult = await manager.query(updateQuery, params);
 
     if (updateResult[0]) {
-        return; // Updated successfully within limit.
+        // Updated successfully.
+        // If overage allowed, we might want to log or warn if it exceeded limit.
+        if (allowOverage && updateResult[0].count > limitDef.limit) {
+             this.emitLimitReachedEvent(organizationId, resource, updateResult[0].count, limitDef.limit);
+        }
+        return;
     }
 
     // Step 2: Try Insert (if update didn't touch anything)
-    // Note: If update didn't touch, it could be "Limit Reached" or "Row Missing".
-    // We try Insert. If it fails uniqueness, then "Row Existed" -> "Limit Reached".
+    // If update failed, it was either (a) Row Missing, or (b) Limit Reached (and no overage).
 
     try {
         const insertResult = await manager.query(
@@ -160,26 +150,61 @@ export class SaasService implements OnModuleInit {
             [organizationId, resource, periodKey, increment]
         );
 
-        // Insert succeeded. Check if initial increment exceeds limit (edge case: limit 0 or huge increment).
-        if (insertResult[0].count > limitDef.limit) {
-            throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+        // Insert succeeded.
+        // Check if initial increment exceeds limit (edge case).
+        if (!allowOverage && insertResult[0].count > limitDef.limit) {
+             // Rollback manually effectively happens by throwing exception
+             throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+        } else if (allowOverage && insertResult[0].count > limitDef.limit) {
+             this.emitLimitReachedEvent(organizationId, resource, insertResult[0].count, limitDef.limit);
         }
         return;
 
     } catch (err) {
-        // If Unique Violation (23505), it means row existed, so UPDATE failed because of LIMIT.
+        // If Unique Violation (23505), it means row existed.
+        // If row existed, and UPDATE failed, it means:
+        // Case 1: allowOverage=false AND limit reached. -> Throw.
+        // Case 2: Race condition (row inserted between Update and Insert attempts). -> Retry?
+        // Actually, if row existed, UPDATE should have worked UNLESS limit was reached (if !allowOverage).
+        // If allowOverage=true, UPDATE has no WHERE limit, so it should have worked.
+        // So if we are here and allowOverage=true, it's weird (maybe race condition).
+
         if (err.code === '23505') {
-             throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+             // To be robust against race condition "Inserted between Update and Insert":
+             // If we hit a unique conflict, it means someone else inserted the row while we were trying to insert.
+             // BUT, our initial UPDATE failed (returned 0 rows).
+             // This implies the row was inserted *after* our UPDATE check but *before* our INSERT.
+
+             // We must retry the UPDATE to see if we can increment the now-existing row.
+             const retryUpdate = await manager.query(updateQuery, params);
+
+             if (retryUpdate[0]) {
+                 // Success on retry!
+                 if (allowOverage && retryUpdate[0].count > limitDef.limit) {
+                     this.emitLimitReachedEvent(organizationId, resource, retryUpdate[0].count, limitDef.limit);
+                 }
+                 return;
+             }
+
+             // If update STILL fails (returns 0 rows), it means the row exists (because of 23505)
+             // BUT the condition (count <= limit) prevented the update.
+             // Therefore, the limit is reached.
+
+             if (!allowOverage) {
+                 this.emitLimitReachedEvent(organizationId, resource, -1, limitDef.limit);
+                 throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+             } else {
+                 // If allowOverage is true, the UPDATE should have succeeded unless something very weird happened (row deleted?).
+                 // Ideally we shouldn't reach here if allowOverage=true and 23505 happened.
+                 // Just return or throw generic.
+                 return;
+             }
         }
         throw err;
     }
   }
 
-  private async incrementUsageTransactional(manager: EntityManager, organizationId: string, resource: SaasResource, periodType: 'monthly' | 'lifetime', increment: number) {
-      const periodKey = periodType === 'monthly'
-        ? new Date().toISOString().slice(0, 7)
-        : 'lifetime';
-
+  private async incrementUsageTransactional(manager: EntityManager, organizationId: string, resource: SaasResource, periodKey: string, increment: number) {
       await manager.query(
         `INSERT INTO saas_usage_metrics (organization_id, resource, period, count, updated_at)
          VALUES ($1, $2, $3, $4, NOW())
@@ -200,11 +225,14 @@ export class SaasService implements OnModuleInit {
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) return true;
     if (limitDef.limit === -1) return true;
+    if (limitDef.allowOverage) return true;
 
     // Use limit definition for period
-    const period = limitDef.period === 'monthly'
-        ? new Date().toISOString().slice(0, 7)
-        : 'lifetime';
+    let period = 'lifetime';
+    if (limitDef.period === 'monthly') {
+         const timezone = org.timezone || 'UTC';
+         period = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
+    }
 
     const metric = await this.usageRepository.findOne({
         where: { organizationId, resource, period }
@@ -212,5 +240,15 @@ export class SaasService implements OnModuleInit {
 
     const currentUsage = metric ? metric.count : 0;
     return (currentUsage + increment) <= limitDef.limit;
+  }
+
+  private emitLimitReachedEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number) {
+      this.eventEmitter.emit('saas.limit_reached', {
+          organizationId,
+          resource,
+          currentUsage,
+          limit,
+          timestamp: new Date()
+      });
   }
 }

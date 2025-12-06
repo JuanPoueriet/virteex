@@ -19,6 +19,9 @@ export class PlanLimit {
   @Column({ default: 'monthly' })
   period: 'monthly' | 'lifetime';
 
+  @Column({ name: 'allow_overage', default: false })
+  allowOverage: boolean;
+
   @Column({ name: 'plan_id' })
   planId: string;
 

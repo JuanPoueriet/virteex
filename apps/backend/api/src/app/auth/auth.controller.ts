@@ -348,6 +348,7 @@ export class AuthController {
 
   @Post('verify-phone')
   @UseGuards(JwtAuthGuard, CsrfGuard)
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async verifyPhoneOtp(@CurrentUser() user: User, @Body() body: { code: string, phoneNumber: string }) {
       // Use MfaOrchestratorService directly instead of AuthService pass-through
       return this.mfaOrchestratorService.verifyPhoneOtp(user.id, body.code, body.phoneNumber);
@@ -391,6 +392,7 @@ export class AuthController {
   @Post('webauthn/register/verify')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Verify WebAuthn registration' })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async verifyWebAuthnRegistration(@CurrentUser() user: User, @Body() body: any) {
     return this.webAuthnService.verifyRegistration(user, body);
   }

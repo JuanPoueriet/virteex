@@ -156,7 +156,11 @@ export class AuthService {
             if (response.require2fa) {
                 return { require2fa: true, tempToken: response.tempToken! };
             }
-            return response.user;
+            // 10/10 SECURITY: Explicitly strip accessToken from response object if present
+            // This ensures the component/frontend logic relies solely on the HTTP-Only cookie
+            // and does not accidentally store the token in memory/localStorage.
+            const { accessToken, ...safeResponse } = response;
+            return safeResponse.user;
         }),
         catchError((err) => this.errorHandlerService.handleError('login', err))
       );
