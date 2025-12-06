@@ -4,6 +4,14 @@ import { Repository } from 'typeorm';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { UserCacheService } from '../modules/user-cache.service';
 import { hasPermission } from '@virteex/shared/util-auth';
+import { RoleEnum } from '../../roles/enums/role.enum';
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  [RoleEnum.ADMINISTRATOR]: 100,
+  [RoleEnum.ACCOUNTANT]: 50,
+  [RoleEnum.SELLER]: 50,
+  [RoleEnum.MEMBER]: 10,
+};
 
 @Injectable()
 export class ImpersonationService {
@@ -12,8 +20,13 @@ export class ImpersonationService {
     private readonly userCacheService: UserCacheService
   ) {}
 
+  private getRoleLevel(roles: { name: string }[]): number {
+    const safeRoles = roles || [];
+    return Math.max(0, ...safeRoles.map(r => ROLE_HIERARCHY[r.name] || 0));
+  }
+
   async validateImpersonationRequest(adminUser: User, targetUserId: string): Promise<User> {
-    const permissions = [...new Set(adminUser.roles.flatMap((role) => role.permissions))];
+    const permissions = [...new Set((adminUser.roles || []).flatMap((role) => role.permissions || []))];
     if (!hasPermission(permissions, ['users:impersonate'])) {
       throw new ForbiddenException(
         'No tienes permisos para suplantar usuarios.',
@@ -27,6 +40,15 @@ export class ImpersonationService {
     if (!targetUser) {
       throw new NotFoundException(
         'El usuario a suplantar no fue encontrado en tu organización.',
+      );
+    }
+
+    const adminLevel = this.getRoleLevel(adminUser.roles);
+    const targetLevel = this.getRoleLevel(targetUser.roles);
+
+    if (targetLevel > adminLevel) {
+      throw new ForbiddenException(
+        'No tienes jerarquía suficiente para suplantar a este usuario.',
       );
     }
 

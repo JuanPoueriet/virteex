@@ -6,7 +6,7 @@ import {
     HttpEvent,
     HttpErrorResponse
 } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { Observable, throwError, BehaviorSubject, timer } from 'rxjs';
 import { catchError, switchMap, filter, take, retry } from 'rxjs/operators';
 import { AuthService } from '../services/auth';
@@ -20,7 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (
     req: HttpRequest<unknown>,
     next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
-    const authService = inject(AuthService);
+    const injector = inject(Injector);
 
     const authReq = req.clone({
         withCredentials: true
@@ -37,6 +37,9 @@ export const authInterceptor: HttpInterceptorFn = (
                 if (!isRefreshing) {
                     isRefreshing = true;
                     refreshTokenSubject.next(null);
+
+                    // Lazy injection to avoid circular dependency
+                    const authService = injector.get(AuthService);
 
                     return authService.refreshAccessToken().pipe(
                         // Reintentar si falla por error de red (status 0) o 5xx
@@ -70,6 +73,8 @@ export const authInterceptor: HttpInterceptorFn = (
                                 return throwError(() => refreshError);
                             }
 
+                            // Lazy injection for logout
+                            const authService = injector.get(AuthService);
                             authService.logout();
                             return throwError(() => refreshError);
                         })

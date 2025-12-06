@@ -21,6 +21,7 @@ import { PasswordService } from './services/password.service';
 import { AuthEvents, AuthLoginFailedEvent, AuthLoginSuccessEvent } from './events/auth.events';
 import { SafeUser, AuthenticatedUser } from './interfaces/authenticated-user.interface';
 import { AuthError } from './enums/auth-error.enum';
+import { AuthException } from './exceptions/auth.exception';
 
 export type LoginResult =
   | { user: AuthenticatedUser; accessToken: string; refreshToken: string; refreshTokenId: string }
@@ -48,20 +49,8 @@ export class AuthService {
     const user = await this.usersService.findUserForAuth(email);
 
     if (user && user.security && user.security.lockoutUntil && new Date() < user.security.lockoutUntil) {
-      // Instead of throwing a raw string, we throw an error object that the frontend can parse.
-      // However, to be consistent with simple error codes, we will return a generic locked code
-      // and let the frontend handle the generic "Try again later" or we can implement more complex error payload support later.
-      // The current Review just requested "AuthError.USER_BLOCKED" usage.
-      // But preserving the time info is nice.
-      // For 10/10 architecture, we should throw a structured error.
-      // Since NestJS HttpExceptions accept a string or object, we can pass an object.
-      throw new UnauthorizedException({
-        message: AuthError.USER_BLOCKED,
-        error: 'Unauthorized',
-        statusCode: 401,
-        meta: {
-            lockoutUntil: user.security.lockoutUntil
-        }
+      throw new AuthException(AuthError.USER_BLOCKED, 401, {
+        lockoutUntil: user.security.lockoutUntil
       });
     }
 
@@ -82,7 +71,7 @@ export class AuthService {
               );
           }
           await this.simulateDelay();
-          throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+          throw new AuthException(AuthError.INVALID_CREDENTIALS);
     }
 
     if (user.status !== UserStatus.ACTIVE) {
@@ -91,7 +80,7 @@ export class AuthService {
            new AuthLoginFailedEvent(user.id, user.email, 'User Inactive/Blocked', ipAddress, userAgent)
        );
       // Obfuscated error message to prevent enumeration
-      throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+      throw new AuthException(AuthError.INVALID_CREDENTIALS);
     }
 
     // 2FA Check
