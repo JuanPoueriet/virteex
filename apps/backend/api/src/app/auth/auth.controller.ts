@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
+import { AuthFacade } from './auth.facade';
 import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { WebAuthnService } from './services/webauthn.service';
@@ -43,6 +44,7 @@ import { CookieService } from './services/cookie.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { AuthGuard } from '@nestjs/passport';
 import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
@@ -54,6 +56,7 @@ import { CsrfGuard } from './guards/csrf.guard';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly authFacade: AuthFacade,
     private readonly twoFactorAuthService: TwoFactorAuthService,
     private readonly passwordRecoveryService: PasswordRecoveryService,
     private readonly webAuthnService: WebAuthnService,
@@ -92,12 +95,12 @@ export class AuthController {
   }
 
   private async handleSocialCallback(socialUser: SocialUser, res: Response) {
-    const { user, tokens } = await this.authService.validateOAuthLogin(socialUser);
+    const { user, tokens } = await this.authFacade.socialLogin(socialUser);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
     if (!user) {
         // Generate a secure, short-lived token to transfer PII safely
-        const registerToken = await this.authService.generateRegisterToken(socialUser);
+        const registerToken = await this.authFacade.generateRegisterToken(socialUser);
 
         // Redirect with token only
         return res.redirect(`${frontendUrl}/auth/register?token=${registerToken}`);
@@ -114,14 +117,14 @@ export class AuthController {
       if (!token) {
           throw new BadRequestException('Token required');
       }
-      return this.authService.getSocialRegisterInfo(token);
+      return this.authFacade.getSocialRegisterInfo(token);
   }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user and organization' })
   @ApiResponse({ status: 201, description: 'User successfully registered.', type: AuthResponseDto })
   @UseGuards(GoogleRecaptchaGuard)
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async register(
     @Body() registerUserDto: RegisterUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -129,7 +132,7 @@ export class AuthController {
     @Headers('user-agent') userAgent: string
   ): Promise<AuthResponseDto> {
     const { user, accessToken, refreshToken } =
-      await this.authService.register(registerUserDto, ip, userAgent);
+      await this.authFacade.register(registerUserDto, ip, userAgent);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
@@ -152,12 +155,17 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string
-  ): Promise<any> {
-    const result = await this.authService.login(loginUserDto, ip, userAgent);
+  ): Promise<LoginResponseDto> {
+    const result = await this.authFacade.login(loginUserDto, ip, userAgent);
 
     // Check if 2FA is required
     if ('require2fa' in result && result.require2fa) {
         return result;
+    }
+
+    // Narrowing type
+    if (!('accessToken' in result)) {
+        throw new Error('Unexpected login result');
     }
 
     const { user, accessToken, refreshToken } = result;
@@ -180,7 +188,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
-      await this.authService.setPasswordFromInvitation(setPasswordDto);
+      await this.authFacade.setPasswordFromInvitation(setPasswordDto);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
@@ -256,7 +264,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(GoogleRecaptchaGuard)
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   @UsePipes(new ValidationPipe())
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     await this.passwordRecoveryService.sendPasswordResetLink(forgotPasswordDto);
@@ -284,7 +292,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
-      await this.authService.impersonate(adminUser, targetUserId);
+      await this.authFacade.impersonate(adminUser, targetUserId);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
@@ -298,7 +306,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
     const { user, accessToken, refreshToken } =
-      await this.authService.stopImpersonation(impersonatingUser);
+      await this.authFacade.stopImpersonation(impersonatingUser);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 
@@ -335,7 +343,7 @@ export class AuthController {
 
   @Post('send-phone-otp')
   @UseGuards(JwtAuthGuard, CsrfGuard)
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // Rate limit: 3 per minute
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } }) // Rate limit: 3 per minute
   async sendPhoneOtp(@CurrentUser() user: User, @Body('phoneNumber') phoneNumber: string) {
       if (!phoneNumber) {
           throw new BadRequestException('Phone number is required');
@@ -353,7 +361,7 @@ export class AuthController {
   @Post('verify-2fa')
   @HttpCode(HttpStatus.OK)
   @UseGuards(CsrfGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Rate limit 2FA attempts
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } }) // Rate limit 2FA attempts
   async verify2fa(
       @Body() body: { code: string, tempToken: string },
       @Res({ passthrough: true }) res: Response,
@@ -405,8 +413,7 @@ export class AuthController {
     const result = await this.webAuthnService.verifyAuthentication(body);
 
     // Create session (same as regular login)
-    // We need to use AuthService to generate tokens
-    const { accessToken, refreshToken } = await this.authService.createTokens(result.user);
+    const { accessToken, refreshToken } = await this.authFacade.generateTokens(result.user);
 
     this.cookieService.setAuthCookies(res, accessToken, refreshToken);
 

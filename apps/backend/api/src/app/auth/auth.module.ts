@@ -12,6 +12,7 @@ import * as redisStore from 'cache-manager-redis-store';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AuthFacade } from './auth.facade';
 import { RegistrationService } from './services/registration.service';
 import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
@@ -105,6 +106,7 @@ import { AuthSubscriber } from './events/auth.events';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthFacade,
     RegistrationService,
     TwoFactorAuthService,
     PasswordRecoveryService,
@@ -130,6 +132,7 @@ import { AuthSubscriber } from './events/auth.events';
   ],
   exports: [
     AuthService,
+    AuthFacade,
     TwoFactorAuthService,
     PasswordRecoveryService,
     WebAuthnService,
