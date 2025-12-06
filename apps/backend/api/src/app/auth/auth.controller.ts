@@ -87,8 +87,17 @@ export class AuthController {
         // Generate a secure, short-lived token to transfer PII safely
         const registerToken = await this.authFacade.generateRegisterToken(socialUser);
 
-        // Redirect with token only
-        return res.redirect(`${frontendUrl}/auth/register?token=${registerToken}`);
+        // SECURITY 10/10: Use HTTP-only cookie to transfer PII token instead of URL parameter.
+        // This prevents token leakage in browser history or referrer headers.
+        res.cookie('social_register_token', registerToken, {
+            httpOnly: true,
+            secure: this.configService.get('NODE_ENV') === 'production',
+            sameSite: 'lax',
+            maxAge: 5 * 60 * 1000 // 5 minutes
+        });
+
+        // Redirect without token in URL
+        return res.redirect(`${frontendUrl}/auth/register?social_registration=true`);
     }
 
     // Login successful
@@ -98,11 +107,18 @@ export class AuthController {
 
   @Get('social-register-info')
   @ApiOperation({ summary: 'Decode social register token to pre-fill form' })
-  async getSocialRegisterInfo(@Query('token') token: string) {
-      if (!token) {
-          throw new BadRequestException('Token required');
+  async getSocialRegisterInfo(@Query('token') token: string, @Req() req: Request) {
+      let tokenToUse = token;
+
+      // Fallback to cookie if token not in query (for the new secure flow)
+      if (!tokenToUse) {
+          tokenToUse = req.cookies['social_register_token'];
       }
-      return this.authFacade.getSocialRegisterInfo(token);
+
+      if (!tokenToUse) {
+          throw new BadRequestException('Token required (query or cookie)');
+      }
+      return this.authFacade.getSocialRegisterInfo(tokenToUse);
   }
 
   @Post('register')

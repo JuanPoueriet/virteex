@@ -92,10 +92,11 @@ export class User {
   isImpersonating?: boolean;
   originalUserId?: string;
 
-  @Column({ name: 'preferred_language', length: 5, nullable: true, default: 'es' })
+  // Localization: Removing hardcoded default 'es'. Will be handled dynamically or by client preference.
+  @Column({ name: 'preferred_language', length: 5, nullable: true })
   preferredLanguage?: string;
 
- @Column({ type: 'varchar', length: 20, unique: true, nullable: true }) // [!code ++]
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   phone?: string | null;
 
   @Column({ name: 'is_phone_verified', default: false })

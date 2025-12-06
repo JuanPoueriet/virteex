@@ -16,6 +16,9 @@ export class PlanLimit {
   @Column({ type: 'int' })
   limit: number; // -1 for unlimited
 
+  @Column({ name: 'is_unlimited', default: false })
+  isUnlimited: boolean;
+
   @Column({ default: 'monthly' })
   period: 'monthly' | 'lifetime';
 
