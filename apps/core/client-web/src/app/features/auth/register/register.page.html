@@ -18,10 +18,22 @@
 
   <div class="form-panel">
     <div class="form-container">
+
       <div class="form-header">
         <p>¿Ya tienes una cuenta? <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']" class="link">Inicia sesión</a></p>
       </div>
       <div class="stepper-header">
+        <!-- Honeypot placed safely outside the stepper but inside the logical flow if form was wrapping everything.
+             Since the form is split across components, we place it hidden here, but we need to ensure it's bound.
+             However, the error was "formControlName must be used with a parent formGroup directive".
+             This component DOES NOT wrap everything in a <form [formGroup]="registerForm"> tag in the template.
+             It uses sub-components. But the controller has the FormGroup.
+             We need to wrap the input in a div with the formGroup or add the formGroup to the container.
+        -->
+        <div [formGroup]="registerForm" style="display:none">
+            <input type="text" formControlName="fax" autocomplete="off" tabindex="-1">
+        </div>
+
         @for (step of [1,2,3,4]; track $index) {
         <div class="step" [class.active]="currentStep() >= $index + 1" [class.completed]="stepsCompleted()[$index]"
           (click)="navigateToStep($index + 1)">

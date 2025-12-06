@@ -48,7 +48,8 @@ export class AuthAuditActionEvent {
         public readonly entityType: string,
         public readonly entityId: string,
         public readonly action: ActionType,
-        public readonly details?: Record<string, any>
+        public readonly details?: Record<string, any>,
+        public readonly actorId?: string // Added actorId to distinguish real user from subject
     ) {}
 }
 
@@ -103,7 +104,7 @@ export class AuthSubscriber {
     async handleAuditAction(payload: AuthAuditActionEvent) {
         try {
             await this.auditService.record(
-                payload.userId,
+                payload.actorId || payload.userId, // Use actorId if available (impersonator), otherwise userId
                 payload.entityType,
                 payload.entityId,
                 payload.action,

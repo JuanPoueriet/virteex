@@ -1,5 +1,6 @@
 
 import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { SocialUser } from './interfaces/social-user.interface';
@@ -31,6 +32,13 @@ export class AuthFacade {
   }
 
   async register(registerUserDto: RegisterUserDto, ip?: string, userAgent?: string) {
+    // Honeypot check
+    if (registerUserDto.fax) {
+      // Silently fail or throw error. Silently failing is better for honeypots but throwing exception stops processing.
+      // We throw BadRequest to stop the flow but maybe log it as "Bot attempt".
+      throw new BadRequestException('Spam detected');
+    }
+
     // 1. Register User
     const user = await this.registrationService.register(registerUserDto);
     // 2. Create Tokens

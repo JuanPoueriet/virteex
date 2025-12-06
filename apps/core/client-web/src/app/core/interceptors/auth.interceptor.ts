@@ -12,7 +12,8 @@ import { catchError, switchMap, filter, take, retry } from 'rxjs/operators';
 import { AuthService } from '../services/auth';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 
-// Mutex para evitar la condición de carrera "Thundering Herd"
+// Mutex (Lock) to prevent race conditions ("Thundering Herd") when multiple requests fail with 401 simultaneously.
+// This ensures only one refresh request is inflight at a time.
 let isRefreshing = false;
 const refreshTokenSubject = new BehaviorSubject<boolean | null>(null);
 
