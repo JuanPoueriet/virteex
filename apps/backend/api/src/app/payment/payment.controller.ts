@@ -4,10 +4,14 @@ import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity/user.entity';
+import { SaasService } from '../saas/saas.service';
 
 @Controller('payment')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly saasService: SaasService
+  ) {}
 
   @Post('checkout-session')
   @UseGuards(JwtAuthGuard)
@@ -28,13 +32,17 @@ export class PaymentController {
   }
 
   @Get('config')
-  getConfig() {
+  async getConfig() {
+    const plans = await this.saasService.getPlans();
+    // Transform to expected format if needed, or better, return the plans directly
+    // Returning legacy format for backward compatibility + new format
     return {
       prices: {
-        starter: process.env.STRIPE_PRICE_STARTER,
-        pro: process.env.STRIPE_PRICE_PRO,
-        enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
-      }
+        starter: plans.find(p => p.slug === 'starter')?.monthlyPriceId,
+        pro: plans.find(p => p.slug === 'pro')?.monthlyPriceId,
+        enterprise: plans.find(p => p.slug === 'enterprise')?.monthlyPriceId,
+      },
+      plans: plans
     };
   }
 

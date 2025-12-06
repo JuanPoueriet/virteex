@@ -27,8 +27,9 @@ export class BillingPage implements OnInit {
   paymentHistory = toSignal(this.billingService.getPaymentHistory());
 
   // Estado para la UI
-  selectedPlan = signal<'trial' | 'pro' | 'enterprise'>('pro');
+  selectedPlan = signal<string>('pro');
   isSaving = signal(false);
+  availablePlans = this.billingService.plans;
 
   ngOnInit(): void {
     // Inicializa el plan seleccionado con el plan actual del usuario
@@ -38,7 +39,7 @@ export class BillingPage implements OnInit {
     }
   }
 
-  selectPlan(planId: 'trial' | 'pro' | 'enterprise'): void {
+  selectPlan(planId: string): void {
     this.selectedPlan.set(planId);
   }
 

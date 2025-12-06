@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
 import { User } from '../../users/entities/user.entity/user.entity';
+import { Plan } from '../../saas/entities/plan.entity';
 
 @Entity('organizations')
 export class Organization {
@@ -45,6 +46,10 @@ export class Organization {
 
   @Column({ name: 'subscription_status', nullable: true })
   subscriptionStatus: string;
+
+  @ManyToOne(() => Plan)
+  @JoinColumn({ name: 'plan_id' })
+  plan: Plan;
 
   @OneToMany(() => OrganizationSubsidiary, sub => sub.parent)
   subsidiaries: OrganizationSubsidiary[];

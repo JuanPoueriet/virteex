@@ -81,27 +81,14 @@
     <div class="form-section">
         <h3 class="section-title">Cambiar de Plan</h3>
         <div class="plans-container">
-            <div class="plan-card" [class.selected]="selectedPlan() === 'trial'" (click)="selectPlan('trial')">
-                <div class="plan-badge trial">Prueba</div>
-                <h4>Explorador</h4>
-                <div class="plan-price">$0</div>
-                <p class="plan-desc">Funcionalidades básicas para empezar.</p>
-                @if (subscription()?.planId === 'trial') { <div class="current-plan-chip">Plan Actual</div> }
+            @for (plan of availablePlans(); track plan.id) {
+            <div class="plan-card" [class.selected]="selectedPlan() === plan.slug" (click)="selectPlan(plan.slug)">
+                <h4>{{ plan.name }}</h4>
+                <!-- TODO: Show price properly from limits or meta -->
+                <p class="plan-desc">{{ plan.description }}</p>
+                @if (subscription()?.planId === plan.slug) { <div class="current-plan-chip">Plan Actual</div> }
             </div>
-            <div class="plan-card popular" [class.selected]="selectedPlan() === 'pro'" (click)="selectPlan('pro')">
-                <div class="plan-badge">Popular</div>
-                <h4>Profesional</h4>
-                <div class="plan-price">$49/mes</div>
-                <p class="plan-desc">Herramientas avanzadas para negocios en crecimiento.</p>
-                @if (subscription()?.planId === 'pro') { <div class="current-plan-chip">Plan Actual</div> }
-            </div>
-            <div class="plan-card" [class.selected]="selectedPlan() === 'enterprise'"
-                (click)="selectPlan('enterprise')">
-                <h4>Empresarial</h4>
-                <div class="plan-price">$99/mes</div>
-                <p class="plan-desc">Soluciones completas para grandes empresas.</p>
-                @if (subscription()?.planId === 'enterprise') { <div class="current-plan-chip">Plan Actual</div> }
-            </div>
+            }
         </div>
         @if (selectedPlan() !== subscription()?.planId) {
         <div class="update-plan-action">

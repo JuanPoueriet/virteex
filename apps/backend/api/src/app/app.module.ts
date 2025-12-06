@@ -57,6 +57,7 @@ import { PaymentModule } from './payment/payment.module';
 import { CountryModule } from '../../../../../libs/api/country/src/lib/country.module';
 import { GeoModule } from './geo/geo.module';
 import { CommonModule } from './common/common.module';
+import { SaasModule } from './saas/saas.module';
 
 const envValidation = Joi.object({
   NODE_ENV: Joi.string()
@@ -195,7 +196,8 @@ const envValidation = Joi.object({
     PaymentModule,
     CountryModule,
     GeoModule,
-    CommonModule
+    CommonModule,
+    SaasModule
   ],
   providers: [
     {

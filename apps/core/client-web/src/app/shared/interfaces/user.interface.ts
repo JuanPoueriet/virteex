@@ -68,4 +68,5 @@ export interface User {
   organization: Organization;
 
   preferredLanguage?: string;
+  isTwoFactorEnabled?: boolean;
 }

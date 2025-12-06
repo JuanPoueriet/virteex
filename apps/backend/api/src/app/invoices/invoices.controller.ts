@@ -19,15 +19,19 @@ import type { Response } from 'express';
 import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
 import { PERMISSIONS } from '../shared/permissions';
+import { SubscriptionActiveGuard } from '../saas/guards/subscription-active.guard';
+import { CheckPlanLimit } from '../saas/decorators/plan-limit.decorator';
+import { PlanLimitGuard } from '../saas/guards/plan-limit.guard';
 
 @Controller('invoices')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, SubscriptionActiveGuard)
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  @UseGuards(PeriodLockGuard)
+  @UseGuards(PeriodLockGuard, PlanLimitGuard)
   @HasPermission(PERMISSIONS.INVOICES_CREATE)
+  @CheckPlanLimit('invoices', 1)
   create(
     @Body() createInvoiceDto: CreateInvoiceDto,
     @CurrentUser() user: User,
