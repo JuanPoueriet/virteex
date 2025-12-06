@@ -6,25 +6,29 @@ export class SubscriptionActiveGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
 
     if (!user || !user.organization) {
-      // If endpoint is public or user not logged in, this guard might be skipped by standard AuthGuard,
-      // but if applied, we expect a user.
+      // If Guard is applied, we expect Org context.
+      // Assuming AuthGuard is applied before this.
       return true;
     }
 
     const status = user.organization.subscriptionStatus;
-    // status can be 'active', 'trialing', 'past_due' (grace period), 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused'
 
-    // Allow 'active' and 'trialing'.
-    // Maybe allow 'past_due' for a grace period? The audit said "Grace logic".
-    // For now, let's strict check for active/trialing.
-    // If null, it might be a free tier or legacy. Let's assume 'active' if null for backward compatibility unless we strictly enforce it.
-    // The audit said "Passive subscription status".
+    // Grace period logic: Allow 'past_due' (payment failed, retrying)
+    // 'active': Good
+    // 'trialing': Good
+    // 'past_due': Good (temporary)
 
-    // Strict mode:
-    const allowedStatuses = ['active', 'trialing'];
+    const allowedStatuses = ['active', 'trialing', 'past_due'];
+
+    // If status is null/undefined, it might be a free tier or legacy.
+    // If we want strict enterprise, we block unless explicitly allowed.
+    // But let's check if 'plan' is free.
+    // For now, if status is present, check it. If missing, assume active/free?
+    // Let's assume if status is set, it must be valid.
 
     if (status && !allowedStatuses.includes(status)) {
         throw new ForbiddenException(`SUBSCRIPTION_SUSPENDED: Status is ${status}`);

@@ -1,13 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Plan } from './plan.entity';
+import { SaasResource } from '../enums/saas-resource.enum';
 
 @Entity('saas_plan_limits')
 export class PlanLimit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  resource: string; // invoices, users, storage_mb
+  @Column({
+    type: 'enum',
+    enum: SaasResource
+  })
+  resource: SaasResource;
 
   @Column({ type: 'int' })
   limit: number; // -1 for unlimited

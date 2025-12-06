@@ -32,6 +32,8 @@ import { DocumentSequencesService } from '../shared/document-sequences/document-
 import { DocumentType } from '../shared/document-sequences/entities/document-sequence.entity';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { Buffer } from 'buffer';
+import { SaasService } from '../saas/saas.service';
+import { SaasResource } from '../saas/enums/saas-resource.enum';
 
 @Injectable()
 export class InvoicesService {
@@ -54,6 +56,7 @@ export class InvoicesService {
     private readonly complianceService: ComplianceService,
     private readonly documentSequencesService: DocumentSequencesService,
     private readonly fiscalAdapterFactory: FiscalAdapterFactory,
+    private readonly saasService: SaasService
   ) {
     this.compileTemplate();
   }
@@ -93,6 +96,9 @@ export class InvoicesService {
     organizationId: string,
   ): Promise<Invoice> {
     return this.dataSource.transaction(async (manager) => {
+      // Enforce SaaS Limit transactionally
+      await this.saasService.enforceLimit(manager, organizationId, SaasResource.INVOICES);
+
       const customer = await this.customersService.findOne(
         createInvoiceDto.customerId,
         organizationId,
