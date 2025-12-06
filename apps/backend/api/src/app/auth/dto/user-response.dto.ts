@@ -46,6 +46,10 @@ export class UserResponseDto {
 
   @ApiProperty()
   @Expose()
+  isPhoneVerified: boolean;
+
+  @ApiProperty()
+  @Expose()
   isTwoFactorEnabled: boolean;
 
   @ApiProperty()

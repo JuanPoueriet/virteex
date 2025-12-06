@@ -6,6 +6,8 @@ import { User } from '../../users/entities/user.entity/user.entity';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UserCacheService } from '../modules/user-cache.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
+import * as crypto from 'crypto';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class TwoFactorAuthService {
@@ -23,29 +25,15 @@ export class TwoFactorAuthService {
     // Encrypt secret before saving
     const encryptedSecret = this.cryptoUtil.encrypt(secret);
 
-    // We save the secret but DO NOT enable it yet. User must verify first.
-    // Ensure security entity exists
-    let security = user.security;
-    if (!security) {
-         // Should try to load it or create it
-         const freshUser = await this.userRepository.findOne({ where: { id: user.id }, relations: ['security'] });
-         if (!freshUser) throw new UnauthorizedException('User not found');
-         if (!freshUser.security) {
-             freshUser.security = new UserSecurity();
-             freshUser.security.userId = user.id; // Or let typeorm handle it
-         }
-         security = freshUser.security;
-         user.security = security;
-    }
+    let security = await this.ensureSecurityEntity(user);
 
     security.twoFactorSecret = encryptedSecret;
-    await this.userSecurityRepository.save(security); // Save security directly
+    await this.userSecurityRepository.save(security);
 
     return { secret, otpauthUrl };
   }
 
   async enableTwoFactor(user: User, token: string) {
-    // Need to fetch secret as it might not be in the user object passed in (usually stripped)
     const freshUser = await this.userRepository.findOne({
         where: { id: user.id },
         relations: ['security']
@@ -64,12 +52,16 @@ export class TwoFactorAuthService {
     }
 
     freshUser.security.isTwoFactorEnabled = true;
+
+    // Auto-generate backup codes upon enabling
+    const { codes, hashedCodes } = await this.createBackupCodes();
+    freshUser.security.backupCodes = hashedCodes;
+
     await this.userSecurityRepository.save(freshUser.security);
 
-    // Invalidate session to force re-login or update user state
     await this.userCacheService.clearUserSession(user.id);
 
-    return { message: '2FA enabled successfully' };
+    return { message: '2FA enabled successfully', backupCodes: codes };
   }
 
   async disableTwoFactor(user: User) {
@@ -79,20 +71,84 @@ export class TwoFactorAuthService {
       });
 
       if (freshUser && freshUser.security) {
-          freshUser.security.isTwoFactorEnabled = false;
-          freshUser.security.twoFactorSecret = undefined; // Set to undefined to clear it, TypeORM should handle null
-          // Actually better to use null if configured nullable
-          // In entity: twoFactorSecret?: string
-          // Let's force it to null via partial update or save
-          // TypeORM save ignores undefined usually, unless configured.
+          // Use update to force nulls/false
           await this.userSecurityRepository.save({
               id: freshUser.security.id,
               isTwoFactorEnabled: false,
-              twoFactorSecret: null
+              twoFactorSecret: null,
+              backupCodes: null // Clear backup codes
           });
       }
 
       await this.userCacheService.clearUserSession(user.id);
       return { message: '2FA disabled successfully' };
+  }
+
+  // 10/10 SECURITY: Backup Codes Management
+  async generateBackupCodes(user: User) {
+      const security = await this.ensureSecurityEntity(user);
+
+      if (!security.isTwoFactorEnabled) {
+          throw new BadRequestException('Cannot generate backup codes if 2FA is not enabled.');
+      }
+
+      const { codes, hashedCodes } = await this.createBackupCodes();
+
+      security.backupCodes = hashedCodes;
+      await this.userSecurityRepository.save(security);
+
+      return { codes };
+  }
+
+  async verifyBackupCode(user: User, code: string): Promise<boolean> {
+      const security = user.security || (await this.ensureSecurityEntity(user));
+
+      if (!security.backupCodes || security.backupCodes.length === 0) {
+          return false;
+      }
+
+      // Check against all hashed codes
+      // This is O(N) where N is small (e.g., 10). Acceptable.
+      for (const hashedCode of security.backupCodes) {
+          if (await argon2.verify(hashedCode, code)) {
+              // Code is valid. Remove it (Burn on use).
+              security.backupCodes = security.backupCodes.filter(c => c !== hashedCode);
+              await this.userSecurityRepository.save(security);
+              return true;
+          }
+      }
+
+      return false;
+  }
+
+  private async createBackupCodes(): Promise<{ codes: string[], hashedCodes: string[] }> {
+      const codes: string[] = [];
+      const hashedCodes: string[] = [];
+
+      for (let i = 0; i < 10; i++) {
+          const code = crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 chars
+          // Format: XXXX-XXXX
+          const formattedCode = `${code.slice(0, 4)}-${code.slice(4)}`;
+          codes.push(formattedCode);
+          hashedCodes.push(await argon2.hash(formattedCode));
+      }
+
+      return { codes, hashedCodes };
+  }
+
+  private async ensureSecurityEntity(user: User): Promise<UserSecurity> {
+      let security = user.security;
+      if (!security) {
+          const freshUser = await this.userRepository.findOne({ where: { id: user.id }, relations: ['security'] });
+          if (!freshUser) throw new UnauthorizedException('User not found');
+
+          if (!freshUser.security) {
+              freshUser.security = new UserSecurity();
+              freshUser.security.userId = user.id;
+              await this.userSecurityRepository.save(freshUser.security);
+          }
+          security = freshUser.security;
+      }
+      return security;
   }
 }

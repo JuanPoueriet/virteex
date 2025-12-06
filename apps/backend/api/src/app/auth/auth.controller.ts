@@ -327,6 +327,13 @@ export class AuthController {
     return this.twoFactorAuthService.disableTwoFactor(user);
   }
 
+  @Post('2fa/backup-codes/generate')
+  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @ApiOperation({ summary: 'Generate new backup codes' })
+  async generateBackupCodes(@CurrentUser() user: User) {
+    return this.twoFactorAuthService.generateBackupCodes(user);
+  }
+
   @Post('send-phone-otp')
   @UseGuards(JwtAuthGuard, CsrfGuard)
   @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } }) // Rate limit: 3 per minute

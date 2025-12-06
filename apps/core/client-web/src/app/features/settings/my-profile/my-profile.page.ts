@@ -25,11 +25,12 @@ import {
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
 import { UsersService } from '../../../core/api/users.service';
+import { SecuritySettingsComponent } from './security-settings.component';
 
 @Component({
   selector: 'app-my-profile-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SecuritySettingsComponent],
   templateUrl: './my-profile.page.html',
   styleUrls: ['./my-profile.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
