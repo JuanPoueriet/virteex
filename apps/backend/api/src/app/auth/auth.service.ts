@@ -177,7 +177,7 @@ export class AuthService {
     return this.sessionService.refreshAccessToken(token, ipAddress, userAgent);
   }
 
-  async status(userFromJwt: AuthenticatedUser | any) {
+  async status(userFromJwt: AuthenticatedUser) {
     let freshUser = await this.userCacheService.getUser(userFromJwt.id);
 
     if (!freshUser) {
