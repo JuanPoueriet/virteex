@@ -43,9 +43,13 @@ import { AbstractSmsProvider } from './services/abstract-sms.provider';
 import { SocialAuthService } from './services/social-auth.service';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 import { UserCacheModule } from './modules/user-cache.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { PasswordService } from './services/password.service';
+import { AuthSubscriber } from './events/auth.events';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule,
     AuditModule,
     OrganizationsModule,
@@ -117,6 +121,8 @@ import { UserCacheModule } from './modules/user-cache.module';
     OktaStrategy,
     SocialAuthService,
     MfaOrchestratorService,
+    PasswordService,
+    AuthSubscriber,
     {
       provide: AbstractSmsProvider,
       useClass: TwilioSmsProvider
