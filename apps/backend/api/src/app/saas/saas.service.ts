@@ -10,6 +10,8 @@ import { SaasResource } from './enums/saas-resource.enum';
 import { SAAS_PLANS } from './saas.config';
 import { DateTime } from 'luxon';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UsageMetricRepository } from './repositories/usage-metric.repository';
+import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
 
 @Injectable()
 export class SaasService implements OnModuleInit {
@@ -20,8 +22,10 @@ export class SaasService implements OnModuleInit {
     @InjectRepository(PlanLimit) private limitRepository: Repository<PlanLimit>,
     @InjectRepository(Organization) private orgRepository: Repository<Organization>,
     @InjectRepository(UsageMetric) private usageRepository: Repository<UsageMetric>,
+    @InjectRepository(OrganizationSubscriptionHistory) private subscriptionHistoryRepository: Repository<OrganizationSubscriptionHistory>,
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2
+    private eventEmitter: EventEmitter2,
+    private usageMetricRepository: UsageMetricRepository
   ) {}
 
   async onModuleInit() {
@@ -67,6 +71,45 @@ export class SaasService implements OnModuleInit {
   }
 
   /**
+   * Upgrades or changes the plan for an organization and records the history.
+   * NOTE: This should be called within a transaction if possible, or manages its own.
+   */
+  async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
+      const org = await this.orgRepository.findOne({ where: { id: organizationId }, relations: ['plan'] });
+      if (!org) {
+          throw new Error('Organization not found');
+      }
+
+      const newPlan = await this.planRepository.findOne({ where: { slug: newPlanSlug } });
+      if (!newPlan) {
+          throw new Error('Plan not found');
+      }
+
+      if (org.plan && org.plan.id === newPlan.id) {
+          return; // No change
+      }
+
+      const previousPlan = org.plan;
+
+      // Update Org
+      org.plan = newPlan;
+      await this.orgRepository.save(org);
+
+      // Record History
+      const history = this.subscriptionHistoryRepository.create({
+          organizationId: org.id,
+          previousPlanId: previousPlan?.id,
+          newPlanId: newPlan.id,
+          changedBy: userId,
+          reason: reason
+      });
+
+      await this.subscriptionHistoryRepository.save(history);
+
+      this.logger.log(`Organization ${organizationId} changed plan from ${previousPlan?.slug ?? 'none'} to ${newPlan.slug}`);
+  }
+
+  /**
    * Enforces plan limits within a transaction context.
    * This method atomically checks and increments usage, preventing race conditions.
    * If the limit is reached, it throws a ForbiddenException (unless overage is allowed), which will abort the transaction.
@@ -89,130 +132,35 @@ export class SaasService implements OnModuleInit {
         return;
     }
 
-    // Determine period key using Organization Timezone
+    // Determine period key using Organization Timezone (Robust Billing Cycle)
     let periodKey = 'lifetime';
     if (limitDef.period === 'monthly') {
-        const timezone = org.timezone || 'UTC';
-        periodKey = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
+        // Use UTC to normalize billing periods, ignoring local timezone shifts for billing accounting
+        periodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
     }
 
-    if (limitDef.limit === -1) {
-        // Unlimited, but we still track usage
-        await this.incrementUsageTransactional(manager, organizationId, resource, periodKey, increment);
-        return;
-    }
-
-    // Check Overage
     const allowOverage = limitDef.allowOverage;
+    const isUnlimited = limitDef.isUnlimited || limitDef.limit === -1;
 
-    // Atomic Upsert with Optimistic Check
+    const result = await this.usageMetricRepository.incrementUsage(
+        manager,
+        organizationId,
+        resource,
+        periodKey,
+        increment,
+        isUnlimited ? -1 : limitDef.limit,
+        allowOverage
+    );
 
-    // Step 1: Try Update if exists
-    // We update count regardless of limit first (to lock row), or check limit in WHERE?
-    // If we want to allow overage, we don't check limit in WHERE.
-    // If we deny overage, we check limit in WHERE.
-
-    let updateQuery = `
-         UPDATE saas_usage_metrics
-         SET count = count + $1, updated_at = NOW()
-         WHERE organization_id = $2 AND resource = $3 AND period = $4
-    `;
-
-    const params = [increment, organizationId, resource, periodKey];
-
-    if (!allowOverage) {
-        // Only update if it stays within limit
-        updateQuery += ` AND count + $1 <= $5`;
-        params.push(limitDef.limit);
-    }
-
-    updateQuery += ` RETURNING count`;
-
-    const updateResult = await manager.query(updateQuery, params);
-
-    if (updateResult[0]) {
-        // Updated successfully.
-        // If overage allowed, we might want to log or warn if it exceeded limit.
-        if (allowOverage && updateResult[0].count > limitDef.limit) {
-             this.emitLimitReachedEvent(organizationId, resource, updateResult[0].count, limitDef.limit);
-        }
-        return;
-    }
-
-    // Step 2: Try Insert (if update didn't touch anything)
-    // If update failed, it was either (a) Row Missing, or (b) Limit Reached (and no overage).
-
-    try {
-        const insertResult = await manager.query(
-            `INSERT INTO saas_usage_metrics (organization_id, resource, period, count, updated_at)
-             VALUES ($1, $2, $3, $4, NOW())
-             RETURNING count`,
-            [organizationId, resource, periodKey, increment]
-        );
-
-        // Insert succeeded.
-        // Check if initial increment exceeds limit (edge case).
-        if (!allowOverage && insertResult[0].count > limitDef.limit) {
-             // Rollback manually effectively happens by throwing exception
-             throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
-        } else if (allowOverage && insertResult[0].count > limitDef.limit) {
-             this.emitLimitReachedEvent(organizationId, resource, insertResult[0].count, limitDef.limit);
-        }
-        return;
-
-    } catch (err) {
-        // If Unique Violation (23505), it means row existed.
-        // If row existed, and UPDATE failed, it means:
-        // Case 1: allowOverage=false AND limit reached. -> Throw.
-        // Case 2: Race condition (row inserted between Update and Insert attempts). -> Retry?
-        // Actually, if row existed, UPDATE should have worked UNLESS limit was reached (if !allowOverage).
-        // If allowOverage=true, UPDATE has no WHERE limit, so it should have worked.
-        // So if we are here and allowOverage=true, it's weird (maybe race condition).
-
-        if (err.code === '23505') {
-             // To be robust against race condition "Inserted between Update and Insert":
-             // If we hit a unique conflict, it means someone else inserted the row while we were trying to insert.
-             // BUT, our initial UPDATE failed (returned 0 rows).
-             // This implies the row was inserted *after* our UPDATE check but *before* our INSERT.
-
-             // We must retry the UPDATE to see if we can increment the now-existing row.
-             const retryUpdate = await manager.query(updateQuery, params);
-
-             if (retryUpdate[0]) {
-                 // Success on retry!
-                 if (allowOverage && retryUpdate[0].count > limitDef.limit) {
-                     this.emitLimitReachedEvent(organizationId, resource, retryUpdate[0].count, limitDef.limit);
-                 }
-                 return;
-             }
-
-             // If update STILL fails (returns 0 rows), it means the row exists (because of 23505)
-             // BUT the condition (count <= limit) prevented the update.
-             // Therefore, the limit is reached.
-
-             if (!allowOverage) {
-                 this.emitLimitReachedEvent(organizationId, resource, -1, limitDef.limit);
-                 throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
-             } else {
-                 // If allowOverage is true, the UPDATE should have succeeded unless something very weird happened (row deleted?).
-                 // Ideally we shouldn't reach here if allowOverage=true and 23505 happened.
-                 // Just return or throw generic.
-                 return;
-             }
-        }
-        throw err;
+    if (result.limitReached) {
+        this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
+        throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+    } else if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
+        this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
     }
   }
 
-  private async incrementUsageTransactional(manager: EntityManager, organizationId: string, resource: SaasResource, periodKey: string, increment: number) {
-      await manager.query(
-        `INSERT INTO saas_usage_metrics (organization_id, resource, period, count, updated_at)
-         VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (organization_id, resource, period)
-         DO UPDATE SET count = saas_usage_metrics.count + $4, updated_at = NOW()`,
-        [organizationId, resource, periodKey, increment]
-      );
-  }
+  // Removed private incrementUsageTransactional as it is now handled by usageMetricRepository
 
   async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
     const org = await this.orgRepository.findOne({

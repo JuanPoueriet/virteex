@@ -38,6 +38,8 @@ export class PlanLimitGuard implements CanActivate {
     );
 
     if (!canProceed) {
+      // Note: This Guard is primarily for UX feedback and fail-fast.
+      // Strict enforcement against race conditions happens in the Service layer (enforceLimit).
       throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${limitMetadata.resource}`);
     }
 
