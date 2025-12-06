@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthConfig } from '../auth.config';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class CookieService {
@@ -43,11 +44,8 @@ export class CookieService {
     }
 
     // CSRF Token (Readable by JS, not HttpOnly)
-    // We generate a random token or just reuse the signature of the access token (or similar) as a binding.
-    // For simplicity and effectiveness in Double Submit Cookie, a random value is enough,
-    // or even a static value rotated per session.
-    // Here we will use a random string.
-    const csrfToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // 10/10 SECURITY: Use CSPRNG for CSRF token generation
+    const csrfToken = crypto.randomBytes(32).toString('hex');
     res.cookie('XSRF-TOKEN', csrfToken, {
       secure: isProduction,
       sameSite: 'lax', // Must be readable on same site

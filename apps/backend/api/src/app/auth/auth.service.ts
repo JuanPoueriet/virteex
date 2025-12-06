@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import * as crypto from 'crypto';
 
 import { LoginUserDto } from './dto/login-user.dto';
 import { User, UserStatus } from '../users/entities/user.entity/user.entity';
@@ -44,7 +45,8 @@ export class AuthService {
   ) {}
 
   async login(loginUserDto: LoginUserDto & { twoFactorCode?: string }, ipAddress?: string, userAgent?: string): Promise<LoginResult> {
-    const { email, password, twoFactorCode } = loginUserDto;
+    const { email, password, twoFactorCode, rememberMe } = loginUserDto;
+    const correlationId = crypto.randomUUID();
 
     const user = await this.usersService.findUserForAuth(email);
 
@@ -67,7 +69,7 @@ export class AuthService {
               await this.securityAnalysisService.handleFailedLoginAttempt(user);
               this.eventEmitter.emit(
                   AuthEvents.LOGIN_FAILED,
-                  new AuthLoginFailedEvent(user.id, user.email, 'Invalid Credentials', ipAddress, userAgent)
+                  new AuthLoginFailedEvent(user.id, user.email, 'Invalid Credentials', ipAddress, userAgent, correlationId)
               );
           }
           await this.simulateDelay();
@@ -77,7 +79,7 @@ export class AuthService {
     if (user.status !== UserStatus.ACTIVE) {
        this.eventEmitter.emit(
            AuthEvents.LOGIN_FAILED,
-           new AuthLoginFailedEvent(user.id, user.email, 'User Inactive/Blocked', ipAddress, userAgent)
+           new AuthLoginFailedEvent(user.id, user.email, 'User Inactive/Blocked', ipAddress, userAgent, correlationId)
        );
 
        if (user.status === UserStatus.BLOCKED) {
@@ -124,10 +126,10 @@ export class AuthService {
 
     this.eventEmitter.emit(
         AuthEvents.LOGIN_SUCCESS,
-        new AuthLoginSuccessEvent(user.id, user.email, ipAddress, userAgent)
+        new AuthLoginSuccessEvent(user.id, user.email, ipAddress, userAgent, correlationId)
     );
 
-    const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
+    const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent, rememberMe);
   return {
       user: authResponse.user,
       accessToken: authResponse.accessToken,
