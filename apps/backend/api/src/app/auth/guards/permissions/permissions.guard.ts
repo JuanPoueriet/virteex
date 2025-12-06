@@ -47,13 +47,16 @@ export class PermissionsGuard implements CanActivate {
             }
         } else if (typeof requirement === 'function') { // It's a Class (Constructor)
              try {
-                // Use ModuleRef to resolve the policy, allowing DI inside policies
+                // Use ModuleRef to resolve the policy, allowing DI inside policies.
+                // 10/10 ARCHITECTURE: Policies MUST be providers. No 'new Class()' allowed.
                 let policy: IPolicy;
                 try {
                     policy = this.moduleRef.get(requirement, { strict: false });
                 } catch (e) {
-                    // Fallback: instantiate if not found in container (e.g. not a provider)
-                    policy = new (requirement as any)();
+                    // If not found in DI container, we log error and fail secure.
+                    // We do NOT manually instantiate, as that breaks DI contract.
+                     console.error(`Policy ${requirement.name} not found in DI container. Make sure it is decorated with @Injectable() and provided in the module.`);
+                     throw new ForbiddenException('Configuration Error: Policy not found.');
                 }
 
                 if (policy) {

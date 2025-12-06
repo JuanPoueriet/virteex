@@ -13,6 +13,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as ms from 'ms';
 
+import * as ipaddr from 'ipaddr.js';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
@@ -305,18 +306,27 @@ export class SessionService {
   }
 
   private maskIp(ip: string): string {
-      // Basic masking, keep first 2 octets for IPv4
-      if (ip.includes('.')) {
-          const parts = ip.split('.');
-          if (parts.length === 4) {
-              return `${parts[0]}.${parts[1]}.*.*`;
-          }
+    try {
+      if (!ipaddr.isValid(ip)) {
+        return '***';
       }
-      // For IPv6, keep first segment
-      if (ip.includes(':')) {
-          const parts = ip.split(':');
-          return `${parts[0]}:*:...`;
+
+      const addr = ipaddr.parse(ip);
+
+      if (addr.kind() === 'ipv4') {
+        // Mask last two octets: 192.168.x.x
+        const ipv4 = addr as ipaddr.IPv4;
+        return `${ipv4.octets[0]}.${ipv4.octets[1]}.*.*`;
+      } else if (addr.kind() === 'ipv6') {
+        // Mask IPv6. Usually we want /48 or similar.
+        // Let's keep first 3 parts (hextets) roughly /48
+        const ipv6 = addr as ipaddr.IPv6;
+        const parts = ipv6.parts;
+        return `${parts[0].toString(16)}:${parts[1].toString(16)}:${parts[2].toString(16)}:*:*:*:*:*`;
       }
       return '***';
+    } catch (e) {
+      return '***';
+    }
   }
 }

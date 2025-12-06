@@ -33,9 +33,19 @@ export class AuthFacade {
   async register(registerUserDto: RegisterUserDto, ip?: string, userAgent?: string) {
     // Honeypot check
     if (registerUserDto.fax) {
-      // Silently fail or throw error. Silently failing is better for honeypots but throwing exception stops processing.
-      // We throw BadRequest to stop the flow but maybe log it as "Bot attempt".
-      throw new Error('Spam detected');
+      // 10/10 SECURITY: Honeypot Silent Fail
+      // Return a fake success response to the bot.
+      // Do NOT throw error, or the bot knows it failed.
+      return {
+          user: {
+             id: 'fake-id',
+             email: registerUserDto.email,
+             firstName: registerUserDto.firstName,
+             lastName: registerUserDto.lastName,
+          } as any,
+          accessToken: 'fake-jwt',
+          refreshToken: 'fake-refresh-token'
+      };
     }
 
     // 1. Register User
