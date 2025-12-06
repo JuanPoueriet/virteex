@@ -8,6 +8,7 @@ import { UserCacheService } from '../modules/user-cache.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TwoFactorAuthService {
@@ -15,12 +16,14 @@ export class TwoFactorAuthService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(UserSecurity) private readonly userSecurityRepository: Repository<UserSecurity>,
     private readonly cryptoUtil: CryptoUtil,
-    private readonly userCacheService: UserCacheService
+    private readonly userCacheService: UserCacheService,
+    private readonly configService: ConfigService
   ) {}
 
   async generateTwoFactorSecret(user: User) {
     const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(user.email, 'Virteex ERP', secret);
+    const appName = this.configService.get<string>('APP_NAME') || 'Virteex ERP';
+    const otpauthUrl = authenticator.keyuri(user.email, appName, secret);
 
     // Encrypt secret before saving
     const encryptedSecret = this.cryptoUtil.encrypt(secret);

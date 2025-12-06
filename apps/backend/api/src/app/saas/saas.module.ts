@@ -13,11 +13,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
 import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
+import { MetricsModule } from '../metrics/metrics.module';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([Plan, PlanLimit, Organization, UsageMetric, OrganizationSubscriptionHistory]),
+    MetricsModule,
     CacheModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -106,12 +106,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
          throw new UnauthorizedException(AuthError.USER_NOT_FOUND); // Or a specific error code like ORG_NOT_FOUND
     }
 
-    // Strict validation: The token's organization context must match the user's current organization
-    // We use optional chaining for user.organization just to be safe, though the check above handles null.
-    // If organizationId is present in the token (context-aware token), it must match.
-    if (organizationId && user.organization?.id !== organizationId) {
-        this.logger.warn(`User ${user.id} attempted to access with token for Organization ${organizationId} but belongs to ${user.organization?.id}`);
-        throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+    // Strict validation: The token's organization context must match one of the user's organizations
+    // If organizationId is present in the token (context-aware token), we verify access.
+    if (organizationId) {
+        // First check active context
+        const isCurrentOrg = user.organization?.id === organizationId;
+
+        // Then check full list if not current
+        const hasAccess = isCurrentOrg || (user.organizations && user.organizations.some(o => o.id === organizationId));
+
+        if (!hasAccess) {
+            this.logger.warn(`User ${user.id} attempted to access with token for Organization ${organizationId} but has no access to it.`);
+            throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+        }
     }
 
     // Return SafeUser / AuthenticatedUser
