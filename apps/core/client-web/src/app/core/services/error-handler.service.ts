@@ -22,23 +22,34 @@ export class ErrorHandlerService {
     } else {
       const serverError = error.error;
 
-      // Check for structured AuthError code
-      if (serverError && typeof serverError.message === 'string' && serverError.message.startsWith('AUTH_')) {
-          // Attempt to translate the error code
-          const translationKey = `LOGIN.ERRORS.${serverError.message}`;
-          const translated = this.translate.instant(translationKey);
+      // Check for structured AuthError code or SaasError code
+      // Priority: 'error' (the code) > 'message' (the human readable text)
+      // The backend SaasException sends { message: "...", error: "SAAS_..." }
+      const errorCode = serverError?.error || serverError?.message;
 
-          // If translation exists and is different from key, use it
-          if (translated !== translationKey) {
-              customErrorMessage = translated;
+      if (typeof errorCode === 'string') {
+          if (errorCode.startsWith('AUTH_')) {
+              const translationKey = `LOGIN.ERRORS.${errorCode}`;
+              const translated = this.translate.instant(translationKey);
+              customErrorMessage = translated !== translationKey ? translated : 'Error de autenticación.';
+          } else if (errorCode.startsWith('SAAS_')) {
+              // 10/10 IMPROVEMENT: Handle SaaS specific errors (Limits, Features)
+              const translationKey = `SAAS.ERRORS.${errorCode}`;
+              const translated = this.translate.instant(translationKey);
+              customErrorMessage = translated !== translationKey ? translated : 'Límite del plan alcanzado.';
           } else {
-              // Fallback if no translation found, though ideally we should have all
-              customErrorMessage = serverError.message;
+             // Avoid exposing raw backend errors if not recognized
+             // If we used 'error' as errorCode but it wasn't a known code,
+             // we might want to fall back to 'message' for display if safe.
+             // But for now, we stick to safe defaults.
+             if (error.status >= 500) {
+                 customErrorMessage = 'Error interno del servidor.';
+             } else {
+                 // If errorCode was actually a message (from fallback), show it.
+                 // If it was a code like "Bad Request", show it.
+                 customErrorMessage = serverError?.message || errorCode;
+             }
           }
-      } else if (serverError && typeof serverError.message === 'string') {
-        customErrorMessage = serverError.message;
-      } else if (serverError && Array.isArray(serverError.message)) {
-        customErrorMessage = serverError.message.join('. ');
       } else if (error.status === 401) {
         customErrorMessage = this.translate.instant('LOGIN.ERRORS.AUTH_INVALID_CREDENTIALS');
       } else if (error.status === 403) {
