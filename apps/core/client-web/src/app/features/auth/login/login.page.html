@@ -1,20 +1,20 @@
 
 <app-auth-layout>
   <!-- Standard Login View -->
-  <div *ngIf="!show2fa(); else twoFactorView" class="animate-fadeIn">
+  <div *ngIf="!show2fa(); else twoFactorView" class="login-view fade-in">
 
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-gray-900 tracking-tight mb-2">{{ 'LOGIN.TITLE' | translate }}</h2>
-      <p class="text-gray-500">{{ 'LOGIN.SUBTITLE' | translate }}</p>
+    <div class="header">
+      <h2>{{ 'LOGIN.TITLE' | translate }}</h2>
+      <p>{{ 'LOGIN.SUBTITLE' | translate }}</p>
     </div>
 
     <!-- Global Error Message -->
-    <div *ngIf="errorMessage()" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start animate-shake">
-      <lucide-icon [img]="LockIcon" class="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0"></lucide-icon>
-      <p class="text-sm text-red-600 font-medium">{{ errorMessage() | translate }}</p>
+    <div *ngIf="errorMessage()" class="alert-error">
+      <lucide-icon [img]="LockIcon"></lucide-icon>
+      <p>{{ errorMessage() | translate }}</p>
     </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
 
       <app-auth-input
         [label]="'LOGIN.EMAIL_LABEL'"
@@ -25,30 +25,29 @@
         errorKey="LOGIN.ERRORS"
       ></app-auth-input>
 
-      <div>
+      <div class="password-group">
         <app-auth-input
           [label]="'LOGIN.PASSWORD_LABEL'"
-          [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
+          [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER'"
           type="password"
           [icon]="LockIcon"
           [control]="$any(passwordControl)"
           errorKey="LOGIN.ERRORS"
         ></app-auth-input>
 
-        <div class="flex items-center justify-between mt-2">
-            <div class="flex items-center">
+        <div class="options">
+            <div class="remember-me">
               <input
                 id="remember-me"
                 type="checkbox"
                 formControlName="rememberMe"
-                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition duration-150 ease-in-out cursor-pointer"
               >
-              <label for="remember-me" class="ml-2 block text-sm text-gray-700 cursor-pointer">
+              <label for="remember-me">
                 {{ 'LOGIN.REMEMBER_ME' | translate }}
               </label>
             </div>
 
-            <a routerLink="../forgot-password" class="text-sm font-medium text-primary hover:text-primary-dark transition-colors">
+            <a routerLink="../forgot-password" class="forgot-link">
               {{ 'LOGIN.FORGOT_PASSWORD' | translate }}
             </a>
         </div>
@@ -69,10 +68,10 @@
       (passkeyLogin)="onPasskeyLogin()"
     ></app-social-login>
 
-    <div class="mt-8 text-center">
-      <p class="text-sm text-gray-500">
+    <div class="register-link-container">
+      <p>
         {{ 'LOGIN.NO_ACCOUNT' | translate }}
-        <a routerLink="../register" class="font-semibold text-primary hover:text-primary-dark transition-colors ml-1">
+        <a routerLink="../register">
           {{ 'LOGIN.REGISTER_LINK' | translate }}
         </a>
       </p>
@@ -81,33 +80,32 @@
 
   <!-- 2FA View -->
   <ng-template #twoFactorView>
-    <div class="animate-fadeIn text-center">
-      <button (click)="cancel2fa()" class="absolute top-0 left-0 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-         <lucide-icon [img]="ArrowLeftIcon" class="w-6 h-6"></lucide-icon>
+    <div class="two-factor-view fade-in">
+      <button (click)="cancel2fa()" class="back-btn">
+         <lucide-icon [img]="ArrowLeftIcon"></lucide-icon>
       </button>
 
-      <div class="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-        <lucide-icon [img]="KeyIcon" class="w-8 h-8 text-primary"></lucide-icon>
+      <div class="icon-circle">
+        <lucide-icon [img]="KeyIcon"></lucide-icon>
       </div>
 
-      <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
-      <p class="text-gray-500 mb-8">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
+      <h2>{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
+      <p class="subtitle">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
 
-       <!-- Global Error Message for 2FA -->
-       <div *ngIf="errorMessage()" class="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center animate-shake">
-          <span class="text-sm text-red-600 font-medium">{{ errorMessage() | translate }}</span>
+       <div *ngIf="errorMessage()" class="alert-error">
+          <span>{{ errorMessage() | translate }}</span>
        </div>
 
       <form [formGroup]="otpForm" (ngSubmit)="onVerify2fa()">
         <app-auth-input
           [placeholder]="'000000'"
           type="text"
-          class="text-center text-2xl tracking-widest font-mono"
+          class="otp-input"
           [control]="$any(otpControl)"
           errorKey="LOGIN.ERRORS"
         ></app-auth-input>
 
-        <div class="mt-6">
+        <div class="actions">
            <app-auth-button
              type="submit"
              [loading]="isLoading()"

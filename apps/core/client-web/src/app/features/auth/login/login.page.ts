@@ -3,22 +3,19 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ReCaptchaV3Service, RecaptchaV3Module } from 'ng-recaptcha-19';
 
-// Components
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
 import { AuthInputComponent } from '../components/auth-input/auth-input.component';
 import { AuthButtonComponent } from '../components/auth-button/auth-button.component';
 import { SocialLoginComponent } from '../components/social-login/social-login.component';
 
-// Services & Interfaces
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../../core/services/auth';
 import { CountryService } from '../../../core/services/country.service';
 import { LanguageService } from '../../../core/services/language';
-import { LoginUserDto } from '../interfaces/auth.interfaces';
+import { LoginCredentials } from '../../../shared/interfaces/login-credentials.interface';
 
-// Icons
 import { LucideAngularModule, Mail, Lock, Key, ArrowLeft } from 'lucide-angular';
 
 @Component({
@@ -37,16 +34,15 @@ import { LucideAngularModule, Mail, Lock, Key, ArrowLeft } from 'lucide-angular'
     SocialLoginComponent
   ],
   providers: [ReCaptchaV3Service],
-  templateUrl: './login.page.html'
+  templateUrl: './login.page.html',
+  styleUrls: ['./login.page.scss']
 })
 export class LoginPage implements OnInit {
-  // Icons
   MailIcon = Mail;
   LockIcon = Lock;
   KeyIcon = Key;
   ArrowLeftIcon = ArrowLeft;
 
-  // Services
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -54,11 +50,9 @@ export class LoginPage implements OnInit {
   private countryService = inject(CountryService);
   private languageService = inject(LanguageService);
 
-  // State
   loginForm!: FormGroup;
   otpForm!: FormGroup;
 
-  // Signals
   isLoading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
   show2fa = signal<boolean>(false);
@@ -95,14 +89,14 @@ export class LoginPage implements OnInit {
     try {
       const token = await this.recaptchaV3Service.execute('login').toPromise();
 
-      const credentials: LoginUserDto = {
+      const credentials: LoginCredentials = {
         ...this.loginForm.getRawValue(),
         recaptchaToken: token || ''
       };
 
       this.authService.login(credentials).subscribe({
-        next: (response) => {
-          if ('require2fa' in response && response.require2fa) {
+        next: (response: any) => {
+          if (response && response.require2fa) {
             this.tempToken.set(response.tempToken);
             this.show2fa.set(true);
             this.isLoading.set(false);
@@ -130,11 +124,6 @@ export class LoginPage implements OnInit {
 
     this.authService.verify2fa(code, this.tempToken()!).subscribe({
         next: (user) => {
-            // Depending on verify2fa response, currently it returns User object or LoginResponseDto
-            // Assuming the authService logic maps it or handles the token storage.
-            // If the service mapped it to User, we are good.
-            // If it returned the full DTO, we might need to handle language setting.
-            // Based on previous code, verify2fa returns Observable<User>.
             if (user.preferredLanguage) {
                 this.languageService.setLanguage(user.preferredLanguage);
             }
@@ -166,10 +155,9 @@ export class LoginPage implements OnInit {
       });
   }
 
-  private handleSuccess(response: any) {
-    // Check if user has preferred language
-    if (response?.user?.preferredLanguage) {
-      this.languageService.setLanguage(response.user.preferredLanguage);
+  private handleSuccess(user: any) {
+    if (user?.preferredLanguage) {
+      this.languageService.setLanguage(user.preferredLanguage);
     }
     this.router.navigate(['/app/dashboard']);
     this.isLoading.set(false);

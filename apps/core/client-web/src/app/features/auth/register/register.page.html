@@ -86,6 +86,8 @@
 
     </form>
 
+    <app-social-login (socialLogin)="onSocialLogin($event)"></app-social-login>
+
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-500">
         {{ 'REGISTER.ALREADY_HAVE_ACCOUNT' | translate }}

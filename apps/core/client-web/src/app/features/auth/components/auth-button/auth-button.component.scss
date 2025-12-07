@@ -1,0 +1,55 @@
+
+.auth-btn {
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.75rem; // xl
+  background: linear-gradient(to right, var(--primary, #2563eb), #1d4ed8); // Gradient primary
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(to right, #1d4ed8, var(--primary, #2563eb));
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #9ca3af; // Gray 400
+    box-shadow: none;
+  }
+
+  .spinner {
+    position: absolute;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+
+    lucide-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      animation: spin 1s linear infinite;
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
