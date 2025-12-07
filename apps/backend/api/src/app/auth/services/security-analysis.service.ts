@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { authenticator } from 'otplib';
 import * as argon2 from 'argon2';
+import * as Bowser from 'bowser';
 import { GeoService } from '../../geo/geo.service';
 import { AuditTrailService } from '../../audit/audit.service';
 import { AuthConfig } from '../auth.config';
@@ -107,44 +108,34 @@ export class SecurityAnalysisService {
 
   /**
    * Lightweight User Agent Parser.
-   * Replaces ua-parser-js to avoid AGPLv3 licensing issues.
-   * Only extracts OS and Browser name for change detection.
+   * Uses 'bowser' (MIT) to safely parse user agent strings.
    */
   parseUserAgent(userAgent: string): { browser: string; os: string } {
     if (!userAgent) return { browser: 'Unknown', os: 'Unknown' };
 
-    let browser = 'Unknown';
-    let os = 'Unknown';
-
-    // Basic Browser Detection
-    if (/firefox|iceweasel|fxios/i.test(userAgent)) browser = 'Firefox';
-    else if (/chrome|crios/i.test(userAgent) && !/edge|opr/i.test(userAgent)) browser = 'Chrome';
-    else if (/safari/i.test(userAgent) && !/chrome|crios/i.test(userAgent)) browser = 'Safari';
-    else if (/opr\//i.test(userAgent)) browser = 'Opera';
-    else if (/edg/i.test(userAgent)) browser = 'Edge';
-    else if (/msie|trident/i.test(userAgent)) browser = 'IE';
-
-    // Basic OS Detection
-    if (/windows/i.test(userAgent)) os = 'Windows';
-    else if (/macintosh|mac os x/i.test(userAgent)) os = 'macOS';
-    else if (/linux/i.test(userAgent)) os = 'Linux';
-    else if (/android/i.test(userAgent)) os = 'Android';
-    else if (/iphone|ipad|ipod/i.test(userAgent)) os = 'iOS';
-
-    return { browser, os };
+    try {
+      const parsed = Bowser.parse(userAgent);
+      return {
+        browser: parsed.browser.name || 'Unknown',
+        os: parsed.os.name || 'Unknown',
+      };
+    } catch (error) {
+      this.logger.warn(`Failed to parse User Agent: ${userAgent}`);
+      return { browser: 'Unknown', os: 'Unknown' };
+    }
   }
 
   async handleFailedLoginAttempt(user: User) {
     if (!user.security) return;
 
-    const MAX_FAILED_ATTEMPTS = 5;
-    const LOCKOUT_MINUTES = 15;
+    const MAX_FAILED_ATTEMPTS = AuthConfig.MAX_FAILED_ATTEMPTS;
+    // LOCKOUT_DURATION is in ms
+    const lockoutMs = AuthConfig.LOCKOUT_DURATION;
 
     user.security.failedLoginAttempts = (user.security.failedLoginAttempts || 0) + 1;
 
     if (user.security.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
-      const lockoutTime = new Date();
-      lockoutTime.setMinutes(lockoutTime.getMinutes() + LOCKOUT_MINUTES);
+      const lockoutTime = new Date(Date.now() + lockoutMs);
       user.security.lockoutUntil = lockoutTime;
     }
 

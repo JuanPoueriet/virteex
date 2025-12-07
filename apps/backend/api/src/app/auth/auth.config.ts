@@ -37,7 +37,7 @@ export const AuthConfig = {
 
   // Lockout
   get MAX_FAILED_ATTEMPTS() { return parseInt(process.env.AUTH_MAX_FAILED_ATTEMPTS || '5', 10); },
-  get LOCKOUT_DURATION() { return parseDuration(process.env.AUTH_LOCKOUT_DURATION || '15m'); },
+  get LOCKOUT_DURATION() { return parseDuration(process.env.AUTH_LOCKOUT_DURATION || '15m'); }, // Default 15m
 
   // Security
   get DUMMY_PASSWORD_HASH() { return process.env.AUTH_DUMMY_PASSWORD_HASH || '$argon2id$v=19$m=65536,t=3,p=4$nQX58JdpAHj04FlImXHVGg$KqRBXlHTOlTtTorAd6friuDAvPPmpa+0E7cDUf/5p9I'; },

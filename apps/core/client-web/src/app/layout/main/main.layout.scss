@@ -277,6 +277,43 @@
   }
 }
 
+// --- BANNER DE PAGO PENDIENTE ---
+.payment-pending-banner {
+  @extend .impersonation-banner;
+  background-color: #fef2f2; // Rojo suave
+  color: #991b1b; // Rojo oscuro
+  border-bottom-color: #fee2e2;
+
+  .btn-resolve {
+    @include primary-button-filled;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: white;
+    text-decoration: none;
+
+    &:hover {
+      background-color: #b91c1c;
+    }
+  }
+
+  .theme-dark & {
+    background-color: #450a0a;
+    color: #fca5a5;
+    border-bottom-color: #7f1d1d;
+
+    .btn-resolve {
+      background-color: #ef4444;
+      border-color: #ef4444;
+
+      &:hover {
+         background-color: #dc2626;
+      }
+    }
+  }
+}
+
 // --- BARRA SUPERIOR (TOPBAR) Y CONTENIDO PRINCIPAL ---
 .main-topbar {
   display: flex;

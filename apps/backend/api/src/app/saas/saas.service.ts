@@ -39,27 +39,58 @@ export class SaasService implements OnModuleInit {
   }
 
   async seedPlans() {
-    const count = await this.planRepository.count();
-    if (count > 0) return;
+    this.logger.log('Seeding/Updating SaaS Plans from Config...');
 
-    this.logger.log('Seeding SaaS Plans from Config...');
-
+    // Use upsert or check-then-save to avoid race conditions and ensure idempotent updates
     for (const pConfig of SAAS_PLANS) {
         const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
 
-        const plan = this.planRepository.create({
-            slug: pConfig.slug,
-            name: pConfig.name,
-            monthlyPriceId: monthlyPriceId,
-            limits: pConfig.limits.map(l => ({
+        let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
+
+        if (plan) {
+            // Update existing plan (if needed)
+            plan.name = pConfig.name;
+            plan.monthlyPriceId = monthlyPriceId;
+
+            // Sync Limits: We remove existing limits and re-add them from config.
+            // In a production system, we might want to be more careful (e.g. migrate usage),
+            // but to ensure config is source of truth as requested:
+            if (plan.limits && plan.limits.length > 0) {
+                 await this.limitRepository.remove(plan.limits);
+            }
+
+            plan.limits = pConfig.limits.map(l => this.limitRepository.create({
                 resource: l.resource,
                 limit: l.limit,
                 period: l.period,
                 allowOverage: l.allowOverage ?? false
-            }))
-        });
+            }));
 
-        await this.planRepository.save(plan);
+            await this.planRepository.save(plan);
+        } else {
+            // Create new plan
+            // Handle race condition with try/catch
+            try {
+                plan = this.planRepository.create({
+                    slug: pConfig.slug,
+                    name: pConfig.name,
+                    monthlyPriceId: monthlyPriceId,
+                    limits: pConfig.limits.map(l => ({
+                        resource: l.resource,
+                        limit: l.limit,
+                        period: l.period,
+                        allowOverage: l.allowOverage ?? false
+                    }))
+                });
+                await this.planRepository.save(plan);
+            } catch (error: any) {
+                if (error.code === '23505') { // Unique violation
+                     this.logger.log(`Plan ${pConfig.slug} already exists (Race condition handled).`);
+                } else {
+                    throw error;
+                }
+            }
+        }
     }
 
     this.logger.log('SaaS Plans seeded.');
@@ -110,8 +141,24 @@ export class SaasService implements OnModuleInit {
 
           await manager.save(history); // Use manager to save history within transaction
 
+          // INVALIDATE CACHE (Fix for blocked UX)
+          await this.clearOrganizationCache(organizationId);
+
           this.logger.log(`Organization ${organizationId} changed plan from ${previousPlan?.slug ?? 'none'} to ${newPlan.slug}`);
       });
+  }
+
+  async clearOrganizationCache(organizationId: string) {
+      // Since cache-manager (standard) doesn't support wildcards easily without Redis specific commands,
+      // we iterate known resources or rely on a specific method if available.
+      // If using Redis, we could scan keys.
+      // However, to keep it agnostic and simple for this "fix", we can iterate SaasResource values.
+      const resources = Object.values(SaasResource);
+      const promises = resources.map(resource =>
+          this.cacheManager.del(`plan_limit:${organizationId}:${resource}`)
+      );
+      await Promise.all(promises);
+      this.logger.log(`Cache cleared for Organization ${organizationId}`);
   }
 
   /**
@@ -148,16 +195,16 @@ export class SaasService implements OnModuleInit {
     // Determine period key using Organization Billing Cycle if available
     let periodKey = 'lifetime';
     if (limitDef.period === 'monthly') {
-        if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
+        // Check for Grace Period: If subscription is past due but grace period is active, we treat it as valid.
+        const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
+            ? org.gracePeriodEnd
+            : org.subscriptionPeriodEnd;
+
+        if (effectiveEndDate && effectiveEndDate > new Date()) {
              // Align with Stripe billing cycle (end date)
-             // Format: "YYYY-MM-DD" of the end of the current period to ensure uniqueness per cycle
-             // Or better: Use the start date YYYY-MM-DD as the key.
-             // If we use just YYYY-MM, we might overlap if billing date is not 1st.
-             // So we use the specific cycle key derived from the subscription end date.
-             // e.g. "2023-10-15" (meaning the cycle ending on Oct 15).
-             periodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
+             periodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
         } else {
-             // Fallback to calendar month (UTC) if no subscription data
+             // Fallback to calendar month (UTC) if no subscription data or expired
              periodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
         }
     }
@@ -287,8 +334,13 @@ export class SaasService implements OnModuleInit {
     // Use limit definition for period
     let period = 'lifetime';
     if (limitDef.period === 'monthly') {
-         if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
-             period = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
+         // Grace Period check
+         const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
+            ? org.gracePeriodEnd
+            : org.subscriptionPeriodEnd;
+
+         if (effectiveEndDate && effectiveEndDate > new Date()) {
+             period = DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
          } else {
              const timezone = org.timezone || 'UTC';
              period = DateTime.now().setZone(timezone).toFormat('yyyy-MM');

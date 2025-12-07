@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import CircuitBreaker = require('opossum');
 
 import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
@@ -18,6 +19,7 @@ import { CachedUser } from '../../interfaces/cached-user.interface';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
+  private circuitBreaker: CircuitBreaker;
 
   constructor(
     private readonly usersService: UsersService,
@@ -32,63 +34,65 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });
-  }
 
-  // Robust Circuit Breaker state
-  private lastCacheFailure: number = 0;
-  private consecutiveFailures: number = 0;
-  private readonly BASE_RETRY_DELAY = 1000; // 1 second start
-  private readonly MAX_RETRY_DELAY = 60000; // 1 minute max
+    // Initialize Opossum Circuit Breaker
+    this.circuitBreaker = new CircuitBreaker(
+      (key: string) => this.cacheManager.get<CachedUser>(key),
+      {
+        timeout: 3000, // 3 seconds timeout for Redis
+        errorThresholdPercentage: 50, // Open circuit if 50% of requests fail
+        resetTimeout: AuthConfig.CACHE_RETRY_DELAY || 30000, // Retry after 30s
+      }
+    );
+
+    this.circuitBreaker.fallback(() => Promise.resolve(null)); // Fallback returns null (proceed to DB)
+
+    this.circuitBreaker.on('open', () => this.logger.warn('Redis Circuit Breaker OPEN: Using Database Fallback'));
+    this.circuitBreaker.on('halfOpen', () => this.logger.log('Redis Circuit Breaker HALF-OPEN: Testing connection'));
+    this.circuitBreaker.on('close', () => this.logger.log('Redis Circuit Breaker CLOSED: Cache restored'));
+  }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const { id, tokenVersion, organizationId } = payload;
     const cacheKey = `user_session:${id}`;
 
-    // 1. Try to get user from cache (with Exponential Backoff Circuit Breaker)
+    // 1. Try to get user from cache (Circuit Breaker Protected)
     let user: CachedUser | null = null;
-    const now = Date.now();
-
-    const currentDelay = Math.min(
-        this.BASE_RETRY_DELAY * Math.pow(2, this.consecutiveFailures),
-        this.MAX_RETRY_DELAY
-    );
-
-    if (this.consecutiveFailures === 0 || (now - this.lastCacheFailure > currentDelay)) {
-        try {
-            user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
-            if (this.consecutiveFailures > 0) {
-                 this.logger.log(`Cache connection restored. Circuit closed.`);
-                 this.consecutiveFailures = 0;
-            }
-        } catch (e) {
-            this.consecutiveFailures++;
-            this.lastCacheFailure = now;
-            const nextRetryMs = Math.min(this.BASE_RETRY_DELAY * Math.pow(2, this.consecutiveFailures), this.MAX_RETRY_DELAY);
-            this.logger.error(`Cache unreachable (Failure #${this.consecutiveFailures}). Opening circuit for ${nextRetryMs}ms. Error: ${(e as Error).message}`);
-            // Fallback silently proceeds to DB check below
-        }
-    } else {
-       // Circuit Open - Skip Cache
+    try {
+        // Fire the circuit breaker
+        // Note: The circuit breaker wraps the cacheManager.get call
+        user = await this.circuitBreaker.fire(cacheKey) as CachedUser | null;
+    } catch (e) {
+        this.logger.error(`Circuit Breaker Execution Error: ${(e as Error).message}`);
+        // Fallback is handled by configuration, but if fire throws, we ensure user is null
+        user = null;
     }
 
     if (!user) {
         // 2. Fallback to DB
-        // Using abstracted service method
         const dbUser = await this.usersService.findUserByIdForAuth(id);
 
         if (dbUser) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
-             try {
-                // Pre-calculate permissions and attach to user object in cache to avoid re-calc
-                user = {
-                  ...dbUser,
-                  _cachedPermissions: this.getPermissionsFromRoles(dbUser.roles ?? [])
-                } as CachedUser;
+             // We only attempt to set cache if the circuit breaker is closed or half-open (i.e. we think it might work)
+             // Opossum doesn't expose "can I write" easily for a different operation (set vs get),
+             // but generally if GET is failing, SET likely will too.
+             // We can check `this.circuitBreaker.opened`.
+             if (!this.circuitBreaker.opened) {
+                 try {
+                    // Pre-calculate permissions and attach to user object in cache to avoid re-calc
+                    user = {
+                      ...dbUser,
+                      _cachedPermissions: this.getPermissionsFromRoles(dbUser.roles ?? [])
+                    } as CachedUser;
 
-                await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
-             } catch (e) {
-                this.logger.warn(`Failed to set user cache during JWT validation: ${(e as Error).message}`);
-                user = dbUser as CachedUser; // Continue with dbUser even if cache fails
+                    await this.cacheManager.set(cacheKey, user, AuthConfig.CACHE_TTL);
+                 } catch (e) {
+                    this.logger.warn(`Failed to set user cache during JWT validation: ${(e as Error).message}`);
+                    user = dbUser as CachedUser;
+                 }
+             } else {
+                 user = dbUser as CachedUser;
              }
         }
     }
