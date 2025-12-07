@@ -31,6 +31,8 @@ export class BillingPage implements OnInit {
   isSaving = signal(false);
   availablePlans = this.billingService.plans;
 
+  usageMetrics = toSignal(this.billingService.getUsage(), { initialValue: [] });
+
   ngOnInit(): void {
     // Inicializa el plan seleccionado con el plan actual del usuario
     const currentPlanId = this.subscription()?.planId;
