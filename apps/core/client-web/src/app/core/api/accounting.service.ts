@@ -16,3 +16,4 @@ export class AccountingService {
     return this.http.get<Account[]>(this.apiUrl);
   }
 }
+
