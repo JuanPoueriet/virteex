@@ -51,15 +51,22 @@ export class SessionService implements OnModuleInit {
 
   onModuleInit() {
       const secret = this.configService.get<string>('ENCRYPTION_SECRET');
+      const salt = this.configService.get<string>('AUTH_SALT') || 'default-salt-change-me-in-prod';
+
       if (!secret) {
           if (process.env['NODE_ENV'] === 'production') {
               throw new Error('FATAL: ENCRYPTION_SECRET is not defined in production environment.');
           }
           this.logger.warn('ENCRYPTION_SECRET not found. Using fallback for development.');
       }
+
+      if (process.env['NODE_ENV'] === 'production' && salt === 'default-salt-change-me-in-prod') {
+          this.logger.warn('WARNING: Using default AUTH_SALT in production. Please set AUTH_SALT env variable.');
+      }
+
       const effectiveSecret = secret || 'default-secret-change-me-in-prod-32';
       // Derive key once during startup (blocking here is acceptable/expected)
-      this.encryptionKey = crypto.scryptSync(effectiveSecret, 'salt', 32);
+      this.encryptionKey = crypto.scryptSync(effectiveSecret, salt, 32);
   }
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {

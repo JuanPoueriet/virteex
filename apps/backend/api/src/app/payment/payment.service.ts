@@ -34,7 +34,7 @@ export class PaymentService {
       throw new NotFoundException('Organization not found');
     }
 
-    let customerId = organization.stripeCustomerId;
+    let customerId = organization.externalCustomerId;
 
     // Create customer if not exists
     if (!customerId) {
@@ -47,7 +47,7 @@ export class PaymentService {
       });
       customerId = customer.id;
 
-      organization.stripeCustomerId = customerId;
+      organization.externalCustomerId = customerId;
       await this.organizationRepository.save(organization);
     }
 
@@ -159,10 +159,10 @@ export class PaymentService {
     const metadata = session.metadata || {};
     const planSlug = metadata.planSlug;
 
-    const organization = await manager.findOne(Organization, { where: { stripeCustomerId: customerId } });
+    const organization = await manager.findOne(Organization, { where: { externalCustomerId: customerId } });
 
     if (organization) {
-        organization.stripeSubscriptionId = subscriptionId;
+        organization.externalSubscriptionId = subscriptionId;
         organization.subscriptionStatus = 'active';
 
         if (planSlug) {
@@ -197,7 +197,7 @@ export class PaymentService {
   }
 
   private async handleSubscriptionUpdated(subscription: Stripe.Subscription, manager: any) {
-    const organization = await manager.findOne(Organization, { where: { stripeSubscriptionId: subscription.id } });
+    const organization = await manager.findOne(Organization, { where: { externalSubscriptionId: subscription.id } });
 
     if (organization) {
         // Grace Period Logic:

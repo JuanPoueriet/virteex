@@ -136,6 +136,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             this.logger.warn(`User ${user.id} attempted to access with token for Organization ${organizationId} but has no access to it.`);
             throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
         }
+
+        // If organization context switched, we might want to update the returned user object's active organization
+        // to match the token context, so controllers don't need to look it up again.
+        // However, we must ensure strict type safety.
+        if (!isCurrentOrg && hasAccess) {
+             const switchedOrg = user.organizations.find(o => o.id === organizationId);
+             if (switchedOrg) {
+                 user.organization = switchedOrg;
+             }
+        }
     }
 
     // Return SafeUser / AuthenticatedUser

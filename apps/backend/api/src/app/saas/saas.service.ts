@@ -9,6 +9,7 @@ import { UsageMetric } from './entities/usage-metric.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { ConfigService } from '@nestjs/config';
 import { SaasResource } from './enums/saas-resource.enum';
+import { QuotaPeriod } from './enums/quota-period.enum';
 import { SAAS_PLANS } from './saas.config';
 import { DateTime } from 'luxon';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -35,7 +36,9 @@ export class SaasService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.seedPlans();
+    if (this.configService.get('SAAS_SEED_ENABLED') === 'true') {
+      await this.seedPlans();
+    }
   }
 
   async seedPlans() {
@@ -197,8 +200,8 @@ export class SaasService implements OnModuleInit {
     }
 
     // Determine period key using Organization Billing Cycle if available
-    let periodKey = 'lifetime';
-    if (limitDef.period === 'monthly') {
+    let periodKey = QuotaPeriod.LIFETIME;
+    if (limitDef.period === QuotaPeriod.MONTHLY) {
         // Check for Grace Period: If subscription is past due but grace period is active, we treat it as valid.
         const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
             ? org.gracePeriodEnd
@@ -261,7 +264,7 @@ export class SaasService implements OnModuleInit {
     if (!org || !org.plan) return [];
 
     // Calculate period keys needed
-    const periodKeys = new Set<string>(['lifetime']);
+    const periodKeys = new Set<string>([QuotaPeriod.LIFETIME]);
     // We assume mostly one billing cycle, but let's be safe
     let monthlyPeriodKey = '';
 
@@ -296,8 +299,8 @@ export class SaasService implements OnModuleInit {
             continue;
         }
 
-        let periodKey = 'lifetime';
-        if (limit.period === 'monthly') {
+        let periodKey = QuotaPeriod.LIFETIME;
+        if (limit.period === QuotaPeriod.MONTHLY) {
              periodKey = monthlyPeriodKey;
         }
 
@@ -336,8 +339,8 @@ export class SaasService implements OnModuleInit {
     if (limitDef.allowOverage) return true;
 
     // Use limit definition for period
-    let period = 'lifetime';
-    if (limitDef.period === 'monthly') {
+    let period = QuotaPeriod.LIFETIME;
+    if (limitDef.period === QuotaPeriod.MONTHLY) {
          // Grace Period check
          const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
             ? org.gracePeriodEnd
@@ -370,14 +373,26 @@ export class SaasService implements OnModuleInit {
   }
 
   private emitLimitWarningEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number, percentage: number) {
-      // Debounce or just emit. Listener should handle noise.
-      this.eventEmitter.emit('saas.limit_warning', {
-          organizationId,
-          resource,
-          currentUsage,
-          limit,
-          percentage,
-          timestamp: new Date()
+      const cacheKey = `debounce:limit_warning:${organizationId}:${resource}`;
+      // Check if we recently warned to prevent flooding (Debounce: 24 hours)
+      // We perform this check asynchronously and catch errors to avoid blocking the main flow
+      this.cacheManager.get(cacheKey).then(lastWarning => {
+          if (!lastWarning) {
+              this.eventEmitter.emit('saas.limit_warning', {
+                  organizationId,
+                  resource,
+                  currentUsage,
+                  limit,
+                  percentage,
+                  timestamp: new Date()
+              });
+              // Set debounce key
+              this.cacheManager.set(cacheKey, '1', 24 * 60 * 60 * 1000).catch(err =>
+                  this.logger.error(`Failed to set debounce cache for warning: ${err.message}`)
+              );
+          }
+      }).catch(err => {
+          this.logger.error(`Error checking debounce cache for warning: ${err.message}`);
       });
   }
 }
