@@ -364,12 +364,19 @@ export class UsersService {
 
   async findUserByIdForAuth(id: string): Promise<User | null> {
     // 10/10 Performance: Select only necessary fields for authentication
-    return this.userRepository.findOne({
-      where: { id },
-      // Important: Include foreign keys (organizationId) to ensure TypeORM relations populate correctly
-      select: ['id', 'email', 'firstName', 'lastName', 'status', 'organizationId'],
-      relations: ['roles', 'organization', 'security', 'organizations'],
-    });
+    // We use QueryBuilder to strictly control what we fetch, especially for 'organizations' relation
+    // which can be large. We only need the ID and minimal info for validation.
+    return this.userRepository.createQueryBuilder('user')
+      .where('user.id = :id', { id })
+      // Use leftJoinAndSelect for eager loading the main relations needed for Auth
+      .leftJoinAndSelect('user.roles', 'roles')
+      .leftJoinAndSelect('user.organization', 'organization')
+      .leftJoinAndSelect('user.security', 'security')
+      // For the full list of organizations (which can be heavy), we select ONLY the ID and Name
+      // This is crucial for multi-tenancy validation performance
+      .leftJoin('user.organizations', 'orgs')
+      .addSelect(['orgs.id', 'orgs.name'])
+      .getOne();
   }
 
   async save(user: User): Promise<User> {

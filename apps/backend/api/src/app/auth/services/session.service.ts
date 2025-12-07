@@ -51,22 +51,40 @@ export class SessionService implements OnModuleInit {
 
   onModuleInit() {
       const secret = this.configService.get<string>('ENCRYPTION_SECRET');
-      const salt = this.configService.get<string>('AUTH_SALT') || 'default-salt-change-me-in-prod';
+      const salt = this.configService.get<string>('AUTH_SALT');
+      const isProduction = process.env['NODE_ENV'] === 'production';
 
       if (!secret) {
-          if (process.env['NODE_ENV'] === 'production') {
+          if (isProduction) {
               throw new Error('FATAL: ENCRYPTION_SECRET is not defined in production environment.');
           }
           this.logger.warn('ENCRYPTION_SECRET not found. Using fallback for development.');
       }
 
-      if (process.env['NODE_ENV'] === 'production' && salt === 'default-salt-change-me-in-prod') {
-          this.logger.warn('WARNING: Using default AUTH_SALT in production. Please set AUTH_SALT env variable.');
+      if (isProduction) {
+          if (!salt || salt === 'default-salt-change-me-in-prod') {
+               throw new Error('FATAL: AUTH_SALT is not defined or is using default value in production.');
+          }
+      } else {
+          if (!salt) {
+             this.logger.warn('AUTH_SALT not found. Using fallback for development.');
+          }
       }
 
       const effectiveSecret = secret || 'default-secret-change-me-in-prod-32';
+      const effectiveSalt = salt || 'default-salt-change-me-in-prod';
       // Derive key once during startup (blocking here is acceptable/expected)
-      this.encryptionKey = crypto.scryptSync(effectiveSecret, salt, 32);
+      this.encryptionKey = crypto.scryptSync(effectiveSecret, effectiveSalt, 32);
+  }
+
+  private sanitizeUserAgent(userAgent?: string): string | null {
+      if (!userAgent) return null;
+      // Truncate to avoid DB errors
+      const truncated = userAgent.substring(0, 500);
+      // Basic sanitization to remove potentially malicious control characters (e.g. log injection)
+      // We allow standard alphanumeric and punctuation commonly found in UAs.
+      // Ideally, we treat this as opaque string but remove newlines.
+      return truncated.replace(/[\r\n]/g, '');
   }
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
@@ -131,8 +149,7 @@ export class SessionService implements OnModuleInit {
           }
         } else {
           // User Agent Analysis (using new SecurityAnalysisService)
-          // Sanitize User Agent to prevent storage issues or injection in logs/admin panels
-          const sanitizedUserAgent = userAgent ? userAgent.substring(0, 500) : null;
+          const sanitizedUserAgent = this.sanitizeUserAgent(userAgent);
 
           if (
             refreshTokenEntity.userAgent &&
@@ -180,7 +197,7 @@ export class SessionService implements OnModuleInit {
         }
       }
 
-      const sanitizedUserAgent = userAgent ? userAgent.substring(0, 500) : null;
+      const sanitizedUserAgent = this.sanitizeUserAgent(userAgent);
       const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, sanitizedUserAgent);
 
       // Update new refresh token with encrypted IP if available
@@ -297,7 +314,6 @@ export class SessionService implements OnModuleInit {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
     // Force UTC comparison effectively by ensuring we are consistent.
-    // TypeORM usually handles Date objects as UTC, but to be explicit:
     const utcExpiration = new Date(Date.UTC(
         expirationDate.getFullYear(),
         expirationDate.getMonth(),
@@ -376,8 +392,6 @@ export class SessionService implements OnModuleInit {
             return `::ffff:${ipv4.octets[0]}.${ipv4.octets[1]}.*.*`;
         }
 
-        // Mask IPv6. Standardize on masking the interface ID (last 64 bits) or more.
-        // Keeping first 3 parts (hextets) roughly /48 is good for privacy.
         const parts = ipv6.parts;
         return `${parts[0].toString(16)}:${parts[1].toString(16)}:${parts[2].toString(16)}:*:*:*:*:*`;
       }
@@ -388,7 +402,6 @@ export class SessionService implements OnModuleInit {
   }
 
   private encryptIp(ip: string): string {
-     // Use pre-derived key for performance
      const iv = crypto.randomBytes(16);
      const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey, iv);
 

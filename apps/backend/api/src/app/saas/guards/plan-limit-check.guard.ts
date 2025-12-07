@@ -2,20 +2,35 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Inject, 
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { ConfigService } from '@nestjs/config';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
 import { SaasResource } from '../enums/saas-resource.enum';
-import { LimitType } from '../entities/plan-limit.entity';
 
+/**
+ * PlanLimitCheckGuard
+ *
+ * This guard performs a "Fail-Fast" check for plan limits to improve UX.
+ * It DOES NOT increment the usage counter.
+ *
+ * WARNING: Developers must call `SaasService.enforceLimit()` within the business logic (Service layer)
+ * to atomically increment usage and ensure data integrity.
+ * This guard is strictly for preventing obvious over-limit requests from reaching the controller logic.
+ */
 @Injectable()
-export class PlanLimitGuard implements CanActivate {
-  private readonly logger = new Logger(PlanLimitGuard.name);
+export class PlanLimitCheckGuard implements CanActivate {
+  private readonly logger = new Logger(PlanLimitCheckGuard.name);
+  private readonly cacheTtl: number;
 
   constructor(
     private reflector: Reflector,
     private saasService: SaasService,
+    private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
-  ) {}
+  ) {
+      // Configure TTL from config or default to 60s
+      this.cacheTtl = this.configService.get<number>('SAAS_LIMIT_CACHE_TTL', 60000);
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const limitMetadata = this.reflector.get<{ resource: SaasResource; increment: number }>(
@@ -32,14 +47,12 @@ export class PlanLimitGuard implements CanActivate {
 
     if (!user || !user.organization) {
        // Defensively check for organization context.
-       // If public endpoint needs this guard, it must be handled carefully.
-       // Here we enforce it.
        throw new ForbiddenException('Organization context required for limit check');
     }
 
-    const cacheKey = `plan_limit:${user.organization.id}:${limitMetadata.resource}`;
+    const cacheKey = `plan_limit_check:${user.organization.id}:${limitMetadata.resource}`;
 
-    // 1. Try Cache first
+    // 1. Try Cache first (Fail-Fast)
     const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
     if (cachedResult !== undefined) {
       if (!cachedResult) {
@@ -48,26 +61,20 @@ export class PlanLimitGuard implements CanActivate {
       return true;
     }
 
-    // Need to handle different limit types in Service, but for Guard optimization we can check generic "canProceed"
-    // However, PlanLimit entity now supports BOOLEAN type.
-    // We should rely on SaasService to interpret the type.
+    // 2. Check Limit (Read-Only)
     const canProceed = await this.saasService.checkLimit(
       user.organization.id,
       limitMetadata.resource,
       limitMetadata.increment
     );
 
-    // 2. Cache the result for a short period (fail-fast buffer)
-    // We cache for 60 seconds. This reduces DB hits.
-    // If the user hits the limit during this time, the Service layer will still block it (enforceLimit),
-    // and subsequent requests might pass the guard until cache expires or is invalidated, but they will fail at service.
-    // To be safer, if canProceed is false, we cache it longer. If true, shorter.
-    const ttl = canProceed ? 60 * 1000 : 5 * 60 * 1000;
+    // 3. Cache the result
+    // If blocked, cache for a longer period (e.g. 5 mins) to reduce DB load
+    // If allowed, cache for shorter period (e.g. 60s) defined in config
+    const ttl = canProceed ? this.cacheTtl : 5 * 60 * 1000;
     await this.cacheManager.set(cacheKey, canProceed, ttl);
 
     if (!canProceed) {
-      // Note: This Guard is primarily for UX feedback and fail-fast.
-      // Strict enforcement against race conditions happens in the Service layer (enforceLimit).
       throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${limitMetadata.resource}`);
     }
 

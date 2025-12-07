@@ -7,11 +7,11 @@ import {
   SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
+import { SessionService } from '../auth/services/session.service';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:4200', 
+    origin: 'http://localhost:4200',
     credentials: true,
   },
 })
@@ -19,9 +19,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private connectedUsers = new Map<string, string>(); 
+  private connectedUsers = new Map<string, string>();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+      private readonly sessionService: SessionService
+  ) {}
 
   async handleConnection(client: Socket) {
     try {
@@ -29,14 +31,24 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         ?.split('; ')
         .find((row) => row.startsWith('access_token='))
         ?.split('=')[1];
-      if (!token) return client.disconnect();
 
-      const payload = this.jwtService.verify(token);
-      this.connectedUsers.set(payload.id, client.id);
-      console.log(`User connected: ${payload.id}, socket: ${client.id}`);
+      if (!token) {
+           client.disconnect();
+           return;
+      }
+
+      // Use SessionService for robust validation (checks revocation, version, etc.)
+      const user = await this.sessionService.verifyUserFromToken(token);
+
+      if (!user) {
+          client.disconnect();
+          return;
+      }
+
+      this.connectedUsers.set(user.id, client.id);
       
       this.server.emit('user-status-update', {
-        userId: payload.id,
+        userId: user.id,
         isOnline: true,
       });
     } catch (e) {

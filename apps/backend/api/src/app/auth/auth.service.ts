@@ -91,10 +91,12 @@ export class AuthService {
     // 2FA Check
     if (user.security && user.security.isTwoFactorEnabled) {
       if (!twoFactorCode) {
+         // Ensure expiration is an integer string in seconds for safety and clarity
+         const expirationSeconds = Math.floor(AuthConfig.MFA_CODE_EXPIRATION / 1000);
          const tempToken = this.jwtService.sign(
             { id: user.id, type: '2fa_pending', tokenVersion: user.security.tokenVersion },
             {
-              expiresIn: `${AuthConfig.MFA_CODE_EXPIRATION / 1000}s`, // Convert to seconds for JWT payload or use ms string if supported
+              expiresIn: `${expirationSeconds}s`,
               secret: this.configService.getOrThrow('JWT_SECRET')
             }
          );
