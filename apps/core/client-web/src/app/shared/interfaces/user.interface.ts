@@ -5,6 +5,8 @@ export interface Organization {
   id: string;
   name?: string;
   logoUrl?: string;
+  subscriptionStatus?: string;
+  gracePeriodEnd?: Date | string;
 }
 
 /**

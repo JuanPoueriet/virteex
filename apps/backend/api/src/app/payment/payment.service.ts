@@ -200,16 +200,21 @@ export class PaymentService {
 
     if (organization) {
         // Grace Period Logic:
-        // If status is 'past_due', we might want to keep the service active or notify user.
-        // For now, we update the status, but 'past_due' usually means "Retry period" in Stripe.
-        // We log it as a warning.
-        // If we wanted to enforce a custom grace period, we would check 'current_period_end' + X days.
+        // If status is 'past_due', we set a custom grace period end date (e.g. +5 days).
+        // If status recovers to 'active', we clear the grace period.
 
         organization.subscriptionStatus = subscription.status;
+        organization.subscriptionPeriodEnd = new Date(subscription.current_period_end * 1000);
 
-        if (subscription.status === 'past_due') {
-             this.logger.warn(`Organization ${organization.id} subscription is past_due. Check payment method.`);
-             // Ideally send email to admin here via Event Emitter
+        if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+             const GRACE_PERIOD_DAYS = 5;
+             const graceEnd = new Date();
+             graceEnd.setDate(graceEnd.getDate() + GRACE_PERIOD_DAYS);
+             organization.gracePeriodEnd = graceEnd;
+
+             this.logger.warn(`Organization ${organization.id} subscription is ${subscription.status}. Grace period set until ${graceEnd.toISOString()}.`);
+        } else if (subscription.status === 'active') {
+             organization.gracePeriodEnd = null;
         }
 
         await manager.save(organization);
