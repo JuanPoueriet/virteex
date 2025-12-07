@@ -61,6 +61,12 @@ export class MainLayout implements OnInit {
   }
   // --- Fin de la lógica para la modal ---
 
+  isGracePeriodActive(): boolean {
+    const org = this.authService.currentUser()?.organization;
+    if (!org?.gracePeriodEnd) return false;
+    return new Date(org.gracePeriodEnd) > new Date();
+  }
+
   ngOnInit(): void {
     this.notificationCenter.initialize();
     this.searchQuery$.pipe(
