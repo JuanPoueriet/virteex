@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
 import { SaasResource } from '../enums/saas-resource.enum';
+import { SaasLimitReachedException } from '../exceptions/saas-exception';
 
 /**
  * PlanLimitCheckGuard
@@ -56,7 +57,7 @@ export class PlanLimitCheckGuard implements CanActivate {
     const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
     if (cachedResult !== undefined) {
       if (!cachedResult) {
-        throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${limitMetadata.resource}`);
+        throw new SaasLimitReachedException(limitMetadata.resource);
       }
       return true;
     }
@@ -75,7 +76,7 @@ export class PlanLimitCheckGuard implements CanActivate {
     await this.cacheManager.set(cacheKey, canProceed, ttl);
 
     if (!canProceed) {
-      throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${limitMetadata.resource}`);
+      throw new SaasLimitReachedException(limitMetadata.resource);
     }
 
     return true;

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { SaasResource } from './enums/saas-resource.enum';
 import { QuotaPeriod } from './enums/quota-period.enum';
 import { SAAS_PLANS } from './saas.config';
+import { SaasLimitReachedException, SaasFeatureNotEnabledException } from './exceptions/saas-exception';
 import { DateTime } from 'luxon';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
@@ -223,7 +224,7 @@ export class SaasService implements OnModuleInit {
 
     if (limitDef.valueType === LimitType.BOOLEAN) {
        if (!limitDef.isEnabled) {
-           throw new ForbiddenException(`FEATURE_NOT_ENABLED: ${resource}`);
+           throw new SaasFeatureNotEnabledException(resource);
        }
        return;
     }
@@ -272,7 +273,7 @@ export class SaasService implements OnModuleInit {
         await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000);
         this.metricsService.limitHitCounter.labels(organizationId, resource).inc();
         this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
-        throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
+        throw new SaasLimitReachedException(resource);
     } else {
         if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
             this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
