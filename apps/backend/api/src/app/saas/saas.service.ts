@@ -1,10 +1,11 @@
-import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Plan } from './entities/plan.entity';
 import { PlanLimit, LimitType } from './entities/plan-limit.entity';
+import { PlanFeature } from './entities/plan-feature.entity';
 import { UsageMetric } from './entities/usage-metric.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { ConfigService } from '@nestjs/config';
@@ -24,6 +25,7 @@ export class SaasService implements OnModuleInit {
   constructor(
     @InjectRepository(Plan) private planRepository: Repository<Plan>,
     @InjectRepository(PlanLimit) private limitRepository: Repository<PlanLimit>,
+    @InjectRepository(PlanFeature) private featureRepository: Repository<PlanFeature>,
     @InjectRepository(Organization) private orgRepository: Repository<Organization>,
     @InjectRepository(UsageMetric) private usageRepository: Repository<UsageMetric>,
     @InjectRepository(OrganizationSubscriptionHistory) private subscriptionHistoryRepository: Repository<OrganizationSubscriptionHistory>,
@@ -44,14 +46,12 @@ export class SaasService implements OnModuleInit {
   async seedPlans() {
     this.logger.log('Seeding/Updating SaaS Plans from Config...');
 
-    // Smart Seeding: Diffing instead of Destroy-Recreate
     for (const pConfig of SAAS_PLANS) {
         const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
 
         let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
 
         if (!plan) {
-            // Create New Plan
             try {
                 plan = this.planRepository.create({
                     slug: pConfig.slug,
@@ -69,7 +69,6 @@ export class SaasService implements OnModuleInit {
                 }
             }
         } else {
-             // Update Plan Details
              plan.name = pConfig.name;
              plan.monthlyPriceId = monthlyPriceId;
              await this.planRepository.save(plan);
@@ -77,15 +76,12 @@ export class SaasService implements OnModuleInit {
 
         if (!plan) continue;
 
-        // Sync Limits (Upsert/Delete strategy)
         const configLimits = pConfig.limits;
         const existingLimits = plan.limits || [];
 
-        // 1. Upsert (Update existing or Create new)
         for (const cLimit of configLimits) {
              const existing = existingLimits.find(l => l.resource === cLimit.resource);
              if (existing) {
-                 // Update if changed
                  if (existing.limit !== cLimit.limit || existing.period !== cLimit.period || existing.allowOverage !== cLimit.allowOverage) {
                      existing.limit = cLimit.limit;
                      existing.period = cLimit.period;
@@ -93,7 +89,6 @@ export class SaasService implements OnModuleInit {
                      await this.limitRepository.save(existing);
                  }
              } else {
-                 // Create new limit
                  const newLimit = this.limitRepository.create({
                      plan: plan,
                      resource: cLimit.resource,
@@ -105,7 +100,6 @@ export class SaasService implements OnModuleInit {
              }
         }
 
-        // 2. Remove obsolete limits
         const configResources = configLimits.map(l => l.resource);
         const limitsToRemove = existingLimits.filter(l => !configResources.includes(l.resource));
         if (limitsToRemove.length > 0) {
@@ -117,17 +111,13 @@ export class SaasService implements OnModuleInit {
   }
 
   async getPlans() {
-    return this.planRepository.find({ relations: ['limits'] });
+    return this.planRepository.find({ relations: ['limits', 'features'] });
   }
 
   async getPlanBySlug(slug: string) {
-    return this.planRepository.findOne({ where: { slug }, relations: ['limits'] });
+    return this.planRepository.findOne({ where: { slug }, relations: ['limits', 'features'] });
   }
 
-  /**
-   * Upgrades or changes the plan for an organization and records the history.
-   * Uses a transaction to ensure atomicity.
-   */
   async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
       await this.dataSource.transaction(async (manager) => {
           const org = await manager.findOne(Organization, { where: { id: organizationId }, relations: ['plan'] });
@@ -141,16 +131,14 @@ export class SaasService implements OnModuleInit {
           }
 
           if (org.plan && org.plan.id === newPlan.id) {
-              return; // No change
+              return;
           }
 
           const previousPlan = org.plan;
 
-          // Update Org
           org.plan = newPlan;
           await manager.save(org);
 
-          // Record History
           const history = this.subscriptionHistoryRepository.create({
               organizationId: org.id,
               previousPlanId: previousPlan?.id,
@@ -159,9 +147,7 @@ export class SaasService implements OnModuleInit {
               reason: reason
           });
 
-          await manager.save(history); // Use manager to save history within transaction
-
-          // INVALIDATE CACHE (Fix for blocked UX)
+          await manager.save(history);
           await this.clearOrganizationCache(organizationId);
 
           this.logger.log(`Organization ${organizationId} changed plan from ${previousPlan?.slug ?? 'none'} to ${newPlan.slug}`);
@@ -169,7 +155,6 @@ export class SaasService implements OnModuleInit {
   }
 
   async clearOrganizationCache(organizationId: string) {
-      // 10/10 SCALABILITY: Use version-based invalidation for O(1) cache clearing.
       const versionKey = `org_limit_version:${organizationId}`;
       const currentVersion = await this.cacheManager.get<number>(versionKey) || 0;
       await this.cacheManager.set(versionKey, currentVersion + 1, { ttl: 0 } as any);
@@ -183,10 +168,6 @@ export class SaasService implements OnModuleInit {
       return `plan_limit_check:${organizationId}:${version}:${resource}`;
   }
 
-  /**
-   * Generates a consistent period key for billing cycles.
-   * Supports 'LIFETIME', 'MONTHLY' (Calendar or Anniversary), and future custom periods.
-   */
   public getPeriodKey(
       periodType: QuotaPeriod,
       org: Organization,
@@ -197,22 +178,13 @@ export class SaasService implements OnModuleInit {
       }
 
       if (periodType === QuotaPeriod.MONTHLY) {
-          // Logic: If organization has a valid subscription end date, we align to that cycle.
-          // Otherwise, we default to UTC Calendar Month.
-
-          // Check for valid subscription or grace period
           const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
               ? org.gracePeriodEnd
               : org.subscriptionPeriodEnd;
 
-          // If we have a valid future end date, use it to determine the billing month key
           if (effectiveEndDate && effectiveEndDate > new Date()) {
-               // Use the subscription end date to fingerprint the cycle
-               // e.g. if cycle ends 2023-10-15, this period is keyed to that date.
                return DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
           } else {
-               // Fallback: UTC Calendar Month (yyyy-MM)
-               // Use UTC explicitly to avoid timezone shifts affecting keys
                return DateTime.fromJSDate(targetDate).toUTC().toFormat('yyyy-MM');
           }
       }
@@ -220,10 +192,20 @@ export class SaasService implements OnModuleInit {
       return 'unknown_period';
   }
 
-  /**
-   * Enforces plan limits within a transaction context.
-   * This method atomically checks and increments usage.
-   */
+  async incrementUsageRedis(organizationId: string, resource: SaasResource, periodKey: string, increment: number): Promise<number> {
+      const cacheKey = `usage_counter:${organizationId}:${resource}:${periodKey}`;
+      const store = (this.cacheManager as any).store;
+      if (store.client && typeof store.client.incrby === 'function') {
+         return await store.client.incrby(cacheKey, increment);
+      } else if (store.incr) {
+         const val = await this.cacheManager.get<number>(cacheKey) || 0;
+         const newVal = val + increment;
+         await this.cacheManager.set(cacheKey, newVal, 24 * 3600 * 1000);
+         return newVal;
+      }
+      return 0;
+  }
+
   async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
     const org = await manager.findOne(Organization, {
         where: { id: organizationId },
@@ -236,7 +218,7 @@ export class SaasService implements OnModuleInit {
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) {
-        return; // Assume unrestricted
+        return;
     }
 
     if (limitDef.valueType === LimitType.BOOLEAN) {
@@ -246,11 +228,18 @@ export class SaasService implements OnModuleInit {
        return;
     }
 
-    // Use Centralized Period Key Logic
     const periodKey = this.getPeriodKey(limitDef.period, org);
-
     const allowOverage = limitDef.allowOverage;
     const isUnlimited = limitDef.isUnlimited || limitDef.limit === -1;
+
+    try {
+        const redisUsage = await this.incrementUsageRedis(organizationId, resource, periodKey, increment);
+        if (redisUsage > 0 && !isUnlimited && redisUsage > limitDef.limit && !allowOverage) {
+             this.logger.warn(`Redis Limit Hit for ${organizationId} on ${resource}`);
+        }
+    } catch (e) {
+        this.logger.warn(`Redis increment failed: ${e.message}`);
+    }
 
     const result = await this.usageMetricRepository.incrementUsage(
         manager,
@@ -262,12 +251,15 @@ export class SaasService implements OnModuleInit {
         allowOverage
     );
 
-    // Invalidate Cache for CheckGuard
+    // 10/10 OPTIMIZATION: Write-Through Cache
+    // Instead of deleting, we update the cache with the new status.
+    // This prevents a cache miss on the next Read (Guard check).
     const cacheKey = await this.getCacheKey(organizationId, resource);
-    // Remove cache so next check refreshes state
-    await this.cacheManager.del(cacheKey);
+    const canProceed = isUnlimited || allowOverage || (result.count <= limitDef.limit);
 
-    // Calculate usage percentage for soft limit warnings
+    // Update cache with new status
+    await this.cacheManager.set(cacheKey, canProceed, canProceed ? 60000 : 300000);
+
     if (!isUnlimited && limitDef.limit > 0) {
         const percentage = result.count / limitDef.limit;
         if (percentage >= 0.8 && percentage < 1.0) {
@@ -276,7 +268,7 @@ export class SaasService implements OnModuleInit {
     }
 
     if (result.limitReached) {
-        // Cache "Blocked" state to aid CheckGuard fail-fast
+        // Ensure cache is blocked
         await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000);
         this.metricsService.limitHitCounter.labels(organizationId, resource).inc();
         this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
@@ -288,6 +280,25 @@ export class SaasService implements OnModuleInit {
     }
   }
 
+  async checkFeature(organizationId: string, featureKey: string): Promise<boolean> {
+     const cacheKey = `feature_flag:${organizationId}:${featureKey}`;
+     const cached = await this.cacheManager.get<boolean>(cacheKey);
+     if (cached !== undefined) return cached;
+
+     const org = await this.orgRepository.findOne({
+         where: { id: organizationId },
+         relations: ['plan', 'plan.features']
+     });
+
+     if (!org || !org.plan) return false;
+
+     const feature = org.plan.features.find(f => f.featureKey === featureKey);
+     const isEnabled = feature ? feature.isEnabled : false;
+
+     await this.cacheManager.set(cacheKey, isEnabled, 60 * 1000);
+     return isEnabled;
+  }
+
   async getUsage(organizationId: string) {
     const org = await this.orgRepository.findOne({
         where: { id: organizationId },
@@ -296,18 +307,15 @@ export class SaasService implements OnModuleInit {
 
     if (!org || !org.plan) return [];
 
-    // Calculate period keys needed
     const periodKeys = new Set<string>([QuotaPeriod.LIFETIME]);
     const monthlyPeriodKey = this.getPeriodKey(QuotaPeriod.MONTHLY, org);
     periodKeys.add(monthlyPeriodKey);
 
-    // Fetch all relevant metrics in one query (N+1 fix)
     const metrics = await this.usageRepository.createQueryBuilder('metric')
         .where('metric.organizationId = :orgId', { orgId: organizationId })
         .andWhere('metric.period IN (:...periods)', { periods: Array.from(periodKeys) })
         .getMany();
 
-    // Map metrics for easier lookup
     const metricMap = new Map<string, UsageMetric>();
     metrics.forEach(m => metricMap.set(`${m.resource}:${m.period}`, m));
 
@@ -346,6 +354,12 @@ export class SaasService implements OnModuleInit {
   }
 
   async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
+    const cacheKey = await this.getCacheKey(organizationId, resource);
+    const cached = await this.cacheManager.get<boolean>(cacheKey);
+    if (cached !== undefined) {
+        return cached;
+    }
+
     const org = await this.orgRepository.findOne({
         where: { id: organizationId },
         relations: ['plan', 'plan.limits']
@@ -363,7 +377,6 @@ export class SaasService implements OnModuleInit {
     if (limitDef.limit === -1) return true;
     if (limitDef.allowOverage) return true;
 
-    // Use Centralized Logic
     const period = this.getPeriodKey(limitDef.period, org);
 
     const metric = await this.usageRepository.findOne({
@@ -371,7 +384,11 @@ export class SaasService implements OnModuleInit {
     });
 
     const currentUsage = metric ? metric.count : 0;
-    return (currentUsage + increment) <= limitDef.limit;
+    const canProceed = (currentUsage + increment) <= limitDef.limit;
+
+    await this.cacheManager.set(cacheKey, canProceed, canProceed ? 60000 : 300000);
+
+    return canProceed;
   }
 
   private emitLimitReachedEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number) {
