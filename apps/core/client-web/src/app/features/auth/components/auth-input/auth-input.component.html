@@ -1,0 +1,36 @@
+
+<div class="auth-input-group">
+  <label *ngIf="label" class="auth-label">{{ label | translate }}</label>
+
+  <div class="input-wrapper" [class.has-error]="hasError">
+    <!-- Icon -->
+    <div *ngIf="icon" class="input-icon left">
+      <lucide-icon [img]="icon"></lucide-icon>
+    </div>
+
+    <input
+      [type]="inputType"
+      [placeholder]="placeholder | translate"
+      [formControl]="control"
+      (blur)="onTouched()"
+      [class.with-icon]="icon"
+      [class.with-toggle]="type === 'password'"
+    />
+
+    <!-- Password Toggle -->
+    <button
+      *ngIf="type === 'password'"
+      type="button"
+      class="input-icon right toggle-btn"
+      (click)="togglePasswordVisibility()"
+    >
+      <lucide-icon [img]="passwordVisible ? EyeOffIcon : EyeIcon"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="hasError" class="error-text">
+    <lucide-icon [img]="AlertCircleIcon" class="error-icon"></lucide-icon>
+    <span>{{ errorMessage | translate }}</span>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+
+.auth-layout {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8fafc; // Slate 50 equivalent
+
+  .auth-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.6;
+      animation: float 10s infinite ease-in-out;
+    }
+
+    .blob-1 {
+      top: -100px;
+      left: -100px;
+      width: 400px;
+      height: 400px;
+      background: rgba(37, 99, 235, 0.2); // Primary blue
+    }
+
+    .blob-2 {
+      bottom: -100px;
+      right: -100px;
+      width: 500px;
+      height: 500px;
+      background: rgba(99, 102, 241, 0.2); // Indigo
+      animation-delay: -5s;
+    }
+  }
+
+  .auth-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 480px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .auth-logo {
+    margin-bottom: 2rem;
+    img {
+      height: 3rem;
+      width: auto;
+    }
+  }
+
+  .auth-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05); // Shadow XL
+    margin-bottom: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, 30px); }
+}
+
+// Media queries for small screens
+@media (max-width: 640px) {
+  .auth-card {
+    padding: 1.5rem;
+  }
+}

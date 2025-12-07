@@ -1,0 +1,72 @@
+
+.social-login-container {
+  margin-top: 1.5rem;
+
+  .divider {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+
+    .line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      border-top: 1px solid #e5e7eb; // Gray 200
+      z-index: 0;
+    }
+
+    .text {
+      position: relative;
+      z-index: 1;
+      background-color: white; // Match card bg or transparent if card is glass
+      // Since card has bg-white/70, we might need a small pill or transparent
+      // Actually, standard white usually works if solid text, or inherit
+      padding: 0 0.5rem;
+
+      span {
+        font-size: 0.875rem;
+        color: #6b7280; // Gray 500
+      }
+    }
+  }
+
+  .social-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+
+    button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.625rem;
+      border: 1px solid #e5e7eb; // Gray 200
+      border-radius: 0.75rem; // xl
+      background-color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+      &:hover {
+        background-color: #f9fafb; // Gray 50
+        border-color: #d1d5db; // Gray 300
+        transform: translateY(-1px);
+      }
+
+      img {
+        width: 1.25rem; // 20px
+        height: 1.25rem;
+      }
+
+      &.passkey-btn {
+        color: #4b5563; // Gray 600
+        lucide-icon {
+          width: 1.25rem;
+          height: 1.25rem;
+        }
+      }
+    }
+  }
+}
