@@ -178,6 +178,14 @@ export class SaasService implements OnModuleInit {
     // Invalidate/Update Cache on Usage Change
     const cacheKey = `plan_limit:${organizationId}:${resource}`;
 
+    // Calculate usage percentage for soft limit warnings
+    if (!isUnlimited && limitDef.limit > 0) {
+        const percentage = result.count / limitDef.limit;
+        if (percentage >= 0.8 && percentage < 1.0) {
+            this.emitLimitWarningEvent(organizationId, resource, result.count, limitDef.limit, percentage);
+        }
+    }
+
     if (result.limitReached) {
         await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000); // Cache "Blocked"
         this.metricsService.limitHitCounter.labels(organizationId, resource).inc();
@@ -190,6 +198,71 @@ export class SaasService implements OnModuleInit {
             this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
         }
     }
+  }
+
+  async getUsage(organizationId: string) {
+    // Return all usage metrics for the current period
+    const org = await this.orgRepository.findOne({
+        where: { id: organizationId },
+        relations: ['plan', 'plan.limits']
+    });
+
+    if (!org || !org.plan) return [];
+
+    // Calculate period keys needed
+    const periodKeys = new Set<string>(['lifetime']);
+    // We assume mostly one billing cycle, but let's be safe
+    let monthlyPeriodKey = '';
+
+    if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
+         monthlyPeriodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
+    } else {
+         monthlyPeriodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
+    }
+    periodKeys.add(monthlyPeriodKey);
+
+    // Fetch all relevant metrics in one query (N+1 fix)
+    const metrics = await this.usageRepository.createQueryBuilder('metric')
+        .where('metric.organizationId = :orgId', { orgId: organizationId })
+        .andWhere('metric.period IN (:...periods)', { periods: Array.from(periodKeys) })
+        .getMany();
+
+    // Map metrics for easier lookup
+    const metricMap = new Map<string, UsageMetric>();
+    metrics.forEach(m => metricMap.set(`${m.resource}:${m.period}`, m));
+
+    const usageData = [];
+
+    for (const limit of org.plan.limits) {
+        if (limit.valueType === LimitType.BOOLEAN) {
+            usageData.push({
+                resource: limit.resource,
+                type: 'boolean',
+                isEnabled: limit.isEnabled,
+                limit: null,
+                used: null
+            });
+            continue;
+        }
+
+        let periodKey = 'lifetime';
+        if (limit.period === 'monthly') {
+             periodKey = monthlyPeriodKey;
+        }
+
+        const metric = metricMap.get(`${limit.resource}:${periodKey}`);
+
+        usageData.push({
+            resource: limit.resource,
+            type: 'numeric',
+            limit: limit.limit,
+            used: metric ? metric.count : 0,
+            isUnlimited: limit.isUnlimited || limit.limit === -1,
+            period: limit.period
+        });
+    }
+
+    return usageData;
   }
 
   async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
@@ -236,6 +309,18 @@ export class SaasService implements OnModuleInit {
           resource,
           currentUsage,
           limit,
+          timestamp: new Date()
+      });
+  }
+
+  private emitLimitWarningEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number, percentage: number) {
+      // Debounce or just emit. Listener should handle noise.
+      this.eventEmitter.emit('saas.limit_warning', {
+          organizationId,
+          resource,
+          currentUsage,
+          limit,
+          percentage,
           timestamp: new Date()
       });
   }

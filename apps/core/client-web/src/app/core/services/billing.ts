@@ -71,6 +71,15 @@ export class BillingService {
     ).subscribe();
   }
 
+  getUsage(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/saas/usage`).pipe(
+        catchError(err => {
+            console.error('Failed to load usage', err);
+            return of([]);
+        })
+    );
+  }
+
   getSubscription(): Observable<Subscription> {
     return of(this.currentSubscription());
   }

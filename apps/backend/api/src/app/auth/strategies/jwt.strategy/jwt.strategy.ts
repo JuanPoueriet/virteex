@@ -34,24 +34,37 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // Simple Circuit Breaker state
+  // Robust Circuit Breaker state
   private lastCacheFailure: number = 0;
-  private readonly CACHE_RETRY_DELAY = AuthConfig.CACHE_RETRY_DELAY;
+  private consecutiveFailures: number = 0;
+  private readonly BASE_RETRY_DELAY = 1000; // 1 second start
+  private readonly MAX_RETRY_DELAY = 60000; // 1 minute max
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const { id, tokenVersion, organizationId } = payload;
     const cacheKey = `user_session:${id}`;
 
-    // 1. Try to get user from cache (with Circuit Breaker)
+    // 1. Try to get user from cache (with Exponential Backoff Circuit Breaker)
     let user: CachedUser | null = null;
     const now = Date.now();
 
-    if (now - this.lastCacheFailure > this.CACHE_RETRY_DELAY) {
+    const currentDelay = Math.min(
+        this.BASE_RETRY_DELAY * Math.pow(2, this.consecutiveFailures),
+        this.MAX_RETRY_DELAY
+    );
+
+    if (this.consecutiveFailures === 0 || (now - this.lastCacheFailure > currentDelay)) {
         try {
             user = await this.cacheManager.get<CachedUser>(cacheKey) ?? null;
+            if (this.consecutiveFailures > 0) {
+                 this.logger.log(`Cache connection restored. Circuit closed.`);
+                 this.consecutiveFailures = 0;
+            }
         } catch (e) {
-            this.logger.error(`Cache unreachable during JWT validation: ${(e as Error).message}. Opening circuit for ${this.CACHE_RETRY_DELAY}ms.`);
+            this.consecutiveFailures++;
             this.lastCacheFailure = now;
+            const nextRetryMs = Math.min(this.BASE_RETRY_DELAY * Math.pow(2, this.consecutiveFailures), this.MAX_RETRY_DELAY);
+            this.logger.error(`Cache unreachable (Failure #${this.consecutiveFailures}). Opening circuit for ${nextRetryMs}ms. Error: ${(e as Error).message}`);
             // Fallback silently proceeds to DB check below
         }
     } else {
