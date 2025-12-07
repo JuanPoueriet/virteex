@@ -34,4 +34,7 @@ export class RefreshToken {
 
   @Column({ name: 'ip_address', nullable: true })
   ipAddress?: string;
+
+  @Column({ name: 'encrypted_ip', nullable: true, select: false })
+  encryptedIp?: string;
 }

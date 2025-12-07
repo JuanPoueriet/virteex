@@ -106,7 +106,7 @@
     }
 }
 
-// Estilos para la tabla de historial
+// Estilos para la tabla de historial y métricas
 .billing-history-column {
     .card-body {
         padding: 0;
@@ -118,6 +118,57 @@
         td {
             padding: 0.75rem 1.5rem;
         }
+    }
+}
+
+// Usage Metrics
+.usage-grid {
+    display: grid;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.metric-item {
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+
+        span:first-child {
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+    }
+
+    .progress-bar-bg {
+        width: 100%;
+        background: var(--bg-solid); // Use variable instead of hardcoded
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        transition: width 0.3s ease-in-out;
+        background-color: var(--accent-primary); // Default
+
+        &.warning {
+            background-color: #f59e0b;
+        }
+
+        &.critical {
+            background-color: #dc2626;
+        }
+    }
+
+    .warning-text {
+        color: #d97706;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
     }
 }
 

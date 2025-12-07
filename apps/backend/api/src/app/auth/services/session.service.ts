@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
   Inject,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as ms from 'ms';
 
 import * as ipaddr from 'ipaddr.js';
+import * as crypto from 'crypto';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
@@ -29,8 +31,9 @@ import { AuthEvents, AuthAuditActionEvent } from '../events/auth.events';
 import { AuthError } from '../enums/auth-error.enum';
 
 @Injectable()
-export class SessionService {
+export class SessionService implements OnModuleInit {
   private readonly logger = new Logger(SessionService.name);
+  private encryptionKey: Buffer;
 
   constructor(
     private readonly usersService: UsersService,
@@ -45,6 +48,19 @@ export class SessionService {
     private readonly tokenService: TokenService,
     private readonly eventEmitter: EventEmitter2
   ) {}
+
+  onModuleInit() {
+      const secret = this.configService.get<string>('ENCRYPTION_SECRET');
+      if (!secret) {
+          if (process.env['NODE_ENV'] === 'production') {
+              throw new Error('FATAL: ENCRYPTION_SECRET is not defined in production environment.');
+          }
+          this.logger.warn('ENCRYPTION_SECRET not found. Using fallback for development.');
+      }
+      const effectiveSecret = secret || 'default-secret-change-me-in-prod-32';
+      // Derive key once during startup (blocking here is acceptable/expected)
+      this.encryptionKey = crypto.scryptSync(effectiveSecret, 'salt', 32);
+  }
 
   async refreshAccessToken(token: string, ipAddress?: string, userAgent?: string) {
     try {
@@ -62,7 +78,11 @@ export class SessionService {
       }
 
       if (payload.jti) {
-        const refreshTokenEntity = await this.refreshTokenRepository.findOneBy({ id: payload.jti });
+        // Select encryptedIp if needed for future forensic analysis, though we don't expose it
+        const refreshTokenEntity = await this.refreshTokenRepository.findOne({
+           where: { id: payload.jti },
+           select: ['id', 'isRevoked', 'revokedAt', 'replacedByToken', 'userAgent', 'ipAddress', 'userId']
+        });
 
         if (!refreshTokenEntity || refreshTokenEntity.isRevoked) {
           const GRACE_PERIOD = AuthConfig.REFRESH_GRACE_PERIOD;
@@ -151,6 +171,16 @@ export class SessionService {
       }
 
       const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
+
+      // Update new refresh token with encrypted IP if available
+      if (ipAddress) {
+          // Asynchronously update encrypted IP for forensic compliance (GDPR/CCPA)
+          // We don't await this to keep response fast
+          const encryptedIp = this.encryptIp(ipAddress);
+          this.refreshTokenRepository.update(authResponse.refreshTokenId, { encryptedIp }).catch(e =>
+              this.logger.error(`Failed to store encrypted IP: ${e.message}`)
+          );
+      }
 
       if (payload.jti) {
         await this.refreshTokenRepository.update(payload.jti, {
@@ -251,8 +281,17 @@ export class SessionService {
   async handleTokenCleanup() {
     this.logger.log('Starting expired refresh token cleanup...');
     const retentionPeriod = 30; // days
+
+    // Ensure UTC consistency for Cron jobs
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() - retentionPeriod);
+    // Force UTC comparison effectively by ensuring we are consistent.
+    // TypeORM usually handles Date objects as UTC, but to be explicit:
+    const utcExpiration = new Date(Date.UTC(
+        expirationDate.getFullYear(),
+        expirationDate.getMonth(),
+        expirationDate.getDate()
+    ));
 
     // Optimized: Batched deletion to prevent table locking and transaction log overflow
     const BATCH_SIZE = 1000;
@@ -262,7 +301,7 @@ export class SessionService {
     // 1. Cleanup Expired Tokens
     do {
       const expiredTokens = await this.refreshTokenRepository.find({
-        where: { expiresAt: LessThan(expirationDate) },
+        where: { expiresAt: LessThan(utcExpiration) },
         take: BATCH_SIZE,
         select: ['id'], // Only select ID for performance
       });
@@ -284,7 +323,7 @@ export class SessionService {
     deletedCount = 0;
     do {
       const revokedTokens = await this.refreshTokenRepository.find({
-        where: { isRevoked: true, revokedAt: LessThan(expirationDate) },
+        where: { isRevoked: true, revokedAt: LessThan(utcExpiration) },
         take: BATCH_SIZE,
         select: ['id'],
       });
@@ -318,9 +357,16 @@ export class SessionService {
         const ipv4 = addr as ipaddr.IPv4;
         return `${ipv4.octets[0]}.${ipv4.octets[1]}.*.*`;
       } else if (addr.kind() === 'ipv6') {
-        // Mask IPv6. Usually we want /48 or similar.
-        // Let's keep first 3 parts (hextets) roughly /48
-        const ipv6 = addr as ipaddr.IPv6;
+        let ipv6 = addr as ipaddr.IPv6;
+
+        // Handle IPv4-mapped IPv6 addresses (::ffff:127.0.0.1)
+        if (ipv6.isIPv4MappedAddress()) {
+            const ipv4 = ipv6.toIPv4Address();
+            return `::ffff:${ipv4.octets[0]}.${ipv4.octets[1]}.*.*`;
+        }
+
+        // Mask IPv6. Standardize on masking the interface ID (last 64 bits) or more.
+        // Keeping first 3 parts (hextets) roughly /48 is good for privacy.
         const parts = ipv6.parts;
         return `${parts[0].toString(16)}:${parts[1].toString(16)}:${parts[2].toString(16)}:*:*:*:*:*`;
       }
@@ -328,5 +374,17 @@ export class SessionService {
     } catch (e) {
       return '***';
     }
+  }
+
+  private encryptIp(ip: string): string {
+     // Use pre-derived key for performance
+     const iv = crypto.randomBytes(16);
+     const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey, iv);
+
+     let encrypted = cipher.update(ip, 'utf8', 'hex');
+     encrypted += cipher.final('hex');
+     const authTag = cipher.getAuthTag().toString('hex');
+
+     return `${iv.toString('hex')}:${encrypted}:${authTag}`;
   }
 }
