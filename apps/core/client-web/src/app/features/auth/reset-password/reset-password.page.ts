@@ -13,7 +13,7 @@ import { AuthService } from '../../../core/services/auth';
 import { LucideAngularModule, Lock, AlertCircle } from 'lucide-angular';
 
 @Component({
-  selector: 'app-set-password',
+  selector: 'app-reset-password',
   standalone: true,
   imports: [
     CommonModule,
@@ -25,10 +25,10 @@ import { LucideAngularModule, Lock, AlertCircle } from 'lucide-angular';
     AuthInputComponent,
     AuthButtonComponent
   ],
-  templateUrl: './set-password.page.html',
-  styleUrls: ['./set-password.page.scss']
+  templateUrl: './reset-password.page.html',
+  styleUrls: ['./reset-password.page.scss']
 })
-export class SetPasswordPage implements OnInit {
+export class ResetPasswordPage implements OnInit {
   LockIcon = Lock;
   AlertCircleIcon = AlertCircle;
 
@@ -44,7 +44,7 @@ export class SetPasswordPage implements OnInit {
 
   ngOnInit() {
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
-    
+
     this.form = this.fb.group({
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
@@ -64,9 +64,9 @@ export class SetPasswordPage implements OnInit {
 
     this.isLoading.set(true);
 
-    this.authService.setPasswordFromInvitation(this.token, this.passwordControl.value).subscribe({
+    this.authService.resetPassword(this.token, this.passwordControl.value).subscribe({
       next: () => {
-        this.router.navigate(['/app/dashboard']);
+        this.router.navigate(['/auth/login']);
       },
       error: () => {
         this.errorMessage.set('AUTH.ERRORS.SERVER_ERROR');

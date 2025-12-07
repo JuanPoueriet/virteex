@@ -1,0 +1,31 @@
+
+<div class="social-login-container">
+  <div class="divider">
+    <div class="line"></div>
+    <div class="text">
+      <span>{{ 'LOGIN.OR' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="social-buttons">
+    <!-- Google -->
+    <button type="button" (click)="onSocialLogin('google')" title="Google">
+      <img src="assets/icons/google.svg" alt="Google">
+    </button>
+
+    <!-- Microsoft -->
+    <button type="button" (click)="onSocialLogin('microsoft')" title="Microsoft">
+      <img src="assets/icons/microsoft.svg" alt="Microsoft">
+    </button>
+
+    <!-- Okta -->
+    <button type="button" (click)="onSocialLogin('okta')" title="Okta">
+      <img src="assets/icons/okta.svg" alt="Okta">
+    </button>
+
+    <!-- Passkey -->
+    <button type="button" (click)="onPasskeyLogin()" title="Passkey" class="passkey-btn">
+      <lucide-icon [img]="KeyIcon"></lucide-icon>
+    </button>
+  </div>
+</div>

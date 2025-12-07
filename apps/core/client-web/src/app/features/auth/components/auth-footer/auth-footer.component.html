@@ -1,0 +1,31 @@
+
+<footer class="auth-footer">
+  <div class="footer-content">
+    <div class="copyright">
+      <span>{{ 'LOGIN.FOOTER.COPYRIGHT' | translate }}</span>
+    </div>
+
+    <div class="links">
+      <!-- Language Selector -->
+      <div class="lang-selector" [class.open]="isOpen">
+        <button (click)="toggle()" class="lang-trigger">
+          <lucide-icon [img]="GlobeIcon"></lucide-icon>
+          <span>{{ currentLang | uppercase }}</span>
+        </button>
+
+        <div class="lang-menu" *ngIf="isOpen">
+          <button (click)="changeLang('es')" [class.active]="currentLang === 'es'">ES</button>
+          <button (click)="changeLang('en')" [class.active]="currentLang === 'en'">EN</button>
+        </div>
+      </div>
+
+      <a routerLink="/privacy">{{ 'LOGIN.FOOTER.PRIVACY' | translate }}</a>
+      <a routerLink="/terms">{{ 'LOGIN.FOOTER.TERMS' | translate }}</a>
+      <a routerLink="/contact">{{ 'LOGIN.FOOTER.CONTACT' | translate }}</a>
+    </div>
+  </div>
+
+  <div class="recaptcha-notice">
+    Protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy">Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply.
+  </div>
+</footer>

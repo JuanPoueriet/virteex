@@ -1,0 +1,12 @@
+
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  class="auth-btn"
+  [class.loading]="loading"
+>
+  <span *ngIf="loading" class="spinner">
+    <lucide-icon [img]="LoaderIcon"></lucide-icon>
+  </span>
+  <ng-content></ng-content>
+</button>

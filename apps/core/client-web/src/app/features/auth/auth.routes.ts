@@ -27,6 +27,14 @@ export const AUTH_ROUTES: Routes = [
     loadComponent: () => import('./login/login.page').then((m) => m.LoginPage),
   },
   {
+    path: 'register',
+    title: 'Crear Cuenta | FacturaPRO',
+    // Aplica el guard a esta ruta.
+    canActivate: [publicGuard],
+    loadComponent: () =>
+      import('./register/register.page').then((m) => m.RegisterPage),
+  },
+  {
     path: 'forgot-password',
     // Aplica el guard a esta ruta.
     canActivate: [publicGuard],

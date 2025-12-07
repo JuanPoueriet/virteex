@@ -208,27 +208,8 @@ export const APP_ROUTES: Routes = [
     path: ':lang',
     canActivate: [languageInitGuard],
     children: [
-      // Country-specific public routes (e.g., /es/do/auth/register)
-      {
-        path: ':country',
-        canActivate: [CountryGuard],
-        children: [
-          {
-            path: 'auth',
-            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.REGISTER_ROUTES),
-          }
-        ]
-      },
       // Generic language-only routes (e.g., /es/auth/login)
-      // Note: If a route matches :country, it will go there first.
-      // 'auth' is not a country code, so /es/auth/login will fall through to here?
-      // No, 'auth' would match ':country' if we are not careful.
-      // We need to distinguish between country codes (2 letters) and 'auth'.
-      // However, usually country codes are 2 letters. 'auth' is 4.
-      // We can rely on router matching order OR regex matchers (available in newer Angular).
-      // Or we can be explicit.
-
-      // Let's explicitly put 'auth' FIRST to capture /es/auth/...
+      // 'auth' must come before ':country' to ensure it is not captured as a country code.
       {
         path: 'auth',
         children: [
@@ -264,18 +245,18 @@ export const APP_ROUTES: Routes = [
             },
         ]
       },
-      // Then catch other 2-letter segments as country?
-      // Or just let it be. 'register' is inside 'auth'.
-      // If we go to /es/do/auth/register:
-      // :lang = es
-      // :country = do -> matches ':country' path? Yes.
-      // children -> auth -> register.
 
-      // If we go to /es/auth/login:
-      // :lang = es
-      // matches 'auth' path directly? YES. Angular matches static paths before parameterized paths if they are siblings.
-      // So 'auth' will take precedence over ':country'.
-      // This is good.
+      // Country-specific public routes (e.g., /es/do/auth/register)
+      {
+        path: ':country',
+        canActivate: [CountryGuard],
+        children: [
+          {
+            path: 'auth',
+            loadChildren: () => import('./features/auth/auth.routes').then((m) => m.REGISTER_ROUTES),
+          }
+        ]
+      }
     ]
   },
 

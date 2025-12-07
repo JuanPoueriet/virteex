@@ -1,4 +1,5 @@
-@use "./assets/styles/variables" as *;
+
+@use './assets/styles/_variables.scss' as *;
 
 // Reset básico y estilos fundamentales
 * {
@@ -17,12 +18,15 @@ body {
   font-size: $font-size-base;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color $transition-duration ease,
+  transition:
+    background-color $transition-duration ease,
     color $transition-duration ease;
 }
 
 // Global Input Styles
-input, select, textarea {
+input,
+select,
+textarea {
   width: 100%;
   padding: 0.625rem 1rem;
   font-family: inherit;
@@ -63,7 +67,6 @@ lucide-icon {
   justify-content: center;
   align-items: center;
 }
-
 
 // Buttons
 button.btn-primary {
@@ -151,7 +154,7 @@ gridster.scrollVertical {
   margin: 1rem 0;
   color: #f44336;
 }
-gridster-item{
+gridster-item {
   background: transparent !important;
 }
 
