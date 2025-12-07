@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Plan } from './plan.entity';
 import { SaasResource } from '../enums/saas-resource.enum';
+import { QuotaPeriod } from '../enums/quota-period.enum';
 
 export enum LimitType {
   NUMERIC = 'NUMERIC',
@@ -34,8 +35,8 @@ export class PlanLimit {
   @Column({ name: 'is_enabled', default: true })
   isEnabled: boolean; // For Boolean limits (Feature Flags)
 
-  @Column({ default: 'monthly' })
-  period: 'monthly' | 'lifetime';
+  @Column({ default: QuotaPeriod.MONTHLY })
+  period: QuotaPeriod;
 
   @Column({ name: 'allow_overage', default: false })
   allowOverage: boolean;

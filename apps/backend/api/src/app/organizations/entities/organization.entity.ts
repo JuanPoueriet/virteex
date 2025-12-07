@@ -39,10 +39,10 @@ export class Organization {
   fiscalRegionId: string;
 
   @Column({ name: 'stripe_customer_id', nullable: true })
-  stripeCustomerId: string;
+  externalCustomerId: string;
 
   @Column({ name: 'stripe_subscription_id', nullable: true })
-  stripeSubscriptionId: string;
+  externalSubscriptionId: string;
 
   @Column({ name: 'subscription_status', nullable: true })
   subscriptionStatus: string;

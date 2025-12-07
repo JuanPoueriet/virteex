@@ -363,8 +363,11 @@ export class UsersService {
   }
 
   async findUserByIdForAuth(id: string): Promise<User | null> {
+    // 10/10 Performance: Select only necessary fields for authentication
     return this.userRepository.findOne({
       where: { id },
+      // Important: Include foreign keys (organizationId) to ensure TypeORM relations populate correctly
+      select: ['id', 'email', 'firstName', 'lastName', 'status', 'organizationId'],
       relations: ['roles', 'organization', 'security', 'organizations'],
     });
   }
