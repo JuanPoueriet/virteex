@@ -1,336 +1,122 @@
-<div class="login-wrapper">
-  <div class="top-language-selector">
-    <div class="language-selector" #topLanguageSelector>
-      <div
-        class="selector-trigger"
-        (click)="toggleDropdown($event, 'top')"
-        [class.active]="dropdownOpen()"
-      >
-        <lucide-icon
-          [img]="GlobeIcon"
-          size="18"
-          class="selector-icon"
-          aria-hidden="true"
-        ></lucide-icon>
-        <span class="selected-language">
-          {{ languageService.currentLang() === "es" ? "Español (LATAM)" : "English (US)" }}
-        </span>
-        <lucide-icon
-          [img]="dropdownOpen() ? ChevronUp : ChevronDown"
-          size="16"
-          class="dropdown-icon"
-          aria-hidden="true"
-        ></lucide-icon>
-      </div>
 
-      <div
-        class="dropdown-menu"
-        [class.show]="dropdownOpen()"
-        [class.dropup]="isDropUp()"
-      >
-        <div
-          class="dropdown-item"
-          [class.active]="languageService.currentLang() === 'es'"
-          (click)="changeLanguage('es')"
-        >
-          <span class="flag-icon">🇪🇸</span>
-          <span class="language-name">Español (LATAM)</span>
-          @if(languageService.currentLang() === 'es'){
-            <lucide-icon
-              [img]="Check"
-              size="16"
-              class="check-icon"
-            ></lucide-icon>
-          }
-        </div>
+<app-auth-layout>
+  <!-- Standard Login View -->
+  <div *ngIf="!show2fa(); else twoFactorView" class="animate-fadeIn">
 
-        <div
-          class="dropdown-item"
-          [class.active]="languageService.currentLang() === 'en'"
-          (click)="changeLanguage('en')"
-        >
-          <span class="flag-icon">🇺🇸</span>
-          <span class="language-name">English (US)</span>
-          @if(languageService.currentLang() === 'en'){
-            <lucide-icon
-              [img]="Check"
-              size="16"
-              class="check-icon"
-            ></lucide-icon>
-          }
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 tracking-tight mb-2">{{ 'LOGIN.TITLE' | translate }}</h2>
+      <p class="text-gray-500">{{ 'LOGIN.SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Global Error Message -->
+    <div *ngIf="errorMessage()" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start animate-shake">
+      <lucide-icon [img]="LockIcon" class="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0"></lucide-icon>
+      <p class="text-sm text-red-600 font-medium">{{ errorMessage() | translate }}</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5">
+
+      <app-auth-input
+        [label]="'LOGIN.EMAIL_LABEL'"
+        [placeholder]="'LOGIN.EMAIL_PLACEHOLDER'"
+        type="email"
+        [icon]="MailIcon"
+        [control]="$any(emailControl)"
+        errorKey="LOGIN.ERRORS"
+      ></app-auth-input>
+
+      <div>
+        <app-auth-input
+          [label]="'LOGIN.PASSWORD_LABEL'"
+          [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
+          type="password"
+          [icon]="LockIcon"
+          [control]="$any(passwordControl)"
+          errorKey="LOGIN.ERRORS"
+        ></app-auth-input>
+
+        <div class="flex items-center justify-between mt-2">
+            <div class="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                formControlName="rememberMe"
+                class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded transition duration-150 ease-in-out cursor-pointer"
+              >
+              <label for="remember-me" class="ml-2 block text-sm text-gray-700 cursor-pointer">
+                {{ 'LOGIN.REMEMBER_ME' | translate }}
+              </label>
+            </div>
+
+            <a routerLink="../forgot-password" class="text-sm font-medium text-primary hover:text-primary-dark transition-colors">
+              {{ 'LOGIN.FORGOT_PASSWORD' | translate }}
+            </a>
         </div>
       </div>
+
+      <app-auth-button
+        type="submit"
+        [loading]="isLoading()"
+        [disabled]="loginForm.invalid"
+      >
+        {{ 'LOGIN.SUBMIT_BUTTON' | translate }}
+      </app-auth-button>
+
+    </form>
+
+    <app-social-login
+      (socialLogin)="onSocialLogin($event)"
+      (passkeyLogin)="onPasskeyLogin()"
+    ></app-social-login>
+
+    <div class="mt-8 text-center">
+      <p class="text-sm text-gray-500">
+        {{ 'LOGIN.NO_ACCOUNT' | translate }}
+        <a routerLink="../register" class="font-semibold text-primary hover:text-primary-dark transition-colors ml-1">
+          {{ 'LOGIN.REGISTER_LINK' | translate }}
+        </a>
+      </p>
     </div>
   </div>
 
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h1 class="auth-title">{{ "LOGIN.TITLE" | translate }}</h1>
-        <p class="auth-subtitle">{{ "LOGIN.SUBTITLE" | translate }}</p>
+  <!-- 2FA View -->
+  <ng-template #twoFactorView>
+    <div class="animate-fadeIn text-center">
+      <button (click)="cancel2fa()" class="absolute top-0 left-0 p-2 text-gray-400 hover:text-gray-600 transition-colors">
+         <lucide-icon [img]="ArrowLeftIcon" class="w-6 h-6"></lucide-icon>
+      </button>
+
+      <div class="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+        <lucide-icon [img]="KeyIcon" class="w-8 h-8 text-primary"></lucide-icon>
       </div>
 
-      <!-- 2FA Verification Form -->
-      @if (show2faInput()) {
-        <div class="space-y-6">
-           <div class="text-center">
-               <h3 class="text-lg font-semibold text-text-primary">Verificación de 2 Pasos</h3>
-               <p class="text-text-secondary text-sm mt-1">Ingresa el código de 6 dígitos enviado a tu dispositivo.</p>
-           </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
+      <p class="text-gray-500 mb-8">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
 
-           <div class="space-y-2">
-               <label class="block text-sm font-medium text-text-secondary">Código de Verificación</label>
-               <div class="relative group">
-                   <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                       <lucide-icon [img]="LockIcon" class="w-5 h-5 text-text-tertiary group-focus-within:text-primary transition-colors"></lucide-icon>
-                   </div>
-                   <input
-                     type="text"
-                     [formControl]="otpCodeControl"
-                     maxlength="6"
-                     class="w-full pl-11 pr-4 py-3 bg-card-bg/50 border border-border-color rounded-xl text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 backdrop-blur-sm"
-                     placeholder="123456"
-                     (keyup.enter)="verify2fa()"
-                   />
-               </div>
-           </div>
+       <!-- Global Error Message for 2FA -->
+       <div *ngIf="errorMessage()" class="mb-6 p-3 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center animate-shake">
+          <span class="text-sm text-red-600 font-medium">{{ errorMessage() | translate }}</span>
+       </div>
 
-           @if (errorMessage()) {
-            <div class="error-message global-error" role="alert" id="global-error">
-              <lucide-icon
-                [img]="AlertCircleIcon"
-                size="16"
-                aria-hidden="true"
-              ></lucide-icon>
-              <span>{{ errorMessage() | translate }}</span>
-            </div>
-           }
+      <form [formGroup]="otpForm" (ngSubmit)="onVerify2fa()">
+        <app-auth-input
+          [placeholder]="'000000'"
+          type="text"
+          class="text-center text-2xl tracking-widest font-mono"
+          [control]="$any(otpControl)"
+          errorKey="LOGIN.ERRORS"
+        ></app-auth-input>
 
-           <button
-            (click)="verify2fa()"
-            [disabled]="otpCodeControl.invalid || isLoggingIn()"
-            class="submit-button"
-            [class.loading]="isLoggingIn()"
-          >
-            @if (isLoggingIn()) {
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Verificando...</span>
-            } @else {
-              <span>Verificar</span>
-            }
-          </button>
-
-          <button (click)="show2faInput.set(false)" class="w-full text-center text-sm text-text-secondary hover:text-primary mt-2">
-              Volver al login
-          </button>
-        </div>
-      } @else {
-      <form
-        [formGroup]="loginForm"
-        (ngSubmit)="onSubmit()"
-        class="auth-form"
-        novalidate
-        #formElement
-      >
-        <div class="social-login-buttons">
-          <button type="button" class="social-btn google" (click)="socialLogin('google')">
-            <img src="assets/icons/google.svg" alt="Google" width="20" height="20">
-            <span>Google</span>
-          </button>
-          <button type="button" class="social-btn microsoft" (click)="socialLogin('microsoft')">
-            <img src="assets/icons/microsoft.svg" alt="Microsoft" width="20" height="20">
-            <span>Microsoft</span>
-          </button>
-          <!-- Okta optional or can be added -->
-        </div>
-
-        <div class="divider">
-          <span>{{ 'LOGIN.OR' | translate }}</span>
-        </div>
-
-        <div class="mb-6">
-          <button
-            type="button"
-            (click)="onLoginWithPasskey()"
-            class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-card-bg hover:bg-gray-50 dark:hover:bg-gray-750 transition-all duration-200 group shadow-sm"
-          >
-            <lucide-icon [img]="KeyIcon" class="w-5 h-5 text-text-secondary group-hover:text-primary transition-colors"></lucide-icon>
-            <span class="text-sm font-medium text-text-primary">
-              Iniciar con Llave de acceso (Passkey)
-            </span>
-          </button>
-        </div>
-
-        <div class="form-field">
-          <label for="email" class="input-label">{{
-            "LOGIN.EMAIL_LABEL" | translate
-          }}</label>
-          <div class="input-wrapper">
-            <lucide-icon
-              [img]="MailIcon"
-              size="18"
-              class="input-icon"
-              aria-hidden="true"
-            ></lucide-icon>
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              [placeholder]="'LOGIN.EMAIL_PLACEHOLDER' | translate"
-              [class.error]="email?.invalid && email?.touched"
-            />
-          </div>
-          @if (email?.invalid && email?.touched) {
-            <div class="error-message">
-              <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
-              @if (email?.errors?.['required']) {
-                {{ 'LOGIN.ERRORS.EMAIL_REQUIRED' | translate }}
-              }
-              @if (email?.errors?.['email']) {
-                {{ 'LOGIN.ERRORS.EMAIL_INVALID' | translate }}
-              }
-            </div>
-          }
-        </div>
-
-        <div class="form-field">
-          <div class="password-header">
-            <label for="password" class="input-label">{{
-              "LOGIN.PASSWORD_LABEL" | translate
-            }}</label>
-            <a
-              [routerLink]="[
-                '/',
-                languageService.currentLang(),
-                'auth',
-                'forgot-password'
-              ]"
-              class="forgot-password"
-              >{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a
-            >
-          </div>
-          <div class="input-wrapper">
-            <lucide-icon
-              [img]="LockIcon"
-              size="18"
-              class="input-icon"
-              aria-hidden="true"
-            ></lucide-icon>
-            <input
-              id="password"
-              [type]="passwordVisible() ? 'text' : 'password'"
-              formControlName="password"
-              placeholder="••••••••"
-              [class.error]="password?.invalid && password?.touched"
-            />
-            <button
-              type="button"
-              (click)="togglePasswordVisibility()"
-              class="toggle-password"
-              [attr.aria-label]="
-                passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'
-              "
-            >
-              <lucide-icon
-                [img]="passwordVisible() ? EyeOffIcon : EyeIcon"
-                size="18"
-                aria-hidden="true"
-              ></lucide-icon>
-            </button>
-          </div>
-          @if (password?.invalid && password?.touched) {
-            <div class="error-message">
-              <lucide-icon [img]="AlertCircleIcon" size="14"></lucide-icon>
-              {{ 'LOGIN.ERRORS.PASSWORD_REQUIRED' | translate }}
-            </div>
-          }
-        </div>
-
-        <div class="remember-container">
-          <label class="checkbox-container">
-            <input
-              type="checkbox"
-              class="remember-checkbox"
-              formControlName="rememberMe"
-              id="remember-me"
-            />
-            <span class="checkmark"></span>
-            <span class="remember-label">{{
-              "LOGIN.REMEMBER_ME" | translate
-            }}</span>
-          </label>
-        </div>
-
-        @if (errorMessage()) {
-        <div class="error-message global-error" role="alert" id="global-error">
-          <lucide-icon
-            [img]="AlertCircleIcon"
-            size="16"
-            aria-hidden="true"
-          ></lucide-icon>
-          <span>{{ errorMessage() | translate }}</span>
-        </div>
-        }
-
-        <button
-          type="submit"
-          [disabled]="loginForm.invalid || isLoggingIn()"
-          class="submit-button"
-          [class.loading]="isLoggingIn()"
-          [attr.aria-busy]="isLoggingIn()"
-          [attr.aria-describedby]="errorMessage() ? 'global-error' : null"
-        >
-          @if (isLoggingIn()) {
-            <span class="spinner" aria-hidden="true"></span>
-            <span>{{ "LOGIN.LOGGING_IN" | translate }}...</span>
-          } @else {
-            <span>{{ "LOGIN.SUBMIT_BUTTON" | translate }}</span>
-          }
-        </button>
-
-        <div class="auth-footer">
-          <p class="register-text">
-            {{ "LOGIN.NO_ACCOUNT" | translate }}
-            <a
-              [routerLink]="[
-                '/',
-                languageService.currentLang(),
-                countryService.currentCountry()?.code || 'do',
-                'auth',
-                'register'
-              ]"
-              class="register-link"
-              >{{ "LOGIN.REGISTER_LINK" | translate }}</a
-            >
-          </p>
+        <div class="mt-6">
+           <app-auth-button
+             type="submit"
+             [loading]="isLoading()"
+             [disabled]="otpForm.invalid"
+           >
+             {{ 'LOGIN.2FA.VERIFY_BUTTON' | translate }}
+           </app-auth-button>
         </div>
       </form>
-      }
     </div>
-  </div>
-
-  <footer class="main-footer">
-    <div class="footer-content">
-      <div class="footer-top">
-        <div class="support-section">
-          <p class="support-text">
-            Questions? Call
-            <a href="tel:+18492001043" class="support-link">+1 (849) 200-1043</a>
-          </p>
-        </div>
-      </div>
-
-      <nav class="footer-links">
-        <a routerLink="/privacy">{{ "FOOTER.PRIVACY" | translate }}</a>
-        <a routerLink="/terms">{{ "FOOTER.TERMS" | translate }}</a>
-        <a routerLink="/cookies">Cookies</a>
-      </nav>
-
-      <div class="footer-bottom">
-        <p class="copyright">
-          &copy; {{ "FOOTER.COPYRIGHT" | translate }} Virteex. All rights reserved.
-        </p>
-      </div>
-    </div>
-  </footer>
-</div>
+  </ng-template>
+</app-auth-layout>
