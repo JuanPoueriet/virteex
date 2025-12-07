@@ -18,6 +18,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
 import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
 import { MetricsService } from '../metrics/metrics.service';
+import { SaasCacheKeyFactory } from './utils/saas-cache-key.factory';
 
 @Injectable()
 export class SaasService implements OnModuleInit {
@@ -50,30 +51,17 @@ export class SaasService implements OnModuleInit {
     for (const pConfig of SAAS_PLANS) {
         const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
 
-        let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
+        // 10/10 Improvement: Use upsert for atomic plan creation/update
+        await this.planRepository.upsert(
+            {
+                slug: pConfig.slug,
+                name: pConfig.name,
+                monthlyPriceId: monthlyPriceId,
+            },
+            ['slug']
+        );
 
-        if (!plan) {
-            try {
-                plan = this.planRepository.create({
-                    slug: pConfig.slug,
-                    name: pConfig.name,
-                    monthlyPriceId: monthlyPriceId,
-                    limits: []
-                });
-                await this.planRepository.save(plan);
-            } catch (error: any) {
-                if (error.code === '23505') {
-                     this.logger.log(`Plan ${pConfig.slug} exists (Race condition).`);
-                     plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
-                } else {
-                    throw error;
-                }
-            }
-        } else {
-             plan.name = pConfig.name;
-             plan.monthlyPriceId = monthlyPriceId;
-             await this.planRepository.save(plan);
-        }
+        let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
 
         if (!plan) continue;
 
@@ -156,7 +144,7 @@ export class SaasService implements OnModuleInit {
   }
 
   async clearOrganizationCache(organizationId: string) {
-      const versionKey = `org_limit_version:${organizationId}`;
+      const versionKey = SaasCacheKeyFactory.limitVersion(organizationId);
       const currentVersion = await this.cacheManager.get<number>(versionKey) || 0;
       await this.cacheManager.set(versionKey, currentVersion + 1, { ttl: 0 } as any);
 
@@ -164,9 +152,9 @@ export class SaasService implements OnModuleInit {
   }
 
   private async getCacheKey(organizationId: string, resource: SaasResource): Promise<string> {
-      const versionKey = `org_limit_version:${organizationId}`;
+      const versionKey = SaasCacheKeyFactory.limitVersion(organizationId);
       const version = await this.cacheManager.get<number>(versionKey) || 0;
-      return `plan_limit_check:${organizationId}:${version}:${resource}`;
+      return SaasCacheKeyFactory.limitCheck(organizationId, version, resource);
   }
 
   public getPeriodKey(
@@ -193,18 +181,9 @@ export class SaasService implements OnModuleInit {
       return 'unknown_period';
   }
 
-  async incrementUsageRedis(organizationId: string, resource: SaasResource, periodKey: string, increment: number): Promise<number> {
-      const cacheKey = `usage_counter:${organizationId}:${resource}:${periodKey}`;
-      const store = (this.cacheManager as any).store;
-      if (store.client && typeof store.client.incrby === 'function') {
-         return await store.client.incrby(cacheKey, increment);
-      } else if (store.incr) {
-         const val = await this.cacheManager.get<number>(cacheKey) || 0;
-         const newVal = val + increment;
-         await this.cacheManager.set(cacheKey, newVal, 24 * 3600 * 1000);
-         return newVal;
-      }
-      return 0;
+  async setUsageRedis(organizationId: string, resource: SaasResource, periodKey: string, value: number): Promise<void> {
+      const cacheKey = SaasCacheKeyFactory.usageCounter(organizationId, resource, periodKey);
+      await this.cacheManager.set(cacheKey, value, 24 * 3600 * 1000);
   }
 
   async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
@@ -233,15 +212,10 @@ export class SaasService implements OnModuleInit {
     const allowOverage = limitDef.allowOverage;
     const isUnlimited = limitDef.isUnlimited || limitDef.limit === -1;
 
-    try {
-        const redisUsage = await this.incrementUsageRedis(organizationId, resource, periodKey, increment);
-        if (redisUsage > 0 && !isUnlimited && redisUsage > limitDef.limit && !allowOverage) {
-             this.logger.warn(`Redis Limit Hit for ${organizationId} on ${resource}`);
-        }
-    } catch (e) {
-        this.logger.warn(`Redis increment failed: ${e.message}`);
-    }
-
+    // 10/10 Improvement: Atomic Consistency (DB First)
+    // We increment DB first to ensure persistence. If DB fails, Redis is untouched.
+    // If DB succeeds, we update Redis to match DB.
+    // This avoids "ghost usage" in Redis if DB rolls back.
     const result = await this.usageMetricRepository.incrementUsage(
         manager,
         organizationId,
@@ -251,6 +225,15 @@ export class SaasService implements OnModuleInit {
         isUnlimited ? -1 : limitDef.limit,
         allowOverage
     );
+
+    // Sync Redis with the Source of Truth (DB)
+    try {
+        await this.setUsageRedis(organizationId, resource, periodKey, result.count);
+    } catch (e) {
+        this.logger.warn(`Redis update failed after DB increment: ${e.message}`);
+        // We do not throw here, because DB is committed.
+        // The Cron Job will reconcile any drift eventually.
+    }
 
     // 10/10 OPTIMIZATION: Write-Through Cache
     // Instead of deleting, we update the cache with the new status.
@@ -282,7 +265,7 @@ export class SaasService implements OnModuleInit {
   }
 
   async checkFeature(organizationId: string, featureKey: string): Promise<boolean> {
-     const cacheKey = `feature_flag:${organizationId}:${featureKey}`;
+     const cacheKey = SaasCacheKeyFactory.featureFlag(organizationId, featureKey);
      const cached = await this.cacheManager.get<boolean>(cacheKey);
      if (cached !== undefined) return cached;
 
@@ -403,7 +386,7 @@ export class SaasService implements OnModuleInit {
   }
 
   private emitLimitWarningEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number, percentage: number) {
-      const cacheKey = `debounce:limit_warning:${organizationId}:${resource}`;
+      const cacheKey = SaasCacheKeyFactory.warningDebounce(organizationId, resource);
       this.cacheManager.get(cacheKey).then(lastWarning => {
           if (!lastWarning) {
               this.eventEmitter.emit('saas.limit_warning', {
