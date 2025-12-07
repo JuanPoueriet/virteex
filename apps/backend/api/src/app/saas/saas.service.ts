@@ -149,16 +149,20 @@ export class SaasService implements OnModuleInit {
   }
 
   async clearOrganizationCache(organizationId: string) {
-      // Since cache-manager (standard) doesn't support wildcards easily without Redis specific commands,
-      // we iterate known resources or rely on a specific method if available.
-      // If using Redis, we could scan keys.
-      // However, to keep it agnostic and simple for this "fix", we can iterate SaasResource values.
-      const resources = Object.values(SaasResource);
-      const promises = resources.map(resource =>
-          this.cacheManager.del(`plan_limit:${organizationId}:${resource}`)
-      );
-      await Promise.all(promises);
-      this.logger.log(`Cache cleared for Organization ${organizationId}`);
+      // 10/10 SCALABILITY: Use version-based invalidation for O(1) cache clearing.
+      // Instead of deleting N keys, we increment the organization's version.
+      // All future limit checks will derive a new key, effectively invalidating old ones.
+      const versionKey = `org_limit_version:${organizationId}`;
+      const currentVersion = await this.cacheManager.get<number>(versionKey) || 0;
+      await this.cacheManager.set(versionKey, currentVersion + 1, { ttl: 0 } as any);
+
+      this.logger.log(`Cache invalidated for Organization ${organizationId} (v${currentVersion + 1})`);
+  }
+
+  private async getCacheKey(organizationId: string, resource: SaasResource): Promise<string> {
+      const versionKey = `org_limit_version:${organizationId}`;
+      const version = await this.cacheManager.get<number>(versionKey) || 0;
+      return `plan_limit:${organizationId}:${version}:${resource}`;
   }
 
   /**
@@ -223,7 +227,7 @@ export class SaasService implements OnModuleInit {
     );
 
     // Invalidate/Update Cache on Usage Change
-    const cacheKey = `plan_limit:${organizationId}:${resource}`;
+    const cacheKey = await this.getCacheKey(organizationId, resource);
 
     // Calculate usage percentage for soft limit warnings
     if (!isUnlimited && limitDef.limit > 0) {

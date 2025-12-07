@@ -14,6 +14,10 @@ export interface PlanConfig {
   limits: PlanLimitConfig[];
 }
 
+export const SAAS_CONFIG = {
+    get GRACE_PERIOD_DAYS() { return parseInt(process.env.SAAS_GRACE_PERIOD_DAYS || '5', 10); }
+};
+
 export const SAAS_PLANS: PlanConfig[] = [
   {
     slug: 'starter',

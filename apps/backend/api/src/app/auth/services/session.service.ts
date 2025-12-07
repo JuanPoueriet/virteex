@@ -124,15 +124,18 @@ export class SessionService implements OnModuleInit {
           }
         } else {
           // User Agent Analysis (using new SecurityAnalysisService)
+          // Sanitize User Agent to prevent storage issues or injection in logs/admin panels
+          const sanitizedUserAgent = userAgent ? userAgent.substring(0, 500) : null;
+
           if (
             refreshTokenEntity.userAgent &&
-            userAgent &&
-            refreshTokenEntity.userAgent !== userAgent
+            sanitizedUserAgent &&
+            refreshTokenEntity.userAgent !== sanitizedUserAgent
           ) {
             const storedUA = this.securityAnalysisService.parseUserAgent(
               refreshTokenEntity.userAgent
             );
-            const currentUA = this.securityAnalysisService.parseUserAgent(userAgent);
+            const currentUA = this.securityAnalysisService.parseUserAgent(sanitizedUserAgent);
 
             const isBrowserMatch = storedUA.browser === currentUA.browser;
             const isOSMatch = storedUA.os === currentUA.os;
@@ -170,7 +173,8 @@ export class SessionService implements OnModuleInit {
         }
       }
 
-      const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, userAgent);
+      const sanitizedUserAgent = userAgent ? userAgent.substring(0, 500) : null;
+      const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, sanitizedUserAgent);
 
       // Update new refresh token with encrypted IP if available
       if (ipAddress) {

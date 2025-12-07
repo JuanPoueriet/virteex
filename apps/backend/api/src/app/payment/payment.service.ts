@@ -5,6 +5,7 @@ import { Repository, DataSource } from 'typeorm';
 import Stripe from 'stripe';
 import { Organization } from '../organizations/entities/organization.entity';
 import { SaasService } from '../saas/saas.service';
+import { SAAS_CONFIG } from '../saas/saas.config';
 import { STRIPE_CLIENT } from './stripe/stripe.provider';
 import { WebhookEvent } from './entities/webhook-event.entity';
 
@@ -204,12 +205,11 @@ export class PaymentService {
         // If status recovers to 'active', we clear the grace period.
 
         organization.subscriptionStatus = subscription.status;
-        organization.subscriptionPeriodEnd = new Date(subscription.current_period_end * 1000);
+        organization.subscriptionPeriodEnd = new Date((subscription as any).current_period_end * 1000);
 
         if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
-             const GRACE_PERIOD_DAYS = 5;
              const graceEnd = new Date();
-             graceEnd.setDate(graceEnd.getDate() + GRACE_PERIOD_DAYS);
+             graceEnd.setDate(graceEnd.getDate() + SAAS_CONFIG.GRACE_PERIOD_DAYS);
              organization.gracePeriodEnd = graceEnd;
 
              this.logger.warn(`Organization ${organization.id} subscription is ${subscription.status}. Grace period set until ${graceEnd.toISOString()}.`);
