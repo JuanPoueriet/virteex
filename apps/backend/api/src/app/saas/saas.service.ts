@@ -44,55 +44,72 @@ export class SaasService implements OnModuleInit {
   async seedPlans() {
     this.logger.log('Seeding/Updating SaaS Plans from Config...');
 
-    // Use upsert or check-then-save to avoid race conditions and ensure idempotent updates
+    // Smart Seeding: Diffing instead of Destroy-Recreate
     for (const pConfig of SAAS_PLANS) {
         const monthlyPriceId = process.env[pConfig.monthlyPriceIdVar];
 
         let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
 
-        if (plan) {
-            // Update existing plan (if needed)
-            plan.name = pConfig.name;
-            plan.monthlyPriceId = monthlyPriceId;
-
-            // Sync Limits: We remove existing limits and re-add them from config.
-            // In a production system, we might want to be more careful (e.g. migrate usage),
-            // but to ensure config is source of truth as requested:
-            if (plan.limits && plan.limits.length > 0) {
-                 await this.limitRepository.remove(plan.limits);
-            }
-
-            plan.limits = pConfig.limits.map(l => this.limitRepository.create({
-                resource: l.resource,
-                limit: l.limit,
-                period: l.period,
-                allowOverage: l.allowOverage ?? false
-            }));
-
-            await this.planRepository.save(plan);
-        } else {
-            // Create new plan
-            // Handle race condition with try/catch
+        if (!plan) {
+            // Create New Plan
             try {
                 plan = this.planRepository.create({
                     slug: pConfig.slug,
                     name: pConfig.name,
                     monthlyPriceId: monthlyPriceId,
-                    limits: pConfig.limits.map(l => ({
-                        resource: l.resource,
-                        limit: l.limit,
-                        period: l.period,
-                        allowOverage: l.allowOverage ?? false
-                    }))
+                    limits: []
                 });
                 await this.planRepository.save(plan);
             } catch (error: any) {
-                if (error.code === '23505') { // Unique violation
-                     this.logger.log(`Plan ${pConfig.slug} already exists (Race condition handled).`);
+                if (error.code === '23505') {
+                     this.logger.log(`Plan ${pConfig.slug} exists (Race condition).`);
+                     plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
                 } else {
                     throw error;
                 }
             }
+        } else {
+             // Update Plan Details
+             plan.name = pConfig.name;
+             plan.monthlyPriceId = monthlyPriceId;
+             await this.planRepository.save(plan);
+        }
+
+        if (!plan) continue;
+
+        // Sync Limits (Upsert/Delete strategy)
+        const configLimits = pConfig.limits;
+        const existingLimits = plan.limits || [];
+
+        // 1. Upsert (Update existing or Create new)
+        for (const cLimit of configLimits) {
+             const existing = existingLimits.find(l => l.resource === cLimit.resource);
+             if (existing) {
+                 // Update if changed
+                 if (existing.limit !== cLimit.limit || existing.period !== cLimit.period || existing.allowOverage !== cLimit.allowOverage) {
+                     existing.limit = cLimit.limit;
+                     existing.period = cLimit.period;
+                     existing.allowOverage = cLimit.allowOverage ?? false;
+                     await this.limitRepository.save(existing);
+                 }
+             } else {
+                 // Create new limit
+                 const newLimit = this.limitRepository.create({
+                     plan: plan,
+                     resource: cLimit.resource,
+                     limit: cLimit.limit,
+                     period: cLimit.period,
+                     allowOverage: cLimit.allowOverage ?? false
+                 });
+                 await this.limitRepository.save(newLimit);
+             }
+        }
+
+        // 2. Remove obsolete limits
+        const configResources = configLimits.map(l => l.resource);
+        const limitsToRemove = existingLimits.filter(l => !configResources.includes(l.resource));
+        if (limitsToRemove.length > 0) {
+            await this.limitRepository.remove(limitsToRemove);
         }
     }
 
@@ -153,8 +170,6 @@ export class SaasService implements OnModuleInit {
 
   async clearOrganizationCache(organizationId: string) {
       // 10/10 SCALABILITY: Use version-based invalidation for O(1) cache clearing.
-      // Instead of deleting N keys, we increment the organization's version.
-      // All future limit checks will derive a new key, effectively invalidating old ones.
       const versionKey = `org_limit_version:${organizationId}`;
       const currentVersion = await this.cacheManager.get<number>(versionKey) || 0;
       await this.cacheManager.set(versionKey, currentVersion + 1, { ttl: 0 } as any);
@@ -165,15 +180,49 @@ export class SaasService implements OnModuleInit {
   private async getCacheKey(organizationId: string, resource: SaasResource): Promise<string> {
       const versionKey = `org_limit_version:${organizationId}`;
       const version = await this.cacheManager.get<number>(versionKey) || 0;
-      return `plan_limit:${organizationId}:${version}:${resource}`;
+      return `plan_limit_check:${organizationId}:${version}:${resource}`;
+  }
+
+  /**
+   * Generates a consistent period key for billing cycles.
+   * Supports 'LIFETIME', 'MONTHLY' (Calendar or Anniversary), and future custom periods.
+   */
+  public getPeriodKey(
+      periodType: QuotaPeriod,
+      org: Organization,
+      targetDate: Date = new Date()
+  ): string {
+      if (periodType === QuotaPeriod.LIFETIME) {
+          return QuotaPeriod.LIFETIME;
+      }
+
+      if (periodType === QuotaPeriod.MONTHLY) {
+          // Logic: If organization has a valid subscription end date, we align to that cycle.
+          // Otherwise, we default to UTC Calendar Month.
+
+          // Check for valid subscription or grace period
+          const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
+              ? org.gracePeriodEnd
+              : org.subscriptionPeriodEnd;
+
+          // If we have a valid future end date, use it to determine the billing month key
+          if (effectiveEndDate && effectiveEndDate > new Date()) {
+               // Use the subscription end date to fingerprint the cycle
+               // e.g. if cycle ends 2023-10-15, this period is keyed to that date.
+               return DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
+          } else {
+               // Fallback: UTC Calendar Month (yyyy-MM)
+               // Use UTC explicitly to avoid timezone shifts affecting keys
+               return DateTime.fromJSDate(targetDate).toUTC().toFormat('yyyy-MM');
+          }
+      }
+
+      return 'unknown_period';
   }
 
   /**
    * Enforces plan limits within a transaction context.
-   * This method atomically checks and increments usage, preventing race conditions.
-   * If the limit is reached, it throws a ForbiddenException (unless overage is allowed), which will abort the transaction.
-   *
-   * WARNING: Must be called within a transaction manager.
+   * This method atomically checks and increments usage.
    */
   async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
     const org = await manager.findOne(Organization, {
@@ -187,11 +236,9 @@ export class SaasService implements OnModuleInit {
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) {
-        // Assume unrestricted if not in limits.
-        return;
+        return; // Assume unrestricted
     }
 
-    // Handle BOOLEAN limits (Entitlements)
     if (limitDef.valueType === LimitType.BOOLEAN) {
        if (!limitDef.isEnabled) {
            throw new ForbiddenException(`FEATURE_NOT_ENABLED: ${resource}`);
@@ -199,22 +246,8 @@ export class SaasService implements OnModuleInit {
        return;
     }
 
-    // Determine period key using Organization Billing Cycle if available
-    let periodKey = QuotaPeriod.LIFETIME;
-    if (limitDef.period === QuotaPeriod.MONTHLY) {
-        // Check for Grace Period: If subscription is past due but grace period is active, we treat it as valid.
-        const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
-            ? org.gracePeriodEnd
-            : org.subscriptionPeriodEnd;
-
-        if (effectiveEndDate && effectiveEndDate > new Date()) {
-             // Align with Stripe billing cycle (end date)
-             periodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
-        } else {
-             // Fallback to calendar month (UTC) if no subscription data or expired
-             periodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
-        }
-    }
+    // Use Centralized Period Key Logic
+    const periodKey = this.getPeriodKey(limitDef.period, org);
 
     const allowOverage = limitDef.allowOverage;
     const isUnlimited = limitDef.isUnlimited || limitDef.limit === -1;
@@ -229,8 +262,10 @@ export class SaasService implements OnModuleInit {
         allowOverage
     );
 
-    // Invalidate/Update Cache on Usage Change
+    // Invalidate Cache for CheckGuard
     const cacheKey = await this.getCacheKey(organizationId, resource);
+    // Remove cache so next check refreshes state
+    await this.cacheManager.del(cacheKey);
 
     // Calculate usage percentage for soft limit warnings
     if (!isUnlimited && limitDef.limit > 0) {
@@ -241,13 +276,12 @@ export class SaasService implements OnModuleInit {
     }
 
     if (result.limitReached) {
-        await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000); // Cache "Blocked"
+        // Cache "Blocked" state to aid CheckGuard fail-fast
+        await this.cacheManager.set(cacheKey, false, 5 * 60 * 1000);
         this.metricsService.limitHitCounter.labels(organizationId, resource).inc();
         this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
         throw new ForbiddenException(`PLAN_LIMIT_REACHED: ${resource}`);
     } else {
-        await this.cacheManager.del(cacheKey);
-
         if (allowOverage && !isUnlimited && result.count > limitDef.limit) {
             this.emitLimitReachedEvent(organizationId, resource, result.count, limitDef.limit);
         }
@@ -255,7 +289,6 @@ export class SaasService implements OnModuleInit {
   }
 
   async getUsage(organizationId: string) {
-    // Return all usage metrics for the current period
     const org = await this.orgRepository.findOne({
         where: { id: organizationId },
         relations: ['plan', 'plan.limits']
@@ -265,14 +298,7 @@ export class SaasService implements OnModuleInit {
 
     // Calculate period keys needed
     const periodKeys = new Set<string>([QuotaPeriod.LIFETIME]);
-    // We assume mostly one billing cycle, but let's be safe
-    let monthlyPeriodKey = '';
-
-    if (org.subscriptionPeriodEnd && org.subscriptionPeriodEnd > new Date()) {
-         monthlyPeriodKey = DateTime.fromJSDate(org.subscriptionPeriodEnd).toUTC().toFormat('yyyy-MM-dd');
-    } else {
-         monthlyPeriodKey = DateTime.now().toUTC().toFormat('yyyy-MM');
-    }
+    const monthlyPeriodKey = this.getPeriodKey(QuotaPeriod.MONTHLY, org);
     periodKeys.add(monthlyPeriodKey);
 
     // Fetch all relevant metrics in one query (N+1 fix)
@@ -330,7 +356,6 @@ export class SaasService implements OnModuleInit {
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) return true;
 
-    // Handle BOOLEAN Entitlement check
     if (limitDef.valueType === LimitType.BOOLEAN) {
         return limitDef.isEnabled;
     }
@@ -338,21 +363,8 @@ export class SaasService implements OnModuleInit {
     if (limitDef.limit === -1) return true;
     if (limitDef.allowOverage) return true;
 
-    // Use limit definition for period
-    let period = QuotaPeriod.LIFETIME;
-    if (limitDef.period === QuotaPeriod.MONTHLY) {
-         // Grace Period check
-         const effectiveEndDate = (org.gracePeriodEnd && org.gracePeriodEnd > (org.subscriptionPeriodEnd || new Date(0)))
-            ? org.gracePeriodEnd
-            : org.subscriptionPeriodEnd;
-
-         if (effectiveEndDate && effectiveEndDate > new Date()) {
-             period = DateTime.fromJSDate(org.subscriptionPeriodEnd || effectiveEndDate).toUTC().toFormat('yyyy-MM-dd');
-         } else {
-             const timezone = org.timezone || 'UTC';
-             period = DateTime.now().setZone(timezone).toFormat('yyyy-MM');
-         }
-    }
+    // Use Centralized Logic
+    const period = this.getPeriodKey(limitDef.period, org);
 
     const metric = await this.usageRepository.findOne({
         where: { organizationId, resource, period }
@@ -374,8 +386,6 @@ export class SaasService implements OnModuleInit {
 
   private emitLimitWarningEvent(organizationId: string, resource: SaasResource, currentUsage: number, limit: number, percentage: number) {
       const cacheKey = `debounce:limit_warning:${organizationId}:${resource}`;
-      // Check if we recently warned to prevent flooding (Debounce: 24 hours)
-      // We perform this check asynchronously and catch errors to avoid blocking the main flow
       this.cacheManager.get(cacheKey).then(lastWarning => {
           if (!lastWarning) {
               this.eventEmitter.emit('saas.limit_warning', {
@@ -386,7 +396,6 @@ export class SaasService implements OnModuleInit {
                   percentage,
                   timestamp: new Date()
               });
-              // Set debounce key
               this.cacheManager.set(cacheKey, '1', 24 * 60 * 60 * 1000).catch(err =>
                   this.logger.error(`Failed to set debounce cache for warning: ${err.message}`)
               );

@@ -21,7 +21,7 @@ import { HasPermission } from '../auth/decorators/permissions.decorator';
 import { PERMISSIONS } from '../shared/permissions';
 import { SubscriptionActiveGuard } from '../saas/guards/subscription-active.guard';
 import { CheckPlanLimit } from '../saas/decorators/plan-limit.decorator';
-import { PlanLimitGuard } from '../saas/guards/plan-limit.guard';
+import { PlanLimitCheckGuard } from '../saas/guards/plan-limit-check.guard';
 import { SaasResource } from '../saas/enums/saas-resource.enum';
 
 @Controller('invoices')
@@ -30,7 +30,7 @@ export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  @UseGuards(PeriodLockGuard, PlanLimitGuard)
+  @UseGuards(PeriodLockGuard, PlanLimitCheckGuard)
   @HasPermission(PERMISSIONS.INVOICES_CREATE)
   @CheckPlanLimit(SaasResource.INVOICES, 1)
   create(

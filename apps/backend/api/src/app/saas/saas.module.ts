@@ -7,7 +7,7 @@ import { SaasService } from './saas.service';
 import { SaasController } from './saas.controller';
 import { Organization } from '../organizations/entities/organization.entity';
 import { SubscriptionActiveGuard } from './guards/subscription-active.guard';
-import { PlanLimitGuard } from './guards/plan-limit.guard';
+import { PlanLimitCheckGuard } from './guards/plan-limit-check.guard';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
@@ -40,7 +40,7 @@ import { MetricsModule } from '../metrics/metrics.module';
     }),
   ],
   controllers: [SaasController],
-  providers: [SaasService, SubscriptionActiveGuard, PlanLimitGuard, UsageMetricRepository],
-  exports: [SaasService, SubscriptionActiveGuard, PlanLimitGuard],
+  providers: [SaasService, SubscriptionActiveGuard, PlanLimitCheckGuard, UsageMetricRepository],
+  exports: [SaasService, SubscriptionActiveGuard, PlanLimitCheckGuard],
 })
 export class SaasModule {}
