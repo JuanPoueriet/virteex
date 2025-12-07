@@ -53,6 +53,9 @@ export class Organization {
   @Column({ name: 'subscription_period_end', type: 'timestamptz', nullable: true })
   subscriptionPeriodEnd: Date;
 
+  @Column({ name: 'grace_period_end', type: 'timestamptz', nullable: true })
+  gracePeriodEnd: Date;
+
   @Column({ default: 'UTC' })
   timezone: string;
 

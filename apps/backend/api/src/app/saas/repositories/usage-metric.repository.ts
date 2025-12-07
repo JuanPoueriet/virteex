@@ -15,6 +15,7 @@ export class UsageMetricRepository {
    * This method uses raw SQL `UPDATE ... RETURNING` which is atomic in PostgreSQL.
    * It ensures that concurrent requests incrementing the same counter will be serialized by the database engine
    * regarding the row lock, preventing "Lost Update" race conditions.
+   * (Atomic Increment Verified)
    *
    * For the "Insert if not exists" case, it handles `23505` (Unique Violation) by retrying the Update,
    * ensuring correctness even if two requests try to insert the first record simultaneously.
