@@ -1,8 +1,9 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Plan } from './entities/plan.entity';
 import { PlanLimit } from './entities/plan-limit.entity';
 import { UsageMetric } from './entities/usage-metric.entity';
+import { PlanFeature } from './entities/plan-feature.entity';
 import { SaasService } from './saas.service';
 import { SaasController } from './saas.controller';
 import { Organization } from '../organizations/entities/organization.entity';
@@ -14,11 +15,12 @@ import * as redisStore from 'cache-manager-redis-store';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
 import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
 import { MetricsModule } from '../metrics/metrics.module';
+import { PaymentModule } from '../payment/payment.module';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Plan, PlanLimit, Organization, UsageMetric, OrganizationSubscriptionHistory]),
+    TypeOrmModule.forFeature([Plan, PlanLimit, PlanFeature, Organization, UsageMetric, OrganizationSubscriptionHistory]),
     MetricsModule,
     CacheModule.registerAsync({
       imports: [ConfigModule],
@@ -38,6 +40,7 @@ import { MetricsModule } from '../metrics/metrics.module';
         };
       },
     }),
+    forwardRef(() => PaymentModule)
   ],
   controllers: [SaasController],
   providers: [SaasService, SubscriptionActiveGuard, PlanLimitCheckGuard, UsageMetricRepository],
