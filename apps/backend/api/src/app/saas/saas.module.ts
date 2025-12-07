@@ -8,7 +8,7 @@ import { SaasController } from './saas.controller';
 import { Organization } from '../organizations/entities/organization.entity';
 import { SubscriptionActiveGuard } from './guards/subscription-active.guard';
 import { PlanLimitGuard } from './guards/plan-limit.guard';
-import { CacheModule, CacheStore } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
@@ -27,7 +27,7 @@ import { MetricsModule } from '../metrics/metrics.module';
         const redisHost = configService.get<string>('REDIS_HOST');
         if (redisHost) {
           return {
-            store: redisStore as unknown as CacheStore,
+            store: redisStore as any,
             host: redisHost,
             port: configService.get<number>('REDIS_PORT', 6379),
             ttl: 60 * 5, // Default 5 mins

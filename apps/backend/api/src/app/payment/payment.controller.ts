@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Headers, Req, BadRequestException, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { PaymentService } from './payment.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
@@ -47,6 +48,7 @@ export class PaymentController {
   }
 
   @Post('webhook')
+  @UseGuards(ThrottlerGuard)
   async handleWebhook(@Headers('stripe-signature') signature: string, @Req() req: Request) {
     // Note: To handle webhook correctly, NestJS needs to pass raw body.
     // Ensure that main.ts or middleware preserves raw body for this route or access it correctly.
