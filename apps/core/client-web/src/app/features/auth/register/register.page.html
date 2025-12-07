@@ -1,86 +1,98 @@
-<div class="register-layout">
-  <app-geo-mismatch-modal></app-geo-mismatch-modal>
-  <div class="branding-panel">
-    <div class="branding-content">
-      <h1 class="logo">FacturaPRO</h1>
-      <p class="tagline">La plataforma todo-en-uno para la gestión de tu negocio.</p>
-      <ul class="feature-list">
-        <li><lucide-icon [img]="CheckCircleIcon" size="20"></lucide-icon> Facturación profesional e intuitiva.</li>
-        <li><lucide-icon [img]="BarChart2Icon" size="20"></lucide-icon> Reportes financieros en tiempo real.</li>
-        <li><lucide-icon [img]="PackageIcon" size="20"></lucide-icon> Control total de tu inventario.</li>
-      </ul>
-    </div>
-    <div class="branding-footer">
-      <p>© 2025 FacturaPRO. Todos los derechos reservados.</p>
-      <nav><a href="#">Legal</a><a href="#">Privacidad</a><a href="#">Seguridad</a></nav>
-    </div>
-  </div>
 
-  <div class="form-panel">
-    <div class="form-container">
-      <!-- Honeypot -->
-      <form [formGroup]="registerForm">
-        <input type="text" formControlName="fax" style="display:none" autocomplete="off" tabindex="-1">
-      </form>
+<app-auth-layout>
+  <div class="animate-fadeIn w-full">
 
-      <div class="form-header">
-        <p>¿Ya tienes una cuenta? <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']" class="link">Inicia sesión</a></p>
+    <div class="text-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-900 tracking-tight mb-2">{{ 'REGISTER.TITLE' | translate }}</h2>
+      <p class="text-gray-500">{{ 'REGISTER.SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage()" class="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center animate-shake">
+      <span class="text-sm text-red-600 font-medium">{{ errorMessage() | translate }}</span>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+      <!-- Personal Info Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <app-auth-input
+          [label]="'REGISTER.FIRST_NAME_LABEL'"
+          [placeholder]="'REGISTER.FIRST_NAME_PLACEHOLDER'"
+          [icon]="UserIcon"
+          [control]="$any(f['firstName'])"
+          errorKey="REGISTER.ERRORS"
+        ></app-auth-input>
+
+        <app-auth-input
+          [label]="'REGISTER.LAST_NAME_LABEL'"
+          [placeholder]="'REGISTER.LAST_NAME_PLACEHOLDER'"
+          [icon]="UserIcon"
+          [control]="$any(f['lastName'])"
+          errorKey="REGISTER.ERRORS"
+        ></app-auth-input>
       </div>
-      <div class="stepper-header">
-        @for (step of [1,2,3,4]; track $index) {
-        <div class="step" [class.active]="currentStep() >= $index + 1" [class.completed]="stepsCompleted()[$index]"
-          (click)="navigateToStep($index + 1)">
-          <div class="step-icon">
-            @if(stepsCompleted()[$index]){<lucide-icon [img]="CheckIcon" size="16" />}
-            @else { {{$index + 1}} }
+
+      <app-auth-input
+        [label]="'REGISTER.EMAIL_LABEL'"
+        [placeholder]="'REGISTER.EMAIL_PLACEHOLDER'"
+        type="email"
+        [icon]="MailIcon"
+        [control]="$any(f['email'])"
+        errorKey="REGISTER.ERRORS"
+      ></app-auth-input>
+
+      <app-auth-input
+        [label]="'REGISTER.PASSWORD_LABEL'"
+        [placeholder]="'REGISTER.PASSWORD_PLACEHOLDER'"
+        type="password"
+        [icon]="LockIcon"
+        [control]="$any(f['password'])"
+        errorKey="REGISTER.ERRORS"
+      ></app-auth-input>
+
+      <div class="border-t border-gray-100 my-4 pt-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{{ 'REGISTER.COMPANY_INFO' | translate }}</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-auth-input
+                [label]="'REGISTER.ORG_NAME_LABEL'"
+                [placeholder]="'REGISTER.ORG_NAME_PLACEHOLDER'"
+                [icon]="BuildingIcon"
+                [control]="$any(f['organizationName'])"
+                errorKey="REGISTER.ERRORS"
+            ></app-auth-input>
+
+            <app-auth-input
+                [label]="'REGISTER.TAX_ID_LABEL'"
+                [placeholder]="'REGISTER.TAX_ID_PLACEHOLDER'"
+                [icon]="HashIcon"
+                [control]="$any(f['taxId'])"
+                errorKey="REGISTER.ERRORS"
+            ></app-auth-input>
           </div>
-          <span class="step-label">
-            @switch ($index + 1) {
-            @case (1) { Cuenta y Acceso }
-            @case (2) { Empresa }
-            @case (3) { Configuración }
-            @case (4) { Plan }
-            }
-          </span>
-        </div>
-        @if ($index < 3) { <div class="step-connector" [class.completed]="stepsCompleted()[$index]">
       </div>
-      }
-      }
+
+      <!-- Hidden Fiscal Region for now, assuming auto-detected or default -->
+      <input type="hidden" formControlName="fiscalRegionId">
+
+      <app-auth-button
+        type="submit"
+        [loading]="isLoading()"
+        [disabled]="registerForm.invalid"
+      >
+        {{ 'REGISTER.SUBMIT_BUTTON' | translate }}
+      </app-auth-button>
+
+    </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-500">
+        {{ 'REGISTER.ALREADY_HAVE_ACCOUNT' | translate }}
+        <a routerLink="../login" class="font-semibold text-primary hover:text-primary-dark transition-colors ml-1">
+          {{ 'REGISTER.LOGIN_LINK' | translate }}
+        </a>
+      </p>
     </div>
-    <div class="stepper-content" [@stepAnimation]="currentStep()">
-      @switch (currentStep()) {
-      @case (1) { <app-step-account-info [parentForm]="accountInfo" /> }
-      @case (2) { <app-step-business [parentForm]="business" /> }
-      @case (3) { <app-step-configuration [parentForm]="configuration" /> }
-      @case (4) { <app-step-plan [parentForm]="plan" /> }
-      }
-    </div>
-    @if (errorMessage()) {
-    <div class="error-message global-error">{{ errorMessage() }}</div>
-    }
-    <div class="stepper-actions">
-      @if (currentStep() > 1) {
-      <button type="button" class="secondary-button" (click)="prevStep()">
-        <lucide-icon [img]="ArrowLeftIcon" size="16" /><span>Anterior</span>
-      </button>
-      }
-      @if (currentStep() < 4) { <button type="button" class="primary-button" (click)="nextStep()">
-        <span>Siguiente</span><lucide-icon [img]="ArrowRightIcon" size="16" />
-        </button>
-        } @else {
-        <button type="button" class="primary-button" (click)="onSubmit()"
-          [disabled]="isRegistering() || !plan.get('agreeToTerms')?.value">
-          @if (isRegistering()) {
-          <span class="spinner"></span><span>Finalizando...</span>
-          } @else {
-          <span>Comenzar Prueba Gratuita</span><lucide-icon [img]="RocketIcon" size="16" />
-          }
-        </button>
-        }
-    </div>
-    <p class="form-footer-text">Al crear una cuenta, aceptas nuestros <a href="#" class="link">Términos</a> y <a
-        href="#" class="link">Política de Privacidad</a>.</p>
   </div>
-</div>
-</div>
+</app-auth-layout>

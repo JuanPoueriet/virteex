@@ -769,34 +769,57 @@
     "OR": "O",
     "FORGOT_PASSWORD": "¿Olvidaste tu contraseña?",
     "EMAIL_PLACEHOLDER": "nombre@empresa.com",
+    "PASSWORD_PLACEHOLDER": "Tu contraseña",
     "REMEMBER_ME": "Mantener la sesión iniciada",
     "SUBMIT_BUTTON": "Entrar",
     "NO_ACCOUNT": "¿No tienes una cuenta?",
     "REGISTER_LINK": "Regístrate",
     "LOGGING_IN": "Iniciando sesión",
+    "2FA": {
+      "TITLE": "Verificación 2FA",
+      "SUBTITLE": "Introduce el código de 6 dígitos de tu aplicación autenticadora.",
+      "VERIFY_BUTTON": "Verificar Código"
+    },
     "ERRORS": {
-      "EMAIL_REQUIRED": "El correo electrónico es obligatorio.",
-      "EMAIL_INVALID": "Por favor, introduce un correo electrónico válido.",
-      "PASSWORD_REQUIRED": "La contraseña es obligatoria.",
-      "AUTH_INVALID_CREDENTIALS": "Las credenciales no son correctas. Por favor, verifica tu correo y contraseña.",
-      "AUTH_USER_INACTIVE": "Usuario inactivo o pendiente, por favor contacte al administrador.",
-      "AUTH_USER_BLOCKED": "Usuario bloqueado. Contacte a soporte.",
-      "AUTH_SESSION_EXPIRED": "La sesión ha expirado. Por favor, inicia sesión de nuevo.",
-      "AUTH_DEVICE_MISMATCH": "Cambio de dispositivo detectado. Por favor inicie sesión nuevamente.",
-      "AUTH_REFRESH_TOKEN_INVALID": "Refresh token inválido o expirado.",
-      "AUTH_REFRESH_TOKEN_REVOKED": "Refresh token reutilizado. Sesión invalidada.",
-      "AUTH_USER_NOT_FOUND": "Usuario no encontrado.",
-      "ACCOUNT_LOCKED": "Tu cuenta está bloqueada temporalmente. Intenta de nuevo en unos minutos.",
-      "TOO_MANY_ATTEMPTS": "Has superado el número de intentos. Tu cuenta ha sido bloqueada.",
-      "NETWORK_ERROR": "Error de red. Por favor, comprueba tu conexión e inténtalo de nuevo.",
-      "SERVER_ERROR": "Ocurrió un error en el servidor. Por favor, inténtalo más tarde o contacta a soporte."
+      "REQUIRED": "Este campo es obligatorio.",
+      "INVALID_EMAIL": "Correo electrónico inválido.",
+      "MIN_LENGTH": "La contraseña es muy corta.",
+      "INVALID": "Campo inválido.",
+      "PASSKEY_FAILED": "Error al iniciar con Passkey.",
+      "AUTH_INVALID_CREDENTIALS": "Las credenciales no son correctas.",
+      "INVALID_CREDENTIALS": "Credenciales inválidas.",
+      "TOO_MANY_ATTEMPTS": "Demasiados intentos fallidos.",
+      "ACCOUNT_LOCKED": "Cuenta bloqueada temporalmente.",
+      "SERVER_ERROR": "Error del servidor."
     },
     "FOOTER": {
-      "LANGUAGE_SELECTOR_LABEL": "Seleccionar idioma",
-      "TERMS": "Términos",
+      "CONTACT": "Contacto",
       "PRIVACY": "Privacidad",
-      "SECURITY": "Seguridad",
-      "COPYRIGHT": "© 2025 FacturaPRO, Inc. Todos los derechos reservados."
+      "TERMS": "Términos",
+      "COPYRIGHT": "© 2025 FacturaPRO. Todos los derechos reservados."
+    }
+  },
+  "REGISTER": {
+    "TITLE": "Crear Cuenta",
+    "SUBTITLE": "Únete a FacturaPRO y gestiona tu negocio.",
+    "FIRST_NAME_LABEL": "Nombre",
+    "FIRST_NAME_PLACEHOLDER": "Juan",
+    "LAST_NAME_LABEL": "Apellido",
+    "LAST_NAME_PLACEHOLDER": "Pérez",
+    "EMAIL_LABEL": "Correo Electrónico",
+    "EMAIL_PLACEHOLDER": "juan@empresa.com",
+    "PASSWORD_LABEL": "Contraseña",
+    "PASSWORD_PLACEHOLDER": "Crea una contraseña segura",
+    "COMPANY_INFO": "Información de la Empresa",
+    "ORG_NAME_LABEL": "Nombre de Organización",
+    "ORG_NAME_PLACEHOLDER": "Mi Empresa S.A.",
+    "TAX_ID_LABEL": "RNC / ID Fiscal",
+    "TAX_ID_PLACEHOLDER": "000-00000-0",
+    "SUBMIT_BUTTON": "Registrarse",
+    "ALREADY_HAVE_ACCOUNT": "¿Ya tienes cuenta?",
+    "LOGIN_LINK": "Inicia Sesión",
+    "ERRORS": {
+      "SERVER_ERROR": "Error al registrarse. Intente nuevamente."
     }
   }
 }
