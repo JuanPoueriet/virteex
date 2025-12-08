@@ -1,25 +1,31 @@
 import { Component, Input, inject } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, MapPin, Landmark, Phone, Hash, Code, Scale, Clock, Calendar, Percent } from 'lucide-angular';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../../../core/services/country.service';
+import { AuthInputComponent } from '../../../components/auth-input/auth-input.component';
 
 @Component({
-  selector: 'app-step-configuration', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './step-configuration.html', styleUrls: ['./step-configuration.scss']
+  selector: 'app-step-configuration',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, AuthInputComponent],
+  templateUrl: './step-configuration.html',
 })
 export class StepConfiguration {
-  @Input() parentForm!: FormGroup;
+  @Input() group!: FormGroup;
   public countryService = inject(CountryService);
+  private translate = inject(TranslateService);
 
-  protected readonly AddressIcon = MapPin;
-  protected readonly CountryIcon = Landmark;
-  protected readonly PhoneIcon = Phone;
-  protected readonly TaxIdIcon = Hash;
-  protected readonly CodeIcon = Code;
-  protected readonly CurrencyIcon = Scale;
-  protected readonly TimezoneIcon = Clock;
-  protected readonly CalendarIcon = Calendar;
-  protected readonly PercentIcon = Percent;
+  onFlagError(event: any) {
+    event.target.src = 'assets/flags/do.svg'; // Fallback
+  }
+
+  getTaxIdError(): string {
+    const control = this.group.get('taxId');
+    if (control?.touched && control?.errors) {
+      if (control.errors['required']) return 'REGISTER.ERRORS.REQUIRED';
+      if (control.errors['pattern']) return this.countryService.currentCountry()?.formSchema?.taxId?.errorMessage || 'REGISTER.ERRORS.INVALID_FORMAT';
+    }
+    return '';
+  }
 }

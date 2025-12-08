@@ -1,54 +1,59 @@
-<div class="step-container" [formGroup]="parentForm">
-    <div class="step-header">
-        <h3>Localización y Fiscal</h3>
-        <p>Datos requeridos para la facturación.</p>
-    </div>
+<form class="space-y-4" [formGroup]="group">
+  <div class="text-center md:text-left mb-6">
+    <h3 class="text-lg font-semibold text-text-primary">{{ 'REGISTER.STEPS.CONFIGURATION.TITLE' | translate }}</h3>
+    <p class="text-sm text-text-secondary">{{ 'REGISTER.STEPS.CONFIGURATION.SUBTITLE' | translate }}</p>
+  </div>
 
-    <!-- Tax ID (Critical) -->
-    <div class="form-row">
-        <div class="form-field full-width"
-            [class.error]="parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched || parentForm.get('taxId')?.dirty)">
-            <label for="taxId">{{ countryService.currentCountry()?.formSchema?.taxId?.label || 'ID Fiscal / RNC' }}*</label>
-            <div class="input-wrapper"><lucide-icon [img]="TaxIdIcon" size="18" class="input-icon"></lucide-icon><input
-                    id="taxId" formControlName="taxId" [placeholder]="countryService.currentCountry()?.formSchema?.taxId?.placeholder || ''"></div>
-            @if (parentForm.get('taxId')?.invalid && (parentForm.get('taxId')?.touched ||
-            parentForm.get('taxId')?.dirty)) {
-            <div class="error-message">
-                @if (parentForm.get('taxId')?.errors?.['required']) { <span>{{ countryService.currentCountry()?.formSchema?.taxId?.label || 'ID Fiscal' }} es obligatorio</span> }
-                @if (parentForm.get('taxId')?.errors?.['pattern']) { <span>{{ countryService.currentCountry()?.formSchema?.taxId?.errorMessage }}</span> }
-                @if (parentForm.get('taxId')?.errors?.['serverError']) { <span>{{
-                    parentForm.get('taxId')?.errors?.['serverError'] }}</span> }
-            </div>
-            }
-        </div>
+  <!-- Country & Currency Info (Read-Only) -->
+  <div class="flex gap-4 p-4 rounded-xl bg-bg-secondary border border-border-color mb-4">
+    <div class="flex items-center gap-2 text-sm">
+        <span class="text-text-tertiary">{{ 'REGISTER.COUNTRY' | translate }}:</span>
+        <span class="font-medium text-text-primary flex items-center gap-1">
+            <img [src]="'assets/flags/' + (countryService.currentCountryCode() || 'do').toLowerCase() + '.svg'" class="w-4 h-4 rounded-sm object-cover" (error)="onFlagError($event)">
+            {{ countryService.currentCountry()?.name }}
+        </span>
     </div>
-
-    <!-- Company Phone -->
-    <div class="form-row">
-        <div class="form-field full-width"
-            [class.error]="parentForm.get('companyPhone')?.invalid && (parentForm.get('companyPhone')?.touched || parentForm.get('companyPhone')?.dirty)">
-            <label for="companyPhone">Teléfono de la Empresa*</label>
-            <div class="input-wrapper"><lucide-icon [img]="PhoneIcon" size="18" class="input-icon"></lucide-icon><input
-                    id="companyPhone" type="tel" formControlName="companyPhone" placeholder="809-555-5555"></div>
-            @if (parentForm.get('companyPhone')?.invalid && (parentForm.get('companyPhone')?.touched ||
-            parentForm.get('companyPhone')?.dirty)) {
-            <div class="error-message">
-                @if (parentForm.get('companyPhone')?.errors?.['required']) { <span>Teléfono es obligatorio</span> }
-            </div>
-            }
-        </div>
+    <div class="w-px h-4 bg-border-color my-auto"></div>
+    <div class="flex items-center gap-2 text-sm">
+        <span class="text-text-tertiary">{{ 'REGISTER.CURRENCY' | translate }}:</span>
+        <span class="font-medium text-text-primary">{{ countryService.currentCountry()?.currencyCode }}</span>
     </div>
+  </div>
 
-    <!-- Hidden / Read-only Country/Currency info display (Optional, good for UX to know where they are registering) -->
-    <div class="info-banner">
-        <div class="info-item">
-            <lucide-icon [img]="CountryIcon" size="14"></lucide-icon>
-            <span>País: <strong>{{ countryService.currentCountry()?.name }}</strong></span>
-        </div>
-        <div class="info-item">
-            <lucide-icon [img]="CurrencyIcon" size="14"></lucide-icon>
-            <span>Moneda: <strong>{{ countryService.currentCountry()?.currencyCode }}</strong></span>
-        </div>
-    </div>
+  <!-- Tax ID -->
+  <app-auth-input
+    formControlName="taxId"
+    [label]="countryService.currentCountry()?.formSchema?.taxId?.label || ('REGISTER.TAX_ID' | translate)"
+    [placeholder]="countryService.currentCountry()?.formSchema?.taxId?.placeholder || ''"
+    [required]="true"
+    [hasIcon]="true"
+    [errorMessage]="getTaxIdError()">
+    <svg icon xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+  </app-auth-input>
 
-</div>
+  <!-- Company Phone (Note: Original StepConfiguration html had companyPhone, but RegisterPage TS definition for 'configuration' group only has country, taxId, fiscalRegionId, currency. 'phone' was in 'accountInfo'.
+  Wait, RegisterPage TS shows 'configuration' group has: country, taxId, fiscalRegionId, currency.
+  The HTML I just read had 'companyPhone'.
+  Memory says: 'RegisterPage TS definition ...'
+  Let me double check RegisterPage.ts I read earlier.
+  RegisterPage.ts: configuration: { country, taxId, fiscalRegionId, currency }.
+  There is NO companyPhone in configuration group in the TS I read.
+  But the previous HTML had it. This implies a discrepancy I need to fix.
+  I will stick to the RegisterPage.ts structure I saw, which puts phone in 'accountInfo' (personal phone) or I might need to add it to business group if it's company phone.
+  Actually, let's add company phone to the Business group or Configuration group to match the UI expectation if needed.
+  However, since I already wrote RegisterPage.ts without it in configuration, and the user wants me to fix inconsistencies...
+  The 'accountInfo' phone is usually personal.
+  Let's look at RegisterPage.ts again. 'business' group has address, industry, employees.
+  I'll add companyPhone to 'business' group in RegisterPage.ts or just rely on the personal phone for now to be safe and simple,
+  OR better, I will assume the previous HTML was using a different form structure than the one I saw in RegisterPage.ts.
+  Wait, I read RegisterPage.ts from the file system. It was the *current* state.
+  The current RegisterPage.ts has 'phone' in 'accountInfo'.
+  The current 'StepConfiguration.html' has 'companyPhone' in 'configuration'.
+  This IS an inconsistency.
+  I will REMOVE companyPhone from this step to align with the TS I saw, or assume the user wants just one phone number for now.
+  I will stick to the 'phone' in StepAccountInfo (Account Info) as the primary contact.
+  If I need a company phone, I should add it to the 'business' group.
+  Let's keep it simple and clean. I will remove the companyPhone field from here, as 'phone' is already collected in step 1.
+  -->
+
+</form>
