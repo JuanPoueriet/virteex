@@ -133,7 +133,11 @@
 
   "AUTH": {
     "SIGN_OUT": "Sign Out",
-    "CONTACT": "Contact"
+    "CONTACT": "Contact",
+    "TERMS": "Terms",
+    "PRIVACY": "Privacy",
+    "SECURITY": "Security",
+    "ALL_RIGHTS_RESERVED": "All rights reserved."
   },
   "ACTIONS": {
     "CREATE_NEW": "Create New"

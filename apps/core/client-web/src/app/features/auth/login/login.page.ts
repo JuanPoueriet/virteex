@@ -34,6 +34,7 @@ import { PasskeyButtonComponent } from '../components/passkey-button/passkey-but
   ],
   providers: [ReCaptchaV3Service],
   templateUrl: './login.page.html',
+  styleUrls: ['./login.page.scss']
 })
 export class LoginPage implements OnInit {
   // Services

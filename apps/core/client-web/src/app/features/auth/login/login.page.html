@@ -34,15 +34,15 @@
 
   <!-- Standard Login View -->
   <ng-template #loginFormTemplate>
-    <div class="animate-fade-in-up">
+    <div class="animate-fade-in-up login-container">
       <!-- Header Section -->
       <div class="auth-header">
         <h1 class="auth-title">{{ 'LOGIN.TITLE' | translate }}</h1>
         <p class="auth-subtitle">{{ 'LOGIN.SUBTITLE' | translate }}</p>
       </div>
 
-      <!-- Social Auth Section -->
-       <div class="social-section">
+      <!-- Quick Login Section (Social + Passkey) -->
+       <div class="quick-login-section">
         <app-social-auth-buttons (onLogin)="socialLogin($event)"></app-social-auth-buttons>
 
         <div class="passkey-wrapper">
@@ -54,7 +54,7 @@
 
       <!-- Divider -->
       <div class="divider">
-        <span>{{ 'LOGIN.OR_EMAIL' | translate }}</span>
+        <span>{{ 'LOGIN.OR' | translate }}</span>
       </div>
 
       <!-- Login Form -->
@@ -68,7 +68,7 @@
           [hasIcon]="true"
           [required]="true"
           [errorMessage]="getErrorMessage('email')">
-          <lucide-icon icon [img]="icons.Mail" size="20"></lucide-icon>
+          <lucide-icon icon [img]="icons.Mail" size="18"></lucide-icon>
         </app-auth-input>
 
         <div class="password-group">
@@ -80,7 +80,7 @@
             [hasIcon]="true"
             [required]="true"
             [errorMessage]="getErrorMessage('password')">
-            <lucide-icon icon [img]="icons.Lock" size="20"></lucide-icon>
+            <lucide-icon icon [img]="icons.Lock" size="18"></lucide-icon>
           </app-auth-input>
 
           <div class="forgot-password-container">
@@ -96,10 +96,8 @@
               type="checkbox"
               formControlName="rememberMe"
               class="remember-checkbox"
-              tabindex="-1"> <!-- Tabindex -1 because label handles focus -->
-            <span class="checkmark">
-               <lucide-icon *ngIf="loginForm.get('rememberMe')?.value" [img]="icons.CheckCircle" size="14"></lucide-icon>
-            </span>
+              tabindex="-1">
+            <span class="checkmark"></span>
             {{ 'LOGIN.REMEMBER_ME' | translate }}
           </label>
         </div>
@@ -120,11 +118,11 @@
 
       </form>
 
-      <!-- Legal Text for Invisible reCAPTCHA -->
+      <!-- Legal Text -->
       <p class="recaptcha-legal">
-        This site is protected by reCAPTCHA and the Google
-        <a href="https://policies.google.com/privacy" target="_blank" tabindex="0">Privacy Policy</a> and
-        <a href="https://policies.google.com/terms" target="_blank" tabindex="0">Terms of Service</a> apply.
+        Protected by reCAPTCHA. Google
+        <a href="https://policies.google.com/privacy" target="_blank" tabindex="0">Privacy</a> &
+        <a href="https://policies.google.com/terms" target="_blank" tabindex="0">Terms</a>.
       </p>
 
     </div>
