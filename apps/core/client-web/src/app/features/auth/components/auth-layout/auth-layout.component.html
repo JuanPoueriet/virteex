@@ -1,28 +1,36 @@
-<div class="auth-layout">
-  <!-- Background Elements -->
-  <div class="auth-background">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+<div class="auth-layout login-wrapper">
+  <!-- Language Selector -->
+  <div class="top-language-selector">
+    <div class="language-selector">
+      <div class="selector-trigger" (click)="toggleLangDropdown($event)" [class.active]="isLangDropdownOpen">
+        <span class="selector-icon">🌐</span>
+        <span>{{ currentLangLabel }}</span>
+        <span class="dropdown-icon">▼</span>
+      </div>
+
+      <div class="dropdown-menu" [class.show]="isLangDropdownOpen">
+        <div class="dropdown-item"
+             *ngFor="let lang of availableLanguages"
+             [class.active]="currentLang === lang.code"
+             (click)="changeLang(lang.code)">
+          <span class="flag-icon">{{ lang.flag }}</span>
+          <span>{{ lang.label }}</span>
+          <span *ngIf="currentLang === lang.code" class="check-icon">✓</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Main Content Area -->
-  <main class="auth-content animate-fade-in-up">
-    <!-- Logo -->
-    <div class="auth-logo">
-      <img src="assets/images/logo-full.svg" alt="FacturaPRO" />
-    </div>
-
-    <!-- Card Content -->
+  <div class="auth-container">
     <div class="auth-card">
       <ng-content></ng-content>
+      <div class="auth-footer-actions">
+          <ng-content select="[footer-actions]"></ng-content>
+      </div>
     </div>
-
-    <!-- Alternate Actions -->
-    <div class="auth-footer-actions">
-      <ng-content select="[footer-actions]"></ng-content>
-    </div>
-  </main>
+  </div>
 
   <!-- Footer -->
-  <app-auth-footer class="auth-footer-component"></app-auth-footer>
+  <app-auth-footer></app-auth-footer>
 </div>
