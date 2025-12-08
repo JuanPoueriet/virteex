@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -18,7 +18,11 @@ export class PaymentService {
     private organizationRepository: Repository<Organization>,
     @InjectRepository(WebhookEvent)
     private webhookEventRepository: Repository<WebhookEvent>,
+    
+    // 👇 ESTA ES LA LÍNEA QUE ROMPE EL CICLO 👇
+    @Inject(forwardRef(() => SaasService))
     private saasService: SaasService,
+    
     private dataSource: DataSource,
     @Inject('PAYMENT_GATEWAY') private paymentGateway: PaymentGateway
   ) {}
@@ -34,7 +38,7 @@ export class PaymentService {
   }
 
   async handleWebhook(signature: string, payload: Buffer) {
-    // Now fully abstracted. The Gateway implementation handles the specific logic.
+    // Ahora está completamente abstraído. La implementación del Gateway maneja la lógica específica.
     return this.paymentGateway.handleWebhook(payload, signature);
   }
 }
