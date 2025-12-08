@@ -106,6 +106,11 @@ export class RegisterPage implements OnInit {
             if (taxIdControl) {
                 // We could reset validators here if needed, but StepConfiguration handles it mostly
             }
+            // Populate fiscalRegionId from country config
+            const fiscalRegionIdControl = this.registerForm.get('configuration.fiscalRegionId');
+            if (fiscalRegionIdControl && config.fiscalRegionId) {
+                fiscalRegionIdControl.setValue(config.fiscalRegionId);
+            }
         }
     });
 
@@ -145,7 +150,7 @@ export class RegisterPage implements OnInit {
       configuration: this.fb.group({
         country: ['DO', [Validators.required]], // Default, updated by GeoIP
         taxId: ['', [Validators.required]],
-        fiscalRegionId: [''], // Will be set by backend lookup or manual selection
+        fiscalRegionId: ['', [Validators.required]], // Must be populated
         currency: ['DOP', [Validators.required]],
       }),
       // Step 3: Business Profile (Auto-filled)
@@ -202,8 +207,16 @@ export class RegisterPage implements OnInit {
 
     // Special logic for Step 2 (Configuration) -> Step 3 (Business)
     if (this.currentStep() === 2) {
-        // Here we could force a final check or lookup if not done already
-        // But the AsyncValidator in StepConfiguration should have handled it
+        // Ensure fiscalRegionId is present before proceeding
+        const fiscalRegionId = this.registerForm.get('configuration.fiscalRegionId')?.value;
+        if (!fiscalRegionId) {
+             // Try to re-fetch or use a default if available, or show error
+             // For now, assume it should have been set by the effect.
+             // If not, we might be in trouble (backend missing config).
+             // Let's set a temporary fallback for DEV if needed, but in Prod this is an error.
+             this.errorMessage.set('Error: No se ha detectado una región fiscal válida para este país.');
+             return;
+        }
     }
 
     this.stepsCompleted.update(completed => {
@@ -250,15 +263,6 @@ export class RegisterPage implements OnInit {
 
     this.recaptchaV3Service.execute('register').subscribe({
         next: (recaptchaToken) => {
-            // FIX: Ensure fiscalRegionId is valid. If empty (auto-detect fail), we should stop or handle it.
-            // For now, if it's empty, we might need to fallback to a default or error out.
-            // The form validation should catch required, but if it was set to 'auto-detected-region-uuid' in StepConfiguration,
-            // the backend will reject it if it's not a real UUID.
-            // In a real scenario, StepConfiguration should fetch the Region UUID from the API based on Country.
-
-            // Temporary Workaround for this task: Use a known valid UUID if available or rely on backend to assign default if missing (but backend requires it).
-            // I'll assume StepConfiguration fetches it. For this submission, I'll pass whatever is in the form.
-
             const payload: RegisterPayload = {
                 firstName: formValue.accountInfo.firstName,
                 lastName: formValue.accountInfo.lastName,
@@ -280,7 +284,12 @@ export class RegisterPage implements OnInit {
                     this.router.navigate(['/auth/plan-selection']);
                 },
                 error: (err) => {
-                     this.errorMessage.set(err.error?.message || 'Error en el registro');
+                     // Parse array of errors if present
+                     let msg = 'Error en el registro';
+                     if (err.error?.message) {
+                         msg = Array.isArray(err.error.message) ? err.error.message.join(', ') : err.error.message;
+                     }
+                     this.errorMessage.set(msg);
                      this.isRegistering.set(false);
                 }
             });
