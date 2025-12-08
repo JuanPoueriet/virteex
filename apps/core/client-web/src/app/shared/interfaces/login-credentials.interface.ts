@@ -20,4 +20,9 @@ export interface LoginCredentials {
      * Código de autenticación de dos factores (2FA), si está habilitado.
      */
     twoFactorCode?: string;
+
+    /**
+     * Si el usuario desea mantener la sesión iniciada.
+     */
+    rememberMe?: boolean;
 }

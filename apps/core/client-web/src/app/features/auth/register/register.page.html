@@ -1,35 +1,35 @@
 <app-auth-layout>
-  <div class="w-full animate-fade-in-up">
+  <div class="register-container animate-fade-in-up">
     <!-- Header -->
-    <div class="text-center mb-6">
-      <h1 class="text-2xl md:text-3xl font-bold text-text-primary mb-2">
+    <div class="view-header">
+      <h1 class="view-title">
         {{ "REGISTER.TITLE" | translate }}
       </h1>
-      <p class="text-text-secondary text-sm md:text-base">
+      <p class="view-subtitle">
         {{ "REGISTER.SUBTITLE" | translate }}
       </p>
     </div>
 
     <!-- Steps Indicator -->
-    <div class="flex items-center justify-between mb-8 px-2 relative z-10">
+    <div class="steps-indicator">
       <!-- Progress Bar Background -->
-      <div class="absolute left-0 top-1/2 w-full h-0.5 bg-white/10 -z-10"></div>
+      <div class="progress-bar-bg"></div>
 
       <!-- Progress Bar Active -->
-      <div class="absolute left-0 top-1/2 h-0.5 bg-primary -z-10 transition-all duration-500 ease-out"
+      <div class="progress-bar-active"
            [style.width]="((currentStep() - 1) / 3) * 100 + '%'"></div>
 
       <ng-container *ngFor="let step of [1, 2, 3, 4]; let i = index">
         <div
-          class="flex flex-col items-center gap-2 cursor-pointer group"
+          class="step-item"
           (click)="navigateToStep(step)"
         >
           <div
-            class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all duration-300 relative bg-card"
+            class="step-circle"
             [ngClass]="{
-              'border-primary text-primary shadow-lg shadow-primary/20 scale-110': currentStep() === step,
-              'border-primary bg-primary text-white': currentStep() > step,
-              'border-white/10 text-text-tertiary': currentStep() < step
+              'active': currentStep() === step,
+              'completed': currentStep() > step,
+              'pending': currentStep() < step
             }"
           >
             <ng-container *ngIf="currentStep() > step; else number">
@@ -42,82 +42,82 @@
     </div>
 
     <!-- Steps Content -->
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="relative min-h-[300px]">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
 
       <!-- Step 1: Account Info -->
-      <div *ngIf="currentStep() === 1" [@stepAnimation] class="space-y-4">
+      <div *ngIf="currentStep() === 1" [@stepAnimation] class="step-content">
         <app-step-account-info [group]="accountInfo"></app-step-account-info>
       </div>
 
       <!-- Step 2: Configuration (Country/Tax) -->
-      <div *ngIf="currentStep() === 2" [@stepAnimation] class="space-y-4">
+      <div *ngIf="currentStep() === 2" [@stepAnimation] class="step-content">
         <app-step-configuration [group]="configuration"></app-step-configuration>
       </div>
 
       <!-- Step 3: Business Info -->
-      <div *ngIf="currentStep() === 3" [@stepAnimation] class="space-y-4">
+      <div *ngIf="currentStep() === 3" [@stepAnimation] class="step-content">
         <app-step-business [group]="business"></app-step-business>
       </div>
 
       <!-- Step 4: Plan / Confirmation -->
-      <div *ngIf="currentStep() === 4" [@stepAnimation] class="space-y-4">
+      <div *ngIf="currentStep() === 4" [@stepAnimation] class="step-content">
         <app-step-plan [group]="plan"></app-step-plan>
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="flex items-center justify-between mt-8 pt-4 border-t border-white/5">
+      <div class="navigation-buttons">
         <button
           type="button"
           *ngIf="currentStep() > 1"
           (click)="prevStep()"
-          class="text-text-secondary hover:text-text-primary text-sm font-medium flex items-center gap-1 transition-colors">
+          class="back-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           Atrás
         </button>
-        <div *ngIf="currentStep() === 1"></div> <!-- Spacer -->
+        <div *ngIf="currentStep() === 1" class="spacer"></div> <!-- Spacer -->
 
-        <app-auth-button
-          *ngIf="currentStep() < 4"
-          (onClick)="nextStep()"
-          variant="primary"
-          class="ml-auto w-auto px-6">
-          Siguiente
-          <svg icon xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </app-auth-button>
+        <div class="next-btn-container" *ngIf="currentStep() < 4">
+            <app-auth-button
+            (onClick)="nextStep()"
+            variant="primary">
+            Siguiente
+            <svg icon xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </app-auth-button>
+        </div>
 
-        <app-auth-button
-          *ngIf="currentStep() === 4"
-          type="submit"
-          variant="primary"
-          [loading]="isRegistering()"
-          [disabled]="registerForm.invalid"
-          class="ml-auto w-auto px-6">
-          {{ "REGISTER.SUBMIT_BUTTON" | translate }}
-        </app-auth-button>
+        <div class="next-btn-container" *ngIf="currentStep() === 4">
+            <app-auth-button
+            type="submit"
+            variant="primary"
+            [loading]="isRegistering()"
+            [disabled]="registerForm.invalid">
+            {{ "REGISTER.SUBMIT_BUTTON" | translate }}
+            </app-auth-button>
+        </div>
       </div>
 
     </form>
 
     <!-- Error Message -->
-    <div *ngIf="errorMessage()" class="mt-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm flex items-center gap-2 animate-fade-in-up">
+    <div *ngIf="errorMessage()" class="global-error-message animate-fade-in-up">
        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
        <span>{{ errorMessage() | translate }}</span>
     </div>
 
     <!-- ReCAPTCHA Legal Text -->
-    <p class="text-[10px] text-text-tertiary text-center mt-6 leading-tight">
+    <p class="recaptcha-legal">
       This site is protected by reCAPTCHA and the Google
-      <a href="https://policies.google.com/privacy" target="_blank" class="hover:text-text-secondary underline">Privacy Policy</a> and
-      <a href="https://policies.google.com/terms" target="_blank" class="hover:text-text-secondary underline">Terms of Service</a> apply.
+      <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a> and
+      <a href="https://policies.google.com/terms" target="_blank">Terms of Service</a> apply.
     </p>
 
   </div>
 
   <!-- Footer Actions -->
-  <p footer-actions class="text-sm text-text-secondary">
+  <p footer-actions class="footer-cta">
     {{ "REGISTER.HAS_ACCOUNT" | translate }}
     <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']"
-       class="font-semibold text-primary hover:text-primary-hover transition-colors">
+       class="cta-link">
        {{ "REGISTER.LOGIN_LINK" | translate }}
     </a>
   </p>

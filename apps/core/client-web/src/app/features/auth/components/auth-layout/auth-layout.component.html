@@ -1,28 +1,28 @@
-<div class="auth-layout min-h-screen flex flex-col justify-between bg-primary relative overflow-hidden">
-  <!-- Background Elements (Optional for visual flair) -->
-  <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-    <div class="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-accent-light blur-[120px] opacity-20"></div>
-    <div class="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-accent-light blur-[100px] opacity-10"></div>
+<div class="auth-layout">
+  <!-- Background Elements -->
+  <div class="auth-background">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
   </div>
 
   <!-- Main Content Area -->
-  <main class="flex-1 flex flex-col items-center justify-center p-4 z-10 w-full max-w-[480px] mx-auto animate-fade-in-up">
+  <main class="auth-content animate-fade-in-up">
     <!-- Logo -->
-    <div class="mb-8 text-center">
-      <img src="assets/images/logo-full.svg" alt="FacturaPRO" class="h-10 md:h-12 mx-auto" />
+    <div class="auth-logo">
+      <img src="assets/images/logo-full.svg" alt="FacturaPRO" />
     </div>
 
     <!-- Card Content -->
-    <div class="w-full bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8">
+    <div class="auth-card">
       <ng-content></ng-content>
     </div>
 
-    <!-- Alternate Actions (like 'Don't have an account?') -->
-    <div class="mt-6 text-center">
+    <!-- Alternate Actions -->
+    <div class="auth-footer-actions">
       <ng-content select="[footer-actions]"></ng-content>
     </div>
   </main>
 
   <!-- Footer -->
-  <app-auth-footer class="z-10 relative"></app-auth-footer>
+  <app-auth-footer class="auth-footer-component"></app-auth-footer>
 </div>

@@ -8,24 +8,24 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, TranslateModule, RouterModule],
   template: `
-    <footer class="w-full py-4 px-6 flex flex-col md:flex-row items-center justify-between text-sm text-text-tertiary gap-4 border-t border-white/5 bg-bg-primary/50 backdrop-blur-sm">
-      <div class="flex items-center gap-4">
+    <footer class="auth-footer">
+      <div class="footer-left">
         <span>&copy; {{ currentYear }} FacturaPRO</span>
-        <a routerLink="/contact" class="hover:text-primary transition-colors">{{ 'AUTH.CONTACT' | translate }}</a>
+        <a routerLink="/contact" class="footer-link">{{ 'AUTH.CONTACT' | translate }}</a>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="footer-right">
         <button
           (click)="changeLang('es')"
-          [class.text-primary]="currentLang === 'es'"
-          class="hover:text-primary transition-colors font-medium">
+          [class.active]="currentLang === 'es'"
+          class="lang-btn">
           ES
         </button>
-        <span class="text-white/20">|</span>
+        <span class="divider">|</span>
         <button
           (click)="changeLang('en')"
-          [class.text-primary]="currentLang === 'en'"
-          class="hover:text-primary transition-colors font-medium">
+          [class.active]="currentLang === 'en'"
+          class="lang-btn">
           EN
         </button>
       </div>
@@ -35,6 +35,63 @@ import { RouterModule } from '@angular/router';
     :host {
       display: block;
       width: 100%;
+    }
+
+    .auth-footer {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.875rem; /* 14px */
+      color: var(--text-tertiary);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(var(--bg-primary-rgb), 0.5);
+      backdrop-filter: blur(4px);
+
+      @media (min-width: 768px) {
+        flex-direction: row;
+      }
+    }
+
+    .footer-left, .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .footer-link {
+      color: var(--text-tertiary);
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--primary);
+      }
+    }
+
+    .lang-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--primary);
+      }
+
+      &.active {
+        color: var(--primary);
+      }
+    }
+
+    .divider {
+      color: rgba(255, 255, 255, 0.2);
     }
   `]
 })
