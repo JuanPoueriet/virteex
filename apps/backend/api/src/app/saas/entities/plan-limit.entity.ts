@@ -1,11 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Plan } from './plan.entity';
 import { SaasResource } from '../enums/saas-resource.enum';
 import { QuotaPeriod } from '../enums/quota-period.enum';
 
 export enum LimitType {
   NUMERIC = 'NUMERIC',
-  BOOLEAN = 'BOOLEAN'
+  BOOLEAN = 'BOOLEAN',
 }
 
 @Entity('saas_plan_limits')
@@ -15,14 +21,14 @@ export class PlanLimit {
 
   @Column({
     type: 'enum',
-    enum: SaasResource
+    enum: SaasResource,
   })
   resource: SaasResource;
 
   @Column({
     type: 'enum',
     enum: LimitType,
-    default: LimitType.NUMERIC
+    default: LimitType.NUMERIC,
   })
   valueType: LimitType;
 
@@ -35,7 +41,11 @@ export class PlanLimit {
   @Column({ name: 'is_enabled', default: true })
   isEnabled: boolean; // For Boolean limits (Feature Flags)
 
-  @Column({ default: QuotaPeriod.MONTHLY })
+  @Column({
+    type: 'enum',
+    enum: QuotaPeriod,
+    default: QuotaPeriod.MONTHLY,
+  })
   period: QuotaPeriod;
 
   @Column({ name: 'allow_overage', default: false })
@@ -44,7 +54,7 @@ export class PlanLimit {
   @Column({ name: 'plan_id' })
   planId: string;
 
-  @ManyToOne(() => Plan, plan => plan.limits)
+  @ManyToOne(() => Plan, (plan) => plan.limits)
   @JoinColumn({ name: 'plan_id' })
   plan: Plan;
 }
