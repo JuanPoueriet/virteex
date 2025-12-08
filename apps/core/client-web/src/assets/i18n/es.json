@@ -132,7 +132,8 @@
   },
 
   "AUTH": {
-    "SIGN_OUT": "Cerrar Sesión"
+    "SIGN_OUT": "Cerrar Sesión",
+    "CONTACT": "Contacto"
   },
   "ACTIONS": {
     "CREATE_NEW": "Crear Nuevo"
@@ -771,9 +772,19 @@
     "EMAIL_PLACEHOLDER": "nombre@empresa.com",
     "REMEMBER_ME": "Mantener la sesión iniciada",
     "SUBMIT_BUTTON": "Entrar",
+    "PASSKEY_BUTTON": "Iniciar con Llave de Acceso (Passkey)",
     "NO_ACCOUNT": "¿No tienes una cuenta?",
     "REGISTER_LINK": "Regístrate",
     "LOGGING_IN": "Iniciando sesión",
+    "2FA": {
+      "TITLE": "Verificación de 2 Pasos",
+      "SUBTITLE": "Ingresa el código de 6 dígitos enviado a tu dispositivo.",
+      "CODE_LABEL": "Código de Verificación",
+      "CODE_PLACEHOLDER": "123456",
+      "VERIFY_BUTTON": "Verificar",
+      "VERIFYING": "Verificando...",
+      "BACK_TO_LOGIN": "Volver al login"
+    },
     "ERRORS": {
       "EMAIL_REQUIRED": "El correo electrónico es obligatorio.",
       "EMAIL_INVALID": "Por favor, introduce un correo electrónico válido.",
@@ -789,7 +800,9 @@
       "ACCOUNT_LOCKED": "Tu cuenta está bloqueada temporalmente. Intenta de nuevo en unos minutos.",
       "TOO_MANY_ATTEMPTS": "Has superado el número de intentos. Tu cuenta ha sido bloqueada.",
       "NETWORK_ERROR": "Error de red. Por favor, comprueba tu conexión e inténtalo de nuevo.",
-      "SERVER_ERROR": "Ocurrió un error en el servidor. Por favor, inténtalo más tarde o contacta a soporte."
+      "SERVER_ERROR": "Ocurrió un error en el servidor. Por favor, inténtalo más tarde o contacta a soporte.",
+      "INVALID_CODE": "Código incorrecto. Intenta de nuevo.",
+      "PASSKEY_ERROR": "Error al iniciar sesión con llave de acceso. Intente nuevamente o use su contraseña."
     },
     "FOOTER": {
       "LANGUAGE_SELECTOR_LABEL": "Seleccionar idioma",
@@ -798,5 +811,38 @@
       "SECURITY": "Seguridad",
       "COPYRIGHT": "© 2025 FacturaPRO, Inc. Todos los derechos reservados."
     }
+  },
+  "REGISTER": {
+    "TITLE": "Crear Cuenta",
+    "SUBTITLE": "Comienza tu prueba gratuita de 30 días",
+    "SUBMIT_BUTTON": "Registrarse",
+    "REGISTERING": "Registrando...",
+    "HAS_ACCOUNT": "¿Ya tienes una cuenta?",
+    "LOGIN_LINK": "Inicia sesión",
+    "ERRORS": {
+      "SERVER_ERROR": "Error al registrarse. Intente nuevamente."
+    }
+  },
+  "FORGOT_PASSWORD": {
+    "TITLE": "Recuperar Contraseña",
+    "SUBTITLE": "Ingresa tu email para recibir instrucciones",
+    "SUBMIT_BUTTON": "Enviar Instrucciones",
+    "SENDING": "Enviando...",
+    "BACK_TO_LOGIN": "Volver al inicio de sesión",
+    "SUCCESS": "Si existe una cuenta con este correo, recibirás instrucciones en breve."
+  },
+  "RESET_PASSWORD": {
+    "TITLE": "Restablecer Contraseña",
+    "SUBTITLE": "Ingresa tu nueva contraseña",
+    "SUBMIT_BUTTON": "Cambiar Contraseña",
+    "CHANGING": "Cambiando...",
+    "SUCCESS": "Tu contraseña ha sido actualizada correctamente."
+  },
+  "SET_PASSWORD": {
+    "TITLE": "Configurar Contraseña",
+    "SUBTITLE": "Establece una contraseña para tu cuenta",
+    "SUBMIT_BUTTON": "Guardar Contraseña",
+    "SAVING": "Guardando...",
+    "SUCCESS": "Contraseña configurada. Iniciando sesión..."
   }
 }

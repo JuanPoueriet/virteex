@@ -132,7 +132,8 @@
   },
 
   "AUTH": {
-    "SIGN_OUT": "Sign Out"
+    "SIGN_OUT": "Sign Out",
+    "CONTACT": "Contact"
   },
   "ACTIONS": {
     "CREATE_NEW": "Create New"
@@ -444,25 +445,77 @@
     "REMEMBER_ME": "Keep me logged in",
     "EMAIL_PLACEHOLDER": "name@company.com",
     "SUBMIT_BUTTON": "Sign In",
+    "PASSKEY_BUTTON": "Sign in with Passkey",
     "NO_ACCOUNT": "Don't have an account?",
     "REGISTER_LINK": "Sign up",
     "LOGGING_IN": "Logging in",
+    "2FA": {
+        "TITLE": "2-Step Verification",
+        "SUBTITLE": "Enter the 6-digit code sent to your device.",
+        "CODE_LABEL": "Verification Code",
+        "CODE_PLACEHOLDER": "123456",
+        "VERIFY_BUTTON": "Verify",
+        "VERIFYING": "Verifying...",
+        "BACK_TO_LOGIN": "Back to login"
+    },
     "ERRORS": {
       "EMAIL_REQUIRED": "Email address is required.",
       "EMAIL_INVALID": "Please enter a valid email address.",
       "PASSWORD_REQUIRED": "Password is required.",
-      "INVALID_CREDENTIALS": "The credentials are not correct. Please check your email and password.",
+      "AUTH_INVALID_CREDENTIALS": "The credentials are not correct. Please check your email and password.",
+      "AUTH_USER_INACTIVE": "User inactive or pending, please contact administrator.",
+      "AUTH_USER_BLOCKED": "User blocked. Contact support.",
+      "AUTH_SESSION_EXPIRED": "Session expired. Please log in again.",
+      "AUTH_DEVICE_MISMATCH": "Device change detected. Please log in again.",
+      "AUTH_REFRESH_TOKEN_INVALID": "Refresh token invalid or expired.",
+      "AUTH_REFRESH_TOKEN_REVOKED": "Refresh token reused. Session invalidated.",
+      "AUTH_USER_NOT_FOUND": "User not found.",
       "ACCOUNT_LOCKED": "Your account is temporarily locked. Please try again in a few minutes.",
       "TOO_MANY_ATTEMPTS": "You have exceeded the number of attempts. Your account has been locked.",
       "NETWORK_ERROR": "Network error. Please check your connection and try again.",
-      "SERVER_ERROR": "A server error occurred. Please try again later or contact support."
+      "SERVER_ERROR": "A server error occurred. Please try again later or contact support.",
+      "INVALID_CODE": "Invalid code. Please try again.",
+      "PASSKEY_ERROR": "Error signing in with passkey. Please try again or use your password."
+    },
+    "FOOTER": {
+      "LANGUAGE_SELECTOR_LABEL": "Select language",
+      "TERMS": "Terms",
+      "PRIVACY": "Privacy",
+      "SECURITY": "Security",
+      "COPYRIGHT": "© 2025 FacturaPRO, Inc. All rights reserved."
     }
   },
-  "FOOTER": {
-    "LANGUAGE_SELECTOR_LABEL": "Select language",
-    "TERMS": "Terms",
-    "PRIVACY": "Privacy",
-    "SECURITY": "Security",
-    "COPYRIGHT": "© 2025 FacturaPRO, Inc. All rights reserved."
+  "REGISTER": {
+    "TITLE": "Create Account",
+    "SUBTITLE": "Start your 30-day free trial",
+    "SUBMIT_BUTTON": "Sign Up",
+    "REGISTERING": "Registering...",
+    "HAS_ACCOUNT": "Already have an account?",
+    "LOGIN_LINK": "Sign in",
+    "ERRORS": {
+      "SERVER_ERROR": "Error registering. Please try again."
+    }
+  },
+  "FORGOT_PASSWORD": {
+    "TITLE": "Recover Password",
+    "SUBTITLE": "Enter your email to receive instructions",
+    "SUBMIT_BUTTON": "Send Instructions",
+    "SENDING": "Sending...",
+    "BACK_TO_LOGIN": "Back to login",
+    "SUCCESS": "If an account exists with this email, you will receive instructions shortly."
+  },
+  "RESET_PASSWORD": {
+    "TITLE": "Reset Password",
+    "SUBTITLE": "Enter your new password",
+    "SUBMIT_BUTTON": "Change Password",
+    "CHANGING": "Changing...",
+    "SUCCESS": "Your password has been successfully updated."
+  },
+  "SET_PASSWORD": {
+    "TITLE": "Set Password",
+    "SUBTITLE": "Set a password for your account",
+    "SUBMIT_BUTTON": "Save Password",
+    "SAVING": "Saving...",
+    "SUCCESS": "Password set. Logging in..."
   }
 }

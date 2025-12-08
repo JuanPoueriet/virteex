@@ -1,18 +1,26 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth';
-import { LucideAngularModule, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Check, X } from 'lucide-angular';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { LanguageService } from '../../../../core/services/language';
 
+// Shared
+import { AuthLayoutComponent } from '../../components/auth-layout/auth-layout.component';
+import { AuthInputComponent } from '../../components/auth-input/auth-input.component';
+import { AuthButtonComponent } from '../../components/auth-button/auth-button.component';
+import { PasswordValidatorComponent } from '../../components/password-validator/password-validator.component';
+
+// Custom validator for strong password
 const strongPasswordValidator = (): ValidatorFn => {
   return (control: AbstractControl): ValidationErrors | null => {
     const v: string = control.value || '';
     const ok =
-      /[a-z]/.test(v) &&        // minúscula
-      /[A-Z]/.test(v) &&        // mayúscula
-      /[0-9]/.test(v) &&        // número
-      /[!@#$%^&*(),.?":{}|<>]/.test(v); // símbolo
+      /[a-z]/.test(v) &&
+      /[A-Z]/.test(v) &&
+      /[0-9]/.test(v) &&
+      /[!@#$%^&*(),.?":{}|<>]/.test(v);
     return ok ? null : { strongPassword: true };
   };
 };
@@ -25,49 +33,38 @@ const passwordMatchValidator: ValidatorFn = (group: AbstractControl): Validation
 
 @Component({
   selector: 'app-reset-password-page',
-  templateUrl: './reset-password.page.html',
-  styleUrls: ['./reset-password.page.scss'],
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    LucideAngularModule
-  ]
+    TranslateModule,
+    AuthLayoutComponent,
+    AuthInputComponent,
+    AuthButtonComponent,
+    PasswordValidatorComponent
+  ],
+  templateUrl: './reset-password.page.html'
 })
 export class ResetPasswordPage implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  public languageService = inject(LanguageService);
 
   resetPasswordForm!: FormGroup;
   isLoading = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
   token: string | null = null;
-  passwordVisible = false;
-  confirmPasswordVisible = false;
-
-  // Icons
-  LockIcon = Lock;
-  EyeIcon = Eye;
-  EyeOffIcon = EyeOff;
-  AlertCircleIcon = AlertCircle;
-  CheckCircleIcon = CheckCircle;
-  showPasswordHints = false;
-  protected readonly CheckIcon = Check;
-  protected readonly XIcon = X;
-  private cdRef = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    // this.token = this.route.snapshot.paramMap.get('token');
     this.token = this.route.snapshot.queryParamMap.get('token');
-    if (!this.token || this.token.length < 30) {
-      this.errorMessage = "Token de restablecimiento inválido";
+    if (!this.token) {
+      this.errorMessage = "Invalid token";
     }
 
-    // ✅ Crear el form con el grupo 'passwordGroup'
     this.resetPasswordForm = this.fb.group({
       passwordGroup: this.fb.group(
         {
@@ -79,14 +76,19 @@ export class ResetPasswordPage implements OnInit {
     });
   }
 
-  get passwordGroup() {
-    return this.resetPasswordForm.get('passwordGroup') as FormGroup;
+  getErrorMessage(controlName: string): string {
+     // Implement simple error mapping if needed, handled mostly in template
+     const control = this.resetPasswordForm.get(controlName);
+     if (control?.touched && control.errors) {
+         if (control.errors['required']) return 'REGISTER.ERRORS.REQUIRED';
+         if (control.errors['minlength']) return 'REGISTER.ERRORS.PASSWORD_LENGTH';
+     }
+     return '';
   }
 
   onSubmit() {
-    const group = this.passwordGroup;
-    if (!group || group.invalid || !this.token) {
-      group?.markAllAsTouched();
+    if (this.resetPasswordForm.invalid || !this.token) {
+      this.resetPasswordForm.markAllAsTouched();
       return;
     }
 
@@ -94,34 +96,18 @@ export class ResetPasswordPage implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
 
-    const newPassword = group.value.password;
+    const newPassword = this.resetPasswordForm.value.passwordGroup.password;
 
     this.authService.resetPassword(this.token, newPassword).subscribe({
       next: () => {
         this.isLoading = false;
-        this.successMessage = 'Tu contraseña ha sido actualizada con éxito. Serás redirigido para iniciar sesión.';
-        setTimeout(() => this.router.navigate(['/auth/login']), 3000);
+        this.successMessage = 'RESET_PASSWORD.SUCCESS';
+        setTimeout(() => this.router.navigate(['/', this.languageService.currentLang(), 'auth', 'login']), 3000);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.customMessage || 'El enlace ha expirado o es inválido. Por favor, solicita uno nuevo.';
+        this.errorMessage = err.customMessage || 'RESET_PASSWORD.ERRORS.INVALID_TOKEN';
       }
     });
-  }
-
-  hasUpperCase(value: string): boolean { return /[A-Z]/.test(value); }
-  hasLowerCase(value: string): boolean { return /[a-z]/.test(value); }
-  hasNumber(value: string): boolean { return /[0-9]/.test(value); }
-  hasSpecialChar(value: string): boolean { return /[!@#$%^&*(),.?":{}|<>]/.test(value); }
-
-  get passwordValue(): string { return this.passwordGroup?.get?.('password')?.value || ''; }
-
-  onPasswordBlur() {
-    if (!document.activeElement?.id.includes('confirmPassword')) {
-      setTimeout(() => {
-        this.showPasswordHints = false;
-        this.cdRef.detectChanges();
-      }, 200);
-    }
   }
 }

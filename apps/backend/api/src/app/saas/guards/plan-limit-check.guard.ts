@@ -7,6 +7,7 @@ import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
 import { SaasResource } from '../enums/saas-resource.enum';
 import { SaasLimitReachedException } from '../exceptions/saas-exception';
+import { SaasCacheKeyFactory } from '../utils/saas-cache-key.factory';
 
 /**
  * PlanLimitCheckGuard
@@ -51,7 +52,14 @@ export class PlanLimitCheckGuard implements CanActivate {
        throw new ForbiddenException('Organization context required for limit check');
     }
 
-    const cacheKey = `plan_limit_check:${user.organization.id}:${limitMetadata.resource}`;
+    // Use Factory for consistent keys
+    // Note: We might need to get the "version" for strict invalidation, but for Fail-Fast
+    // checking the simple key might be enough?
+    // Actually SaasService uses versioning. We should probably read the version here too to ensure we don't read stale cache after a plan upgrade.
+
+    const versionKey = SaasCacheKeyFactory.limitVersion(user.organization.id);
+    const version = await this.cacheManager.get<number>(versionKey) || 0;
+    const cacheKey = SaasCacheKeyFactory.limitCheck(user.organization.id, version, limitMetadata.resource);
 
     // 1. Try Cache first (Fail-Fast)
     const cachedResult = await this.cacheManager.get<boolean>(cacheKey);

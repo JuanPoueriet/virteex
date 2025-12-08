@@ -1,48 +1,40 @@
-import { Component, Input, signal, inject, OnInit } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Building2, Briefcase, Users, Globe, Landmark, Image, MapPin } from 'lucide-angular';
-import { Observable } from 'rxjs';
-import { FiscalRegion } from '../../../../../core/models/fiscal-region.model';
-import { LocalizationApiService } from '../../../../../core/api/localization.service';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthInputComponent } from '../../../components/auth-input/auth-input.component';
 
 @Component({
-  selector: 'app-step-business', standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
-  templateUrl: './step-business.html', styleUrls: ['./step-business.scss']
+  selector: 'app-step-business',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, AuthInputComponent],
+  templateUrl: './step-business.html',
 })
-export class StepBusiness implements OnInit {
-  @Input() parentForm!: FormGroup;
-  protected readonly CompanyIcon = Building2;
-  protected readonly IndustryIcon = Briefcase;
-  protected readonly LegalFormIcon = Landmark;
-  protected readonly EmployeesIcon = Users;
-  protected readonly WebsiteIcon = Globe;
-  protected readonly LogoIcon = Image;
-  protected readonly FiscalRegionIcon = MapPin;
+export class StepBusiness {
+  @Input() group!: FormGroup;
 
-  // Data for Selects
   industries = [
-    { id: 'tech', label: 'Tecnología y Software' },
-    { id: 'retail', label: 'Comercio Minorista (Retail)' },
-    { id: 'services', label: 'Servicios Profesionales' },
-    { id: 'construction', label: 'Construcción e Inmobiliaria' },
-    { id: 'health', label: 'Salud y Medicina' },
-    { id: 'manufacturing', label: 'Manufactura' },
-    { id: 'education', label: 'Educación' },
-    { id: 'other', label: 'Otro' }
+    { id: 'TECHNOLOGY', label: 'REGISTER.INDUSTRIES.TECHNOLOGY' },
+    { id: 'RETAIL', label: 'REGISTER.INDUSTRIES.RETAIL' },
+    { id: 'MANUFACTURING', label: 'REGISTER.INDUSTRIES.MANUFACTURING' },
+    { id: 'SERVICES', label: 'REGISTER.INDUSTRIES.SERVICES' },
+    { id: 'HEALTHCARE', label: 'REGISTER.INDUSTRIES.HEALTHCARE' },
+    { id: 'CONSTRUCTION', label: 'REGISTER.INDUSTRIES.CONSTRUCTION' },
+    { id: 'OTHER', label: 'REGISTER.INDUSTRIES.OTHER' }
   ];
 
   companySizes = [
-    { id: '1-10', label: '1 - 10 empleados' },
-    { id: '11-50', label: '11 - 50 empleados' },
-    { id: '51-200', label: '51 - 200 empleados' },
-    { id: '201+', label: 'Más de 200 empleados' }
+    { id: '1-10', label: '1-10' },
+    { id: '11-50', label: '11-50' },
+    { id: '51-200', label: '51-200' },
+    { id: '201+', label: '201+' }
   ];
 
-  private localizationApiService = inject(LocalizationApiService);
-
-  ngOnInit(): void {
-    // No explicit initialization needed for static lists
+  getErrorMessage(controlName: string): string {
+    const control = this.group.get(controlName);
+    if (control?.touched && control?.errors) {
+      if (control.errors['required']) return 'REGISTER.ERRORS.REQUIRED';
+    }
+    return '';
   }
 }
