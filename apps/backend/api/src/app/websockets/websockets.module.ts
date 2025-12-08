@@ -1,12 +1,14 @@
 
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { EventsGateway } from './events.gateway';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
 imports: [
+    forwardRef(() => AuthModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

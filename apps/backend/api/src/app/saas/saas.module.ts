@@ -16,7 +16,6 @@ import { RedisClientOptions } from 'redis';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
 import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
 import { MetricsModule } from '../metrics/metrics.module';
-import { PaymentModule } from '../payment/payment.module';
 import { SaasCronService } from './services/saas-cron.service';
 
 @Global()
@@ -41,8 +40,7 @@ import { SaasCronService } from './services/saas-cron.service';
            ttl: 60 * 5,
         };
       },
-    }),
-    forwardRef(() => PaymentModule)
+    })
   ],
   controllers: [SaasController],
   providers: [SaasService, SubscriptionActiveGuard, PlanLimitCheckGuard, UsageMetricRepository, SaasCronService],

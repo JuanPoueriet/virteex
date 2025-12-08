@@ -21,7 +21,7 @@ export class StripePaymentAdapter implements PaymentGateway {
     @InjectRepository(WebhookEvent) private webhookEventRepository: Repository<WebhookEvent>,
     private configService: ConfigService,
     private dataSource: DataSource,
-    @Inject(forwardRef(() => SaasService)) private saasService: SaasService
+    private saasService: SaasService
   ) {}
 
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResult> {

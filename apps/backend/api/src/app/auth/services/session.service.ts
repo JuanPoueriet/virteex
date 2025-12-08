@@ -5,6 +5,7 @@ import {
   NotFoundException,
   Inject,
   OnModuleInit,
+  forwardRef,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -36,6 +37,7 @@ export class SessionService implements OnModuleInit {
   private encryptionKey: Buffer;
 
   constructor(
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,

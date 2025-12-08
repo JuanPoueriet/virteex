@@ -150,11 +150,15 @@ const envValidation = Joi.object({
         };
       },
     }),
-    GoogleRecaptchaModule.forRoot({
-      secretKey: process.env.RECAPTCHA_V3_SECRET_KEY,
-      response: (req) => req.body.recaptchaToken,
-      score: 0.7,
-      skipIf: process.env.NODE_ENV !== 'production',
+    GoogleRecaptchaModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secretKey: config.get('RECAPTCHA_V3_SECRET_KEY'),
+        response: (req) => req.body.recaptchaToken,
+        score: 0.7,
+        skipIf: config.get('NODE_ENV') !== 'production',
+      }),
     }),
 
 

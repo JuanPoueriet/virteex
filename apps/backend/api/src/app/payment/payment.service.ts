@@ -19,8 +19,6 @@ export class PaymentService {
     @InjectRepository(WebhookEvent)
     private webhookEventRepository: Repository<WebhookEvent>,
     
-    // 👇 ESTA ES LA LÍNEA QUE ROMPE EL CICLO 👇
-    @Inject(forwardRef(() => SaasService))
     private saasService: SaasService,
     
     private dataSource: DataSource,
