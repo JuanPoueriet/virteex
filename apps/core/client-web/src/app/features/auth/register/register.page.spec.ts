@@ -1,4 +1,3 @@
-
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RegisterPage } from './register.page';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,17 +6,33 @@ import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthService } from '../../../core/services/auth';
 import { ReCaptchaV3Service } from 'ng-recaptcha-19';
-import { of } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { CountryService } from '../../../core/services/country.service';
 import { LanguageService } from '../../../core/services/language';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { UsersService } from '../../../core/api/users.service';
 import { GeoLocationService } from '../../../core/services/geo-location.service';
+
+// Import standalone components used in template to ensure they are available
+import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
+import { StepAccountInfo } from './steps/step-account-info/step-account-info';
+import { StepBusiness } from './steps/step-business/step-business';
+import { StepConfiguration } from './steps/step-configuration/step-configuration';
+import { StepPlan } from './steps/step-plan/step-plan';
+import { AuthButtonComponent } from '../components/auth-button/auth-button.component';
+
+// Fake Loader for Translate
+class FakeLoader implements TranslateLoader {
+  getTranslation(lang: string): Observable<any> {
+    return of({});
+  }
+}
 
 // Mocks
 class MockAuthService {
   register = jest.fn().mockReturnValue(of({}));
   currentUser = jest.fn().mockReturnValue(null);
+  getSocialRegisterInfo = jest.fn().mockReturnValue(of({}));
 }
 class MockRecaptchaService {
   execute = jest.fn().mockReturnValue(of('mock-token'));
@@ -27,12 +42,8 @@ class MockCountryService {
   currentCountryCode = jest.fn().mockReturnValue('do');
   detectAndSetCountry = jest.fn();
 }
-class MockTranslateService {
-  addLangs = jest.fn();
-  setDefaultLang = jest.fn();
-  use = jest.fn();
-  getBrowserLang = jest.fn().mockReturnValue('es');
-}
+// Removed MockTranslateService in favor of FakeLoader
+
 class MockUsersService {
     updateUser = jest.fn().mockReturnValue(of({}));
 }
@@ -51,7 +62,19 @@ describe('RegisterPage', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RegisterPage, NoopAnimationsModule],
+      imports: [
+        RegisterPage,
+        NoopAnimationsModule,
+        TranslateModule.forRoot({
+            loader: { provide: TranslateLoader, useClass: FakeLoader }
+        }),
+        AuthLayoutComponent,
+        StepAccountInfo,
+        StepBusiness,
+        StepConfiguration,
+        StepPlan,
+        AuthButtonComponent
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -59,7 +82,7 @@ describe('RegisterPage', () => {
         { provide: AuthService, useClass: MockAuthService },
         { provide: ReCaptchaV3Service, useClass: MockRecaptchaService },
         { provide: CountryService, useClass: MockCountryService },
-        { provide: TranslateService, useClass: MockTranslateService },
+        // TranslateService provided by module
         { provide: UsersService, useClass: MockUsersService },
         { provide: LanguageService, useClass: MockLanguageService },
         { provide: GeoLocationService, useClass: MockGeoLocationService }
@@ -88,13 +111,10 @@ describe('RegisterPage', () => {
     expect(accountInfo.valid).toBeFalsy();
 
     // Fill with valid data
-    // Updated test: Removed jobTitle and phone as they are optional/not in the main validation check for required
     accountInfo.patchValue({
       firstName: 'John',
       lastName: 'Doe',
       email: 'test@example.com',
-      // jobTitle: 'Developer', // Removed from expectation if not required
-      // phone: '1234567890',
       passwordGroup: {
         password: 'Password123!',
         confirmPassword: 'Password123!'

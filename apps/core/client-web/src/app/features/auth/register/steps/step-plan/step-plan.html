@@ -1,56 +1,54 @@
-<div class="step-container" [formGroup]="parentForm">
-    <div class="step-header">
-        <h3>Elige tu Plan</h3>
-        <p>Comienza con una prueba gratuita de 15 días. Sin necesidad de tarjeta de crédito.</p>
+<form class="space-y-4" [formGroup]="group">
+  <div class="text-center md:text-left mb-6">
+    <h3 class="text-lg font-semibold text-text-primary">{{ 'REGISTER.STEPS.PLAN.TITLE' | translate }}</h3>
+    <p class="text-sm text-text-secondary">{{ 'REGISTER.STEPS.PLAN.SUBTITLE' | translate }}</p>
+  </div>
+
+  <div class="bg-card/50 border border-border-color rounded-xl p-6 mb-6">
+    <div class="flex items-center gap-4 mb-4">
+       <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/></svg>
+       </div>
+       <div>
+         <h4 class="font-bold text-text-primary">Prueba Gratuita de 30 Días</h4>
+         <p class="text-sm text-text-secondary">Acceso completo a todas las funciones Premium.</p>
+       </div>
     </div>
-    <div class="plans-container">
-        <div class="plan-card" [class.selected]="parentForm.get('planId')?.value === 'trial'"
-            (click)="selectPlan('trial')">
-            <div class="plan-badge trial">Prueba Gratuita</div>
-            <h4>Explorador</h4>
-            <div class="plan-price">$0 <span class="price-period">/ 15 días</span></div>
-            <ul class="plan-features">
-                <li><lucide-icon [img]="CheckIcon" size="16" /> 50 Facturas</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> 1 Usuario</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Reportes Básicos</li>
-            </ul>
-        </div>
-        <div class="plan-card popular" [class.selected]="parentForm.get('planId')?.value === 'pro'"
-            (click)="selectPlan('pro')">
-            <div class="plan-badge">Más Popular</div>
-            <h4>Profesional</h4>
-            <div class="plan-price">$49 <span class="price-period">/ mes</span></div>
-            <ul class="plan-features">
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Facturas Ilimitadas</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Hasta 5 Usuarios</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Reportes Avanzados</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Soporte Prioritario</li>
-            </ul>
-        </div>
-        <div class="plan-card" [class.selected]="parentForm.get('planId')?.value === 'enterprise'"
-            (click)="selectPlan('enterprise')">
-            <h4>Empresarial</h4>
-            <div class="plan-price">$99 <span class="price-period">/ mes</span></div>
-            <ul class="plan-features">
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Todo lo de Profesional</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> Usuarios Ilimitados</li>
-                <li><lucide-icon [img]="CheckIcon" size="16" /> API de Integración</li>
-            </ul>
-        </div>
+    <ul class="space-y-2">
+       <li class="flex items-center gap-2 text-sm text-text-primary">
+          <svg class="text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Sin tarjeta de crédito requerida
+       </li>
+       <li class="flex items-center gap-2 text-sm text-text-primary">
+          <svg class="text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Cancela en cualquier momento
+       </li>
+       <li class="flex items-center gap-2 text-sm text-text-primary">
+          <svg class="text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Soporte prioritario incluido
+       </li>
+    </ul>
+  </div>
+
+  <div class="space-y-3">
+    <div class="flex items-start gap-3">
+      <div class="flex items-center h-5">
+         <input
+           id="agreeToTerms"
+           type="checkbox"
+           formControlName="agreeToTerms"
+           class="w-4 h-4 rounded border-border-color bg-bg-secondary text-primary focus:ring-primary/20 cursor-pointer">
+      </div>
+      <label for="agreeToTerms" class="text-sm text-text-secondary cursor-pointer select-none">
+          {{ 'REGISTER.TERMS_AGREEMENT_1' | translate }}
+          <a routerLink="/terms" target="_blank" class="text-primary hover:underline">{{ 'REGISTER.TERMS' | translate }}</a>
+          {{ 'REGISTER.AND' | translate }}
+          <a routerLink="/privacy" target="_blank" class="text-primary hover:underline">{{ 'REGISTER.PRIVACY' | translate }}</a>.
+      </label>
     </div>
-    <div class="terms-field"
-        [class.error]="parentForm.get('agreeToTerms')?.invalid && parentForm.get('agreeToTerms')?.touched">
-        <input id="agreeToTerms" type="checkbox" formControlName="agreeToTerms">
-        <label for="agreeToTerms">Acepto los <a href="#" class="link">Términos de Servicio</a> y la <a href="#"
-                class="link">Política de Privacidad</a> de FacturaPRO.*</label>
-        @if (parentForm.get('agreeToTerms')?.invalid && parentForm.get('agreeToTerms')?.touched) {
-        <div class="error-message">
-            <span>Debes aceptar los términos y condiciones</span>
-        </div>
-        }
+
+    <div *ngIf="group.get('agreeToTerms')?.touched && group.get('agreeToTerms')?.invalid" class="ml-7 text-xs text-error">
+        {{ 'REGISTER.ERRORS.TERMS_REQUIRED' | translate }}
     </div>
-    <div class="terms-field">
-        <input id="marketingOptIn" type="checkbox" formControlName="marketingOptIn">
-        <label for="marketingOptIn">Quiero recibir correos con consejos, ofertas y actualizaciones de productos.</label>
-    </div>
-</div>
+  </div>
+</form>
