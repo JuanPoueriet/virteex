@@ -1,8 +1,10 @@
 <app-auth-layout>
   <!-- 2FA Verification View -->
   <div *ngIf="show2faInput(); else loginFormTemplate" class="auth-header animate-fade-in-up">
-    <h2 class="auth-title">{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
-    <p class="auth-subtitle">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
+    <div class="header-content">
+      <h2 class="auth-title">{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
+      <p class="auth-subtitle">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
+    </div>
 
     <div class="auth-form two-fa-form">
        <app-auth-input
@@ -13,7 +15,7 @@
          [hasIcon]="true"
          [errorMessage]="errorMessage() ? (errorMessage() | translate) : ''"
          (keyup.enter)="verify2fa()">
-         <svg icon xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+         <lucide-icon icon [img]="icons.ShieldCheck" size="20"></lucide-icon>
        </app-auth-input>
 
        <app-auth-button
@@ -33,19 +35,29 @@
   <!-- Standard Login View -->
   <ng-template #loginFormTemplate>
     <div class="animate-fade-in-up">
+      <!-- Header Section -->
       <div class="auth-header">
         <h1 class="auth-title">{{ 'LOGIN.TITLE' | translate }}</h1>
         <p class="auth-subtitle">{{ 'LOGIN.SUBTITLE' | translate }}</p>
       </div>
 
-      <app-social-auth-buttons (onLogin)="socialLogin($event)"></app-social-auth-buttons>
+      <!-- Social Auth Section -->
+       <div class="social-section">
+        <app-social-auth-buttons (onLogin)="socialLogin($event)"></app-social-auth-buttons>
 
-      <div class="passkey-section">
-        <app-passkey-button (onClick)="onLoginWithPasskey()" [loading]="isLoggingIn()">
-            {{ 'LOGIN.PASSKEY_BUTTON' | translate }}
-        </app-passkey-button>
+        <div class="passkey-wrapper">
+          <app-passkey-button (onClick)="onLoginWithPasskey()" [loading]="isLoggingIn()">
+              {{ 'LOGIN.PASSKEY_BUTTON' | translate }}
+          </app-passkey-button>
+        </div>
       </div>
 
+      <!-- Divider -->
+      <div class="divider">
+        <span>{{ 'LOGIN.OR_EMAIL' | translate }}</span>
+      </div>
+
+      <!-- Login Form -->
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
 
         <app-auth-input
@@ -56,7 +68,7 @@
           [hasIcon]="true"
           [required]="true"
           [errorMessage]="getErrorMessage('email')">
-          <svg icon xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <lucide-icon icon [img]="icons.Mail" size="20"></lucide-icon>
         </app-auth-input>
 
         <div class="password-group">
@@ -68,29 +80,32 @@
             [hasIcon]="true"
             [required]="true"
             [errorMessage]="getErrorMessage('password')">
-            <svg icon xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <lucide-icon icon [img]="icons.Lock" size="20"></lucide-icon>
           </app-auth-input>
 
           <div class="forgot-password-container">
-            <a [routerLink]="['/', languageService.currentLang(), 'auth', 'forgot-password']" class="forgot-link">
+            <a [routerLink]="['/', languageService.currentLang(), 'auth', 'forgot-password']" class="forgot-link" tabindex="0">
               {{ 'LOGIN.FORGOT_PASSWORD' | translate }}
             </a>
           </div>
         </div>
 
         <div class="remember-container">
-          <label class="checkbox-container">
+          <label class="checkbox-container" tabindex="0" (keyup.enter)="loginForm.get('rememberMe')?.setValue(!loginForm.get('rememberMe')?.value)">
             <input
               type="checkbox"
               formControlName="rememberMe"
-              class="remember-checkbox">
-            <span class="checkmark"></span>
+              class="remember-checkbox"
+              tabindex="-1"> <!-- Tabindex -1 because label handles focus -->
+            <span class="checkmark">
+               <lucide-icon *ngIf="loginForm.get('rememberMe')?.value" [img]="icons.CheckCircle" size="14"></lucide-icon>
+            </span>
             {{ 'LOGIN.REMEMBER_ME' | translate }}
           </label>
         </div>
 
-        <div *ngIf="errorMessage()" class="error-message global-error">
-           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        <div *ngIf="errorMessage()" class="error-message global-error" role="alert">
+           <lucide-icon [img]="icons.AlertCircle" size="16"></lucide-icon>
            <span>{{ errorMessage() | translate }}</span>
         </div>
 
@@ -100,6 +115,7 @@
           [loading]="isLoggingIn()"
           [disabled]="loginForm.invalid">
           {{ (isLoggingIn() ? 'LOGIN.LOGGING_IN' : 'LOGIN.SUBMIT_BUTTON') | translate }}
+          <lucide-icon *ngIf="!isLoggingIn()" [img]="icons.ArrowRight" size="18" class="btn-icon"></lucide-icon>
         </app-auth-button>
 
       </form>
@@ -107,19 +123,19 @@
       <!-- Legal Text for Invisible reCAPTCHA -->
       <p class="recaptcha-legal">
         This site is protected by reCAPTCHA and the Google
-        <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a> and
-        <a href="https://policies.google.com/terms" target="_blank">Terms of Service</a> apply.
+        <a href="https://policies.google.com/privacy" target="_blank" tabindex="0">Privacy Policy</a> and
+        <a href="https://policies.google.com/terms" target="_blank" tabindex="0">Terms of Service</a> apply.
       </p>
 
     </div>
   </ng-template>
 
   <!-- Footer Actions -->
-  <div footer-actions class="auth-footer">
+  <div footer-actions class="auth-footer-actions">
     <p class="register-text">
       {{ 'LOGIN.NO_ACCOUNT' | translate }}
       <a [routerLink]="['/', languageService.currentLang(), countryService.currentCountry()?.code || 'do', 'auth', 'register']"
-         class="register-link">
+         class="register-link" tabindex="0">
          {{ 'LOGIN.REGISTER_LINK' | translate }}
       </a>
     </p>

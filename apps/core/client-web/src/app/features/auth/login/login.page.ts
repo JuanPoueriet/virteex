@@ -7,6 +7,7 @@ import { LanguageService } from '../../../core/services/language';
 import { CountryService } from '../../../core/services/country.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RecaptchaV3Module, ReCaptchaV3Service } from 'ng-recaptcha-19';
+import { LucideAngularModule, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-angular';
 
 // Shared Components
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
@@ -24,6 +25,7 @@ import { PasskeyButtonComponent } from '../components/passkey-button/passkey-but
     RouterModule,
     TranslateModule,
     RecaptchaV3Module,
+    LucideAngularModule,
     AuthLayoutComponent,
     AuthInputComponent,
     AuthButtonComponent,
@@ -44,6 +46,9 @@ export class LoginPage implements OnInit {
 
   public languageService = inject(LanguageService);
   public countryService = inject(CountryService);
+
+  // Icons
+  readonly icons = { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle, ShieldCheck };
 
   // State
   loginForm!: FormGroup;
