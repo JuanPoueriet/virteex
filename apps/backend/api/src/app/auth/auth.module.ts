@@ -96,7 +96,7 @@ import { AuthSubscriber } from './events/auth.events';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secretKey: config.get<string>('RECAPTCHA_SECRET_KEY'),
+        secretKey: config.get<string>('RECAPTCHA_V3_SECRET_KEY'),
         response: (req) => req.body.recaptchaToken,
       }),
     }),
@@ -143,7 +143,8 @@ import { AuthSubscriber } from './events/auth.events';
     CookieService,
     SocialAuthService,
     MfaOrchestratorService,
-    UserCacheModule
+    UserCacheModule,
+    SessionService
   ],
 })
 export class AuthModule {}

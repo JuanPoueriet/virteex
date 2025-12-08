@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, Inject } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { authenticator } from 'otplib';
@@ -19,6 +19,7 @@ export class SecurityAnalysisService {
   constructor(
     private readonly geoService: GeoService,
     private readonly auditService: AuditTrailService,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     @InjectRepository(VerificationCode)
     private readonly verificationCodeRepository: Repository<VerificationCode>,
