@@ -1,86 +1,124 @@
-<div class="register-layout">
-  <app-geo-mismatch-modal></app-geo-mismatch-modal>
-  <div class="branding-panel">
-    <div class="branding-content">
-      <h1 class="logo">FacturaPRO</h1>
-      <p class="tagline">La plataforma todo-en-uno para la gestión de tu negocio.</p>
-      <ul class="feature-list">
-        <li><lucide-icon [img]="CheckCircleIcon" size="20"></lucide-icon> Facturación profesional e intuitiva.</li>
-        <li><lucide-icon [img]="BarChart2Icon" size="20"></lucide-icon> Reportes financieros en tiempo real.</li>
-        <li><lucide-icon [img]="PackageIcon" size="20"></lucide-icon> Control total de tu inventario.</li>
-      </ul>
+<app-auth-layout>
+  <div class="register-container animate-fade-in-up">
+    <!-- Header -->
+    <div class="view-header">
+      <h1 class="view-title">
+        {{ "REGISTER.TITLE" | translate }}
+      </h1>
+      <p class="view-subtitle">
+        {{ "REGISTER.SUBTITLE" | translate }}
+      </p>
     </div>
-    <div class="branding-footer">
-      <p>© 2025 FacturaPRO. Todos los derechos reservados.</p>
-      <nav><a href="#">Legal</a><a href="#">Privacidad</a><a href="#">Seguridad</a></nav>
-    </div>
-  </div>
 
-  <div class="form-panel">
-    <div class="form-container">
-      <!-- Honeypot -->
-      <form [formGroup]="registerForm">
-        <input type="text" formControlName="fax" style="display:none" autocomplete="off" tabindex="-1">
-      </form>
+    <!-- Steps Indicator -->
+    <div class="steps-indicator">
+      <!-- Progress Bar Background -->
+      <div class="progress-bar-bg"></div>
 
-      <div class="form-header">
-        <p>¿Ya tienes una cuenta? <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']" class="link">Inicia sesión</a></p>
-      </div>
-      <div class="stepper-header">
-        @for (step of [1,2,3,4]; track $index) {
-        <div class="step" [class.active]="currentStep() >= $index + 1" [class.completed]="stepsCompleted()[$index]"
-          (click)="navigateToStep($index + 1)">
-          <div class="step-icon">
-            @if(stepsCompleted()[$index]){<lucide-icon [img]="CheckIcon" size="16" />}
-            @else { {{$index + 1}} }
+      <!-- Progress Bar Active -->
+      <div class="progress-bar-active"
+           [style.width]="((currentStep() - 1) / 3) * 100 + '%'"></div>
+
+      <ng-container *ngFor="let step of [1, 2, 3, 4]; let i = index">
+        <div
+          class="step-item"
+          (click)="navigateToStep(step)"
+        >
+          <div
+            class="step-circle"
+            [ngClass]="{
+              'active': currentStep() === step,
+              'completed': currentStep() > step,
+              'pending': currentStep() < step
+            }"
+          >
+            <ng-container *ngIf="currentStep() > step; else number">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </ng-container>
+            <ng-template #number>{{ step }}</ng-template>
           </div>
-          <span class="step-label">
-            @switch ($index + 1) {
-            @case (1) { Cuenta y Acceso }
-            @case (2) { Empresa }
-            @case (3) { Configuración }
-            @case (4) { Plan }
-            }
-          </span>
         </div>
-        @if ($index < 3) { <div class="step-connector" [class.completed]="stepsCompleted()[$index]">
+      </ng-container>
+    </div>
+
+    <!-- Steps Content -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+
+      <!-- Step 1: Account Info -->
+      <div *ngIf="currentStep() === 1" [@stepAnimation] class="step-content">
+        <app-step-account-info [group]="accountInfo"></app-step-account-info>
       </div>
-      }
-      }
-    </div>
-    <div class="stepper-content" [@stepAnimation]="currentStep()">
-      @switch (currentStep()) {
-      @case (1) { <app-step-account-info [parentForm]="accountInfo" /> }
-      @case (2) { <app-step-business [parentForm]="business" /> }
-      @case (3) { <app-step-configuration [parentForm]="configuration" /> }
-      @case (4) { <app-step-plan [parentForm]="plan" /> }
-      }
-    </div>
-    @if (errorMessage()) {
-    <div class="error-message global-error">{{ errorMessage() }}</div>
-    }
-    <div class="stepper-actions">
-      @if (currentStep() > 1) {
-      <button type="button" class="secondary-button" (click)="prevStep()">
-        <lucide-icon [img]="ArrowLeftIcon" size="16" /><span>Anterior</span>
-      </button>
-      }
-      @if (currentStep() < 4) { <button type="button" class="primary-button" (click)="nextStep()">
-        <span>Siguiente</span><lucide-icon [img]="ArrowRightIcon" size="16" />
+
+      <!-- Step 2: Configuration (Country/Tax) -->
+      <div *ngIf="currentStep() === 2" [@stepAnimation] class="step-content">
+        <app-step-configuration [group]="configuration"></app-step-configuration>
+      </div>
+
+      <!-- Step 3: Business Info -->
+      <div *ngIf="currentStep() === 3" [@stepAnimation] class="step-content">
+        <app-step-business [group]="business"></app-step-business>
+      </div>
+
+      <!-- Step 4: Plan / Confirmation -->
+      <div *ngIf="currentStep() === 4" [@stepAnimation] class="step-content">
+        <app-step-plan [group]="plan"></app-step-plan>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="navigation-buttons">
+        <button
+          type="button"
+          *ngIf="currentStep() > 1"
+          (click)="prevStep()"
+          class="back-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Atrás
         </button>
-        } @else {
-        <button type="button" class="primary-button" (click)="onSubmit()"
-          [disabled]="isRegistering() || !plan.get('agreeToTerms')?.value">
-          @if (isRegistering()) {
-          <span class="spinner"></span><span>Finalizando...</span>
-          } @else {
-          <span>Comenzar Prueba Gratuita</span><lucide-icon [img]="RocketIcon" size="16" />
-          }
-        </button>
-        }
+        <div *ngIf="currentStep() === 1" class="spacer"></div> <!-- Spacer -->
+
+        <div class="next-btn-container" *ngIf="currentStep() < 4">
+            <app-auth-button
+            (onClick)="nextStep()"
+            variant="primary">
+            Siguiente
+            <svg icon xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </app-auth-button>
+        </div>
+
+        <div class="next-btn-container" *ngIf="currentStep() === 4">
+            <app-auth-button
+            type="submit"
+            variant="primary"
+            [loading]="isRegistering()"
+            [disabled]="registerForm.invalid">
+            {{ "REGISTER.SUBMIT_BUTTON" | translate }}
+            </app-auth-button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage()" class="global-error-message animate-fade-in-up">
+       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+       <span>{{ errorMessage() | translate }}</span>
     </div>
-    <p class="form-footer-text">Al crear una cuenta, aceptas nuestros <a href="#" class="link">Términos</a> y <a
-        href="#" class="link">Política de Privacidad</a>.</p>
+
+    <!-- ReCAPTCHA Legal Text -->
+    <p class="recaptcha-legal">
+      This site is protected by reCAPTCHA and the Google
+      <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a> and
+      <a href="https://policies.google.com/terms" target="_blank">Terms of Service</a> apply.
+    </p>
+
   </div>
-</div>
-</div>
+
+  <!-- Footer Actions -->
+  <p footer-actions class="footer-cta">
+    {{ "REGISTER.HAS_ACCOUNT" | translate }}
+    <a [routerLink]="['/', languageService.currentLang(), 'auth', 'login']"
+       class="cta-link">
+       {{ "REGISTER.LOGIN_LINK" | translate }}
+    </a>
+  </p>
+</app-auth-layout>

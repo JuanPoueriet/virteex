@@ -4,6 +4,7 @@ import { Component, OnInit, inject, signal, effect, computed, Injector, runInInj
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { AlertCircle, ArrowLeft, ArrowRight, BarChart2, Check, CheckCircle, LucideAngularModule, Package, Rocket } from 'lucide-angular';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AuthService } from '../../../core/services/auth';
@@ -19,6 +20,9 @@ import { LanguageService } from '../../../core/services/language';
 import { CountryService } from '../../../core/services/country.service';
 import { GeoMismatchModalComponent } from '../../../shared/components/geo-mismatch-modal/geo-mismatch-modal.component';
 import { GeoLocationService } from '../../../core/services/geo-location.service';
+import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
+import { AuthButtonComponent } from '../components/auth-button/auth-button.component';
+import { AuthInputComponent } from '../components/auth-input/auth-input.component';
 
 export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -32,6 +36,7 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    TranslateModule,
     LucideAngularModule,
     RouterLink,
     StepAccountInfo,
@@ -39,7 +44,10 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     StepConfiguration,
     StepPlan,
     RecaptchaV3Module,
-    GeoMismatchModalComponent
+    GeoMismatchModalComponent,
+    AuthLayoutComponent,
+    AuthButtonComponent,
+    AuthInputComponent
   ],
   providers: [
     ReCaptchaV3Service,
