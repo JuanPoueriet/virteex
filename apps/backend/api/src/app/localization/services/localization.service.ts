@@ -52,6 +52,10 @@ export class LocalizationService implements OnModuleInit {
     return this.fiscalRegionRepository.find({ order: { name: 'ASC' } });
   }
 
+  async findById(id: string): Promise<FiscalRegion | null> {
+    return this.fiscalRegionRepository.findOneBy({ id });
+  }
+
   async findRegionByCountryCode(countryCode: string): Promise<FiscalRegion | null> {
       return this.fiscalRegionRepository.findOne({ where: { countryCode }});
   }
