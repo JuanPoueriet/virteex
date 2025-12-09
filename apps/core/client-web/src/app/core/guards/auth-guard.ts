@@ -3,12 +3,14 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { AuthService } from '../services/auth';
+import { LanguageService } from '../services/language';
 import { map, take } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 export const authGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
   const authService = inject(AuthService);
   const router = inject(Router);
+  const languageService = inject(LanguageService);
 
   return authService.checkAuthStatus().pipe(
     take(1),
@@ -16,7 +18,8 @@ export const authGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
       if (isAuthenticated) {
         return true;
       }
-      return router.createUrlTree(['/auth/login']);
+      const lang = languageService.currentLang() || 'es';
+      return router.createUrlTree(['/', lang, 'auth', 'login']);
     })
   );
 };
