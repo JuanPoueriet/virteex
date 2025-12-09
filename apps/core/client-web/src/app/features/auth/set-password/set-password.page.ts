@@ -101,7 +101,7 @@ export class SetPasswordPage implements OnInit {
         next: (token) => {
             this.authService.setPasswordFromInvitation(this.token!, password).subscribe({
                 next: () => {
-                    this.router.navigate(['/app/dashboard']);
+                    this.router.navigate(['/dashboard']);
                 },
                 error: (err: any) => {
                     this.isLoading = false;

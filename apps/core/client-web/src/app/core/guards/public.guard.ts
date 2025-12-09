@@ -18,7 +18,7 @@ export const publicGuard: CanActivateFn = (): Observable<boolean | UrlTree> => {
     map(isAuthenticated => {
       if (isAuthenticated) {
         // Si el usuario está autenticado, crea un UrlTree para redirigir al dashboard.
-        return router.createUrlTree(['/app/dashboard']);
+        return router.createUrlTree(['/dashboard']);
       }
       // Si no está autenticado, permite el acceso a la ruta.
       return true;

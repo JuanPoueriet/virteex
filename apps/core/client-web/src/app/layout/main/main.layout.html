@@ -17,7 +17,7 @@
   <div class="banner-content">
     <strong>¡Atención!</strong> Tu pago está pendiente. Tienes acceso temporal hasta el {{ authService.currentUser()?.organization?.gracePeriodEnd | date:'mediumDate' }}.
   </div>
-  <a routerLink="/app/settings/billing" class="btn-resolve">Resolver Ahora</a>
+  <a routerLink="/settings/billing" class="btn-resolve">Resolver Ahora</a>
 </div>
 
 
@@ -60,26 +60,26 @@
 
     <nav class="topbar-nav">
       <a
-        routerLink="/app/dashboard"
+        routerLink="/dashboard"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         class="nav-link"
       >
         {{ "NAV.DASHBOARD" | translate }}
       </a>
-      <a routerLink="/app/sales" routerLinkActive="active" class="nav-link">
+      <a routerLink="/sales" routerLinkActive="active" class="nav-link">
         {{ "NAV.SALES" | translate }}
       </a>
-      <a routerLink="/app/invoices" routerLinkActive="active" class="nav-link">
+      <a routerLink="/invoices" routerLinkActive="active" class="nav-link">
         {{ "NAV.INVOICES" | translate }}
       </a>
-      <a routerLink="/app/inventory" routerLinkActive="active" class="nav-link">
+      <a routerLink="/inventory" routerLinkActive="active" class="nav-link">
         {{ "NAV.INVENTORY" | translate }}
       </a>
-      <a routerLink="/app/contacts" routerLinkActive="active" class="nav-link">
+      <a routerLink="/contacts" routerLinkActive="active" class="nav-link">
         {{ "NAV.CONTACTS" | translate }}
       </a>
-      <a routerLink="/app/settings" routerLinkActive="active" class="nav-link">
+      <a routerLink="/settings" routerLinkActive="active" class="nav-link">
         {{ "NAV.SETTINGS" | translate }}
       </a>
     </nav>
@@ -196,7 +196,7 @@
             </div>
             <div class="dropdown-body">
               <a
-                routerLink="/app/invoices/new"
+                routerLink="/invoices/new"
                 (click)="closeQuickCreateModal()"
                 class="quick-action-item"
               >
@@ -204,7 +204,7 @@
                 <span>{{ 'ACTIONS.NEW_INVOICE' | translate }}</span>
               </a>
               <a
-                routerLink="/app/quotes/new"
+                routerLink="/quotes/new"
                 (click)="closeQuickCreateModal()"
                 class="quick-action-item"
               >
@@ -212,7 +212,7 @@
                 <span>{{ 'ACTIONS.NEW_QUOTE' | translate }}</span>
               </a>
               <a
-                routerLink="/app/customers/new"
+                routerLink="/customers/new"
                 (click)="closeQuickCreateModal()"
                 class="quick-action-item"
               >
@@ -220,7 +220,7 @@
                 <span>{{ 'ACTIONS.NEW_CUSTOMER' | translate }}</span>
               </a>
               <a
-                routerLink="/app/products/new"
+                routerLink="/products/new"
                 (click)="closeQuickCreateModal()"
                 class="quick-action-item"
               >
@@ -268,7 +268,7 @@
               </div>
               @if(notificationCenter.notifications().length > 0) {
                 <div class="dropdown-footer">
-                  <a routerLink="/app/notifications" (click)="closeNotificationMenu()">{{ 'NOTIFICATIONS.VIEW_ALL' | translate }}</a>
+                  <a routerLink="/notifications" (click)="closeNotificationMenu()">{{ 'NOTIFICATIONS.VIEW_ALL' | translate }}</a>
                 </div>
               }
             </div>
@@ -321,7 +321,7 @@
 
           <div class="dropdown-body">
             <a
-              routerLink="/app/settings/profile"
+              routerLink="/settings/profile"
               class="dropdown-item"
               (click)="closeUserMenu()"
             >
@@ -330,7 +330,7 @@
             </a>
 
             <a
-              routerLink="/app/settings"
+              routerLink="/settings"
               class="dropdown-item"
               (click)="closeUserMenu()"
             >
