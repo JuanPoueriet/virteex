@@ -281,7 +281,7 @@ export class RegisterPage implements OnInit {
         next: (recaptchaToken) => {
             // Handle optional fiscalRegionId: convert empty string to null
             const regionId = formValue.configuration.fiscalRegionId;
-            const finalRegionId = (regionId && regionId.trim() !== '') ? regionId : null;
+            const finalRegionId = (regionId && regionId.trim() !== '') ? regionId : undefined;
 
             const payload: RegisterPayload = {
                 firstName: formValue.accountInfo.firstName,
