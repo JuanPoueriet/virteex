@@ -62,4 +62,8 @@ export class OrganizationsService {
     const org = repo.create(createOrganizationDto);
     return repo.save(org);
   }
+
+  async findByTaxId(taxId: string): Promise<Organization | null> {
+    return this.organizationRepository.findOneBy({ taxId });
+  }
 }

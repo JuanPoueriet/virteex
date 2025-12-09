@@ -1,4 +1,5 @@
 
+import { IsTaxIdValid } from '../../common/validators/tax-id.validator';
 import {
     IsString,
     IsNotEmpty,
@@ -24,6 +25,7 @@ export class RegisterUserDto {
     // Refactored: Renamed from rnc to taxId and removed specific @IsRNC
     @ApiProperty({ example: '131222222', description: 'Tax ID (RNC, RFC, EIN)', required: false })
     @IsString({ message: 'El ID Fiscal debe ser un texto.' })
+    @IsTaxIdValid({ message: 'El ID Fiscal no es válido para la región seleccionada.' })
     @IsOptional()
     taxId?: string;
 
