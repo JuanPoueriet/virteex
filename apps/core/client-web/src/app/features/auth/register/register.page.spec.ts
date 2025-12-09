@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RegisterPage } from './register.page';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthService } from '../../../core/services/auth';
@@ -12,6 +13,7 @@ import { LanguageService } from '../../../core/services/language';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { UsersService } from '../../../core/api/users.service';
 import { GeoLocationService } from '../../../core/services/geo-location.service';
+import { ConfigService, RegistrationOptions } from '../../../shared/services/config.service';
 
 // Import standalone components used in template to ensure they are available
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
@@ -20,6 +22,7 @@ import { StepBusiness } from './steps/step-business/step-business';
 import { StepConfiguration } from './steps/step-configuration/step-configuration';
 import { StepPlan } from './steps/step-plan/step-plan';
 import { AuthButtonComponent } from '../components/auth-button/auth-button.component';
+import { environment } from '../../../../environments/environment';
 
 // Fake Loader for Translate
 class FakeLoader implements TranslateLoader {
@@ -41,9 +44,9 @@ class MockCountryService {
   currentCountry = jest.fn().mockReturnValue({ code: 'DO', currencyCode: 'DOP', name: 'Dominican Republic', formSchema: {} });
   currentCountryCode = jest.fn().mockReturnValue('do');
   detectAndSetCountry = jest.fn();
+  getCountryConfig = jest.fn().mockReturnValue(of({}));
+  lookupTaxId = jest.fn().mockReturnValue(of(null));
 }
-// Removed MockTranslateService in favor of FakeLoader
-
 class MockUsersService {
     updateUser = jest.fn().mockReturnValue(of({}));
 }
@@ -56,9 +59,17 @@ class MockGeoLocationService {
     mismatchSignal = jest.fn().mockReturnValue(null);
 }
 
+class MockConfigService {
+    getRegistrationOptions = jest.fn().mockReturnValue(of({
+        industries: ['tech'],
+        companySizes: ['1-10']
+    }));
+}
+
 describe('RegisterPage', () => {
   let component: RegisterPage;
   let fixture: ComponentFixture<RegisterPage>;
+  let httpMock: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -82,16 +93,21 @@ describe('RegisterPage', () => {
         { provide: AuthService, useClass: MockAuthService },
         { provide: ReCaptchaV3Service, useClass: MockRecaptchaService },
         { provide: CountryService, useClass: MockCountryService },
-        // TranslateService provided by module
         { provide: UsersService, useClass: MockUsersService },
         { provide: LanguageService, useClass: MockLanguageService },
-        { provide: GeoLocationService, useClass: MockGeoLocationService }
+        { provide: GeoLocationService, useClass: MockGeoLocationService },
+        { provide: ConfigService, useClass: MockConfigService }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should create', () => {
@@ -104,7 +120,7 @@ describe('RegisterPage', () => {
     expect(component.configuration.get('currency')?.value).toBe('DOP');
   });
 
-  it('should validate required fields', () => {
+  it('should validate required fields', fakeAsync(() => {
     const accountInfo = component.accountInfo;
 
     // Check initial invalid state
@@ -121,7 +137,20 @@ describe('RegisterPage', () => {
       }
     });
 
+    // Advance time for async validator debounce/timer (500ms)
+    tick(500);
+
+    // Expect the HTTP request for email validation
+    const req = httpMock.expectOne(`${environment.apiUrl}/common/users/exists?email=test@example.com`);
+    expect(req.request.method).toBe('HEAD');
+
+    // Respond with 404 (User not found -> Valid for registration)
+    req.flush(null, { status: 404, statusText: 'Not Found' });
+
+    // Update validity
+    fixture.detectChanges();
+
     // Should be valid now
     expect(accountInfo.valid).toBeTruthy();
-  });
+  }));
 });
