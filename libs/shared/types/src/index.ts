@@ -1,1 +1,1 @@
-export * from './enums/registration.enums';
+export * from './lib/enums/registration.enums';
