@@ -6,6 +6,7 @@ import { AuthFacade } from './auth.facade';
 import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { WebAuthnService } from './services/webauthn.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { RequestWithUser } from './interfaces/request-with-user.interface';
 import { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -122,9 +123,9 @@ export class AuthController {
   }
 
   @Post('register')
+  @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Register a new user and organization' })
   @ApiResponse({ status: 201, description: 'User successfully registered.', type: AuthResponseDto })
-  @UseGuards(GoogleRecaptchaGuard)
   @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async register(
     @Body() registerUserDto: RegisterUserDto,

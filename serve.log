@@ -1,0 +1,106 @@
+
+> nx run client-web:serve:development --port 4200
+
+[33m❯[39m Building...
+[32m✔[39m Building...
+[37mApplication bundle generation failed. [19.340 seconds] - 2025-12-09T03:19:42.454Z[39m
+[37m[39m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/app.ts:16:56:[39m[22m
+[1m[33m[37m      16 │ ...omponent, CommonModule, [32mLoaderComponent[37m, GeoMismatchModalCompon...[39m[22m
+[1m[33m         ╵                            [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: RouterLink is not used within the template of AccountFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/accounting/account-form/account-form.page.ts:15:47:[39m[22m
+[1m[33m[37m      15 │ ...mmonModule, ReactiveFormsModule, [32mRouterLink[37m, LucideAngularModule],[39m[22m
+[1m[33m         ╵                                     [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: GeoMismatchModalComponent is not used within the template of RegisterPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:47:4:[39m[22m
+[1m[33m[37m      47 │     [32mGeoMismatchModalComponent[37m,[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AuthInputComponent is not used within the template of RegisterPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:50:4:[39m[22m
+[1m[33m[37m      50 │     [32mAuthInputComponent[37m[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of ProductFormPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/inventory/product-form/product-form.page.ts:14:80:[39m[22m
+[1m[33m[37m      14 │ ...ReactiveFormsModule, LucideAngularModule, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113:[39m[22m[1m[33m RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/invoices/detail/detail.page.ts:12:47:[39m[22m
+[1m[33m[37m      12 │   imports: [CommonModule, LucideAngularModule, [32mRouterLink[37m],[39m[22m
+[1m[33m         ╵                                                [32m~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: HasPermissionDirective is not used within the template of TaxesPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/masters/taxes/taxes.page.ts:13:59:[39m[22m
+[1m[33m[37m      13 │ ...nModule, LucideAngularModule, RouterLink, [32mHasPermissionDirective[37m],[39m[22m
+[1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of SettingsLayout[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/settings/layout/settings.layout.ts:40:4:[39m[22m
+[1m[33m[37m      40 │     [32mLoaderComponent[37m[39m[22m
+[1m[33m         ╵     [32m~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[33m[39m[22m
+[1m[33m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../../../shared/services/config.service' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    apps/core/client-web/src/app/features/auth/register/steps/step-business/step-business.component.ts:6:51:[39m[22m
+[1m[31m[37m      6 │ ...nOptions } from [32m'../../../../../../shared/services/config.service'[37m;[39m[22m
+[1m[31m        ╵                    [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'getRegistrationOptions' does not exist on type 'unknown'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    apps/core/client-web/src/app/features/auth/register/steps/step-business/step-business.component.ts:114:25:[39m[22m
+[1m[31m[37m      114 │       this.configService.[32mgetRegistrationOptions[37m().subscribe({[39m[22m
+[1m[31m          ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2305: Module '"@virteex/shared/types"' has no exported member 'Industry'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:4:9:[39m[22m
+[1m[31m[37m      4 │ import { [32mIndustry[37m, CompanySize } from '@virteex/shared/types';[39m[22m
+[1m[31m        ╵          [32m~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2305: Module '"@virteex/shared/types"' has no exported member 'CompanySize'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:4:19:[39m[22m
+[1m[31m[37m      4 │ import { Industry, [32mCompanySize[37m } from '@virteex/shared/types';[39m[22m
+[1m[31m        ╵                    [32m~~~~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../environments/environment' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:5:28:[39m[22m
+[1m[31m[37m      5 │ import { environment } [39m[22m[1m[31mfrom [32m'../../../../environments/environment'[37m;[39m[22m
+[1m[31m        ╵                             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './enums/registration.enums' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m    libs/shared/types/src/index.ts:1:14:[39m[22m
+[1m[31m[37m      1 │ export * from [32m'./enums/registration.enums'[37m;[39m[22m
+[1m[31m        ╵               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[37mWatch mode enabled. Watching for file changes...[39m
