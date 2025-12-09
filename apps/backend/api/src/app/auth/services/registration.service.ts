@@ -1,11 +1,14 @@
 
-import { ConflictException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, Logger, ForbiddenException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { GoogleRecaptchaValidator } from '@nestlab/google-recaptcha';
 
 import { RegisterUserDto } from '../dto/register-user.dto';
+import { RegistrationStrategyFactory } from '../strategies/registration/registration-strategy.factory';
+import { LocalizationService } from '../../localization/services/localization.service';
 import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { Role } from '../../roles/entities/role.entity';
@@ -26,6 +29,9 @@ export class RegistrationService {
     private readonly organizationsService: OrganizationsService,
     private readonly mailService: MailService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly recaptchaValidator: GoogleRecaptchaValidator,
+    private readonly registrationStrategyFactory: RegistrationStrategyFactory,
+    private readonly localizationService: LocalizationService,
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>
   ) {}
@@ -43,7 +49,29 @@ export class RegistrationService {
       companySize, // New field
       address, // New field
       fax, // Honeypot
+      recaptchaToken
     } = registerUserDto;
+
+    // Validate ReCaptcha
+    const recaptchaResult = await this.recaptchaValidator.validate({
+        response: recaptchaToken,
+        score: 0.5, // Minimum score for v3
+        action: 'register'
+    });
+
+    if (!recaptchaResult.success) {
+        this.logger.warn(`Recaptcha validation failed for ${email}: ${JSON.stringify(recaptchaResult.errors)}`);
+        throw new ForbiddenException('Error de validación de seguridad (reCAPTCHA).');
+    }
+
+    // Strategy Pattern Validation
+    if (fiscalRegionId) {
+       const region = await this.localizationService.findById(fiscalRegionId);
+       if (region) {
+          const strategy = this.registrationStrategyFactory.getStrategy(region.countryCode);
+          await strategy.validate(registerUserDto);
+       }
+    }
 
     // Honeypot check: if 'fax' is populated, it's likely a bot.
     if (fax) {

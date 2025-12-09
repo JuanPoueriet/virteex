@@ -12,6 +12,9 @@ import { User } from '../../users/entities/user.entity/user.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { RoleEnum } from '../../roles/enums/role.enum';
 import { RegisterUserDto } from '../dto/register-user.dto';
+import { GoogleRecaptchaValidator } from '@nestlab/google-recaptcha';
+import { RegistrationStrategyFactory } from '../strategies/registration/registration-strategy.factory';
+import { LocalizationService } from '../../localization/services/localization.service';
 
 describe('RegistrationService', () => {
   let service: RegistrationService;
@@ -51,6 +54,18 @@ describe('RegistrationService', () => {
       findOne: jest.fn()
   };
 
+  const mockRecaptchaValidator = {
+      validate: jest.fn().mockResolvedValue({ success: true, errors: [] })
+  };
+
+  const mockStrategyFactory = {
+      getStrategy: jest.fn().mockReturnValue({ validate: jest.fn().mockResolvedValue(true) })
+  };
+
+  const mockLocalizationService = {
+      findById: jest.fn().mockResolvedValue({ countryCode: 'DO' })
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,6 +75,9 @@ describe('RegistrationService', () => {
         { provide: MailService, useValue: mockMailService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: getRepositoryToken(Organization), useValue: mockOrganizationRepo },
+        { provide: GoogleRecaptchaValidator, useValue: mockRecaptchaValidator },
+        { provide: RegistrationStrategyFactory, useValue: mockStrategyFactory },
+        { provide: LocalizationService, useValue: mockLocalizationService },
       ],
     }).compile();
 
