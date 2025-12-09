@@ -375,7 +375,7 @@ export class UsersService {
       // For the full list of organizations (which can be heavy), we select ONLY the ID and Name
       // This is crucial for multi-tenancy validation performance
       .leftJoin('user.organizations', 'orgs')
-      .addSelect(['orgs.id', 'orgs.name'])
+      .addSelect(['orgs.id', 'orgs.legalName'])
       .getOne();
   }
 
