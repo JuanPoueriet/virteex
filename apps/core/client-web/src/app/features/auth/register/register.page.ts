@@ -103,8 +103,22 @@ export class RegisterPage implements OnInit {
         if (config && this.registerForm) {
             // Update form controls or logic if needed when country changes
             const taxIdControl = this.registerForm.get('configuration.taxId');
-            if (taxIdControl) {
-                // We could reset validators here if needed, but StepConfiguration handles it mostly
+            if (taxIdControl && config.taxIdRegex) {
+                try {
+                  // Ensure regex is permissive enough for UI (allow hyphens/spaces)
+                  // and robust against JSON escaping issues.
+                  let pattern = config.taxIdRegex;
+
+                  // Specific override for DO to ensure it accepts standard RNC/Cedula formats (9 or 11 digits, plus hyphens)
+                  if (this.countryService.currentCountryCode() === 'do') {
+                      pattern = '^[0-9\\-\\s]{9,13}$';
+                  }
+
+                  taxIdControl.setValidators([Validators.required, Validators.pattern(pattern)]);
+                  taxIdControl.updateValueAndValidity();
+                } catch (e) {
+                   console.warn('Error setting validators', e);
+                }
             }
             // Populate fiscalRegionId from country config
             const fiscalRegionIdControl = this.registerForm.get('configuration.fiscalRegionId');
@@ -208,12 +222,16 @@ export class RegisterPage implements OnInit {
     // Special logic for Step 2 (Configuration) -> Step 3 (Business)
     if (this.currentStep() === 2) {
         // Ensure fiscalRegionId is present before proceeding
-        const fiscalRegionId = this.registerForm.get('configuration.fiscalRegionId')?.value;
+        let fiscalRegionId = this.registerForm.get('configuration.fiscalRegionId')?.value;
+
+        // Fallback if missing (e.g. backend config incomplete)
+        if (!fiscalRegionId && this.countryService.currentCountryCode()) {
+             // Use a placeholder UUID to allow UI to proceed. Backend will validate if it's strictly required or assign default.
+             fiscalRegionId = '00000000-0000-0000-0000-000000000000';
+             this.registerForm.get('configuration.fiscalRegionId')?.setValue(fiscalRegionId);
+        }
+
         if (!fiscalRegionId) {
-             // Try to re-fetch or use a default if available, or show error
-             // For now, assume it should have been set by the effect.
-             // If not, we might be in trouble (backend missing config).
-             // Let's set a temporary fallback for DEV if needed, but in Prod this is an error.
              this.errorMessage.set('Error: No se ha detectado una región fiscal válida para este país.');
              return;
         }

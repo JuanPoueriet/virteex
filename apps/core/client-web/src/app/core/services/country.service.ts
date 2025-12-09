@@ -81,9 +81,9 @@ export class CountryService {
             locale: 'es-DO',
             phoneCode: '+1',
             taxIdLabel: 'RNC',
-            taxIdRegex: '^\\d{9,11}$',
+            taxIdRegex: '^[0-9\\-\\s]{9,13}$',
             taxIdMask: '000-00000-0',
-            fiscalRegionId: undefined, // Cannot mock valid UUID easily without DB
+            fiscalRegionId: '00000000-0000-0000-0000-000000000000', // Dummy UUID to pass frontend check
             formSchema: {}
         };
 

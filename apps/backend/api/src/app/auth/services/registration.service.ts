@@ -63,8 +63,14 @@ export class RegistrationService {
       }
 
       if (taxId) {
+        // Scope Tax ID uniqueness by Fiscal Region to allow same ID in different countries
+        const whereClause: any = { taxId: taxId };
+        if (fiscalRegionId) {
+            whereClause.fiscalRegionId = fiscalRegionId;
+        }
+
         const existingOrg = await queryRunner.manager.findOne(Organization, {
-          where: { taxId: taxId },
+          where: whereClause,
         });
         if (existingOrg) {
           throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
