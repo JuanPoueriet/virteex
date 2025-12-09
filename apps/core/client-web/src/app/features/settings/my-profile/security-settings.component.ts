@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { NotificationService } from '../../../core/services/notification';
 import { DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 
 interface Session {
   id: string;
@@ -213,14 +214,14 @@ export class SecuritySettingsComponent implements OnInit {
     }
 
     loadSessions() {
-        this.http.get<Session[]>('/api/v1/auth/sessions').subscribe({
+        this.http.get<Session[]>(`${environment.apiUrl}/auth/sessions`).subscribe({
             next: (data) => this.sessions.set(data),
             error: () => this.notificationService.showError('Error al cargar sesiones.')
         });
     }
 
     revokeSession(id: string) {
-        this.http.post(`/api/v1/auth/sessions/${id}/revoke`, {}).subscribe({
+        this.http.post(`${environment.apiUrl}/auth/sessions/${id}/revoke`, {}).subscribe({
             next: () => {
                 this.notificationService.showSuccess('Sesión cerrada.');
                 this.loadSessions();
@@ -230,7 +231,7 @@ export class SecuritySettingsComponent implements OnInit {
     }
 
     enable2fa() {
-        this.http.post<any>('/api/v1/auth/2fa/generate', {}).subscribe({
+        this.http.post<any>(`${environment.apiUrl}/auth/2fa/generate`, {}).subscribe({
             next: (res) => {
                 this.secretKey = res.secret; // Only use the secret for display
                 // res.otpauthUrl is ignored to prevent external API leak
@@ -242,7 +243,7 @@ export class SecuritySettingsComponent implements OnInit {
 
     confirm2fa() {
         if (!this.setupTokenControl.value) return;
-        this.http.post<any>('/api/v1/auth/2fa/enable', { token: this.setupTokenControl.value }).subscribe({
+        this.http.post<any>(`${environment.apiUrl}/auth/2fa/enable`, { token: this.setupTokenControl.value }).subscribe({
             next: (res) => {
                 this.notificationService.showSuccess('2FA Activado exitosamente.');
                 this.is2faEnabled.set(true);
@@ -258,7 +259,7 @@ export class SecuritySettingsComponent implements OnInit {
 
     disable2fa() {
         if(!confirm('¿Estás seguro? Tu cuenta será menos segura.')) return;
-        this.http.post('/api/v1/auth/2fa/disable', {}).subscribe({
+        this.http.post(`${environment.apiUrl}/auth/2fa/disable`, {}).subscribe({
             next: () => {
                 this.notificationService.showSuccess('2FA Desactivado.');
                 this.is2faEnabled.set(false);
@@ -269,7 +270,7 @@ export class SecuritySettingsComponent implements OnInit {
     }
 
     generateBackupCodes() {
-        this.http.post<any>('/api/v1/auth/2fa/backup-codes/generate', {}).subscribe({
+        this.http.post<any>(`${environment.apiUrl}/auth/2fa/backup-codes/generate`, {}).subscribe({
             next: (res) => {
                 this.backupCodes = res.codes;
                 this.showBackupCodes.set(true);

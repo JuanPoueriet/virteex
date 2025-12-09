@@ -111,6 +111,9 @@
       <div class="card">
         <div class="card-body">
           <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+            <!-- Accessibility: Hidden username field -->
+            <input type="text" name="username" autocomplete="username" hidden style="display:none">
+
             <div class="form-field">
               <label for="currentPassword">Contraseña Actual</label>
               <input

@@ -32,6 +32,8 @@ describe('PushNotificationService', () => {
     const spy = jest.spyOn(console, 'warn');
     service.subscribeToNotifications();
     expect(swPush.requestSubscription).not.toHaveBeenCalled();
-    expect(spy).toHaveBeenCalledWith('Push notifications are not enabled (Service Worker not active).');
+    // Warning is suppressed in test/dev environment by default logic modification
+    // So we expect it NOT to be called, unless we mock environment.production = true
+    expect(spy).not.toHaveBeenCalled();
   });
 });

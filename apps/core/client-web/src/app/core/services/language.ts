@@ -113,9 +113,8 @@ export class LanguageService {
    */
   private async syncWithUserProfile(userId: string, lang: string): Promise<void> {
     try {
-      // ✅ CORRECCIÓN: Se cambió .update() por .updateUser()
       await firstValueFrom(
-        this.usersService.updateUser(userId, { preferredLanguage: lang })
+        this.usersService.updateProfile({ preferredLanguage: lang })
       );
       console.log(`Preferencia de idioma del usuario ${userId} sincronizada a '${lang}'.`);
     } catch (error) {

@@ -14,7 +14,9 @@ export class PushNotificationService {
 
   subscribeToNotifications() {
     if (!this.swPush.isEnabled) {
-      console.warn('Push notifications are not enabled (Service Worker not active).');
+      if (environment.production) {
+          console.warn('Push notifications are not enabled (Service Worker not active).');
+      }
       return;
     }
     this.swPush.requestSubscription({
