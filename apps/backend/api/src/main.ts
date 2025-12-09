@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -67,6 +68,7 @@ async function bootstrap() {
   }
 
   const port = configService.get<number>('PORT', 3000);
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   await app.listen(port);
   console.log(`🚀 Application is running on: ${await app.getUrl()}/${apiPrefix}`);
 }
