@@ -183,8 +183,14 @@ export class RegisterPage implements OnInit {
   }
 
   ngOnInit(): void {
-    // Iniciar detección de país
-    this.countryService.detectAndSetCountry();
+    // Check if we have a country in the route
+    const routeCountry = this.activatedRoute.parent?.parent?.snapshot.paramMap.get('country') ||
+                         this.activatedRoute.parent?.snapshot.paramMap.get('country');
+
+    if (!routeCountry) {
+      // Iniciar detección de país only if not in a country-specific route
+      this.countryService.detectAndSetCountry();
+    }
 
     this.registerForm = this.fb.group({
       fax: [''], // Honeypot antispam

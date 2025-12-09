@@ -4,19 +4,31 @@
     <p class="text-sm text-text-secondary">{{ 'REGISTER.STEPS.CONFIGURATION.SUBTITLE' | translate }}</p>
   </div>
 
-  <!-- Country & Currency Info (Read-Only) -->
-  <div class="flex gap-4 p-4 rounded-xl bg-bg-secondary border border-border-color mb-4">
-    <div class="flex items-center gap-2 text-sm">
-        <span class="text-text-tertiary">{{ 'REGISTER.COUNTRY' | translate }}:</span>
-        <span class="font-medium text-text-primary flex items-center gap-1">
-            <img [src]="'assets/flags/' + (countryService.currentCountryCode() || 'do').toLowerCase() + '.svg'" class="w-4 h-4 rounded-sm object-cover" (error)="onFlagError($event)">
-            {{ countryService.currentCountry()?.name }}
-        </span>
+  <!-- Country Selector & Currency Info -->
+  <div class="flex flex-col gap-4 mb-4">
+    <!-- Country Selector -->
+    <div class="form-group">
+      <label class="block text-sm font-medium text-text-primary mb-1">
+        {{ 'REGISTER.COUNTRY' | translate }}
+      </label>
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <img [src]="'assets/flags/' + (countryService.currentCountryCode() || 'do').toLowerCase() + '.svg'" class="w-4 h-4 rounded-sm object-cover" (error)="onFlagError($event)">
+        </div>
+        <select
+          formControlName="country"
+          (change)="onCountryChange($event)"
+          class="pl-10 block w-full rounded-lg border-border-color bg-input-bg text-text-primary shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-2"
+        >
+          <option *ngFor="let c of countries" [value]="c.code">{{ c.name }}</option>
+        </select>
+      </div>
     </div>
-    <div class="w-px h-4 bg-border-color my-auto"></div>
-    <div class="flex items-center gap-2 text-sm">
-        <span class="text-text-tertiary">{{ 'REGISTER.CURRENCY' | translate }}:</span>
-        <span class="font-medium text-text-primary">{{ countryService.currentCountry()?.currencyCode }}</span>
+
+    <!-- Currency Display (Read-Only) -->
+    <div class="flex items-center gap-2 text-sm p-3 rounded-lg bg-bg-secondary border border-border-color">
+      <span class="text-text-tertiary">{{ 'REGISTER.CURRENCY' | translate }}:</span>
+      <span class="font-medium text-text-primary">{{ countryService.currentCountry()?.currencyCode }}</span>
     </div>
   </div>
 
