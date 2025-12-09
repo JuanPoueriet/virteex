@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/services/auth';
 import { UsersService } from '../../../core/api/users.service';
 import { NotificationService } from '../../../core/services/notification';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 class MockAuthService {
@@ -32,7 +33,7 @@ describe('MyProfilePage', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MyProfilePage, BrowserAnimationsModule],
+      imports: [MyProfilePage, BrowserAnimationsModule, HttpClientTestingModule],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: UsersService, useClass: MockUsersService },
