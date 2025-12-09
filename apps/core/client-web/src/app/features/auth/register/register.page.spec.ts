@@ -51,6 +51,13 @@ class MockUsersService {
     updateUser = jest.fn().mockReturnValue(of({}));
 }
 class MockLanguageService {
+    // The component accesses languageService.currentLang() as a Signal.
+    // In the template it is accessed as function call {{ languageService.currentLang() }}
+    // The previous error "Cannot read properties of undefined (reading 'currentLang')"
+    // implies it might be accessed differently or the injection is missing.
+    // However, looking at the template: [routerLink]="['/', languageService.currentLang(), 'auth', 'login']"
+    // Since LanguageService is injected as public property, we just need to ensure the mock has the method.
+    // If it's a Signal, it's a function.
     currentLang = jest.fn().mockReturnValue('es');
 }
 
@@ -74,17 +81,14 @@ describe('RegisterPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        RegisterPage,
+        RegisterPage, // Standalone
         NoopAnimationsModule,
         TranslateModule.forRoot({
             loader: { provide: TranslateLoader, useClass: FakeLoader }
         }),
-        AuthLayoutComponent,
-        StepAccountInfo,
-        StepBusiness,
-        StepConfiguration,
-        StepPlan,
-        AuthButtonComponent
+        // Mock components that might be in the template but not mocked
+        // Actually they are imports in RegisterPage, so they are used.
+        // We can override them if they are complex, but for now importing them via RegisterPage is fine.
       ],
       providers: [
         provideHttpClient(),
@@ -102,6 +106,12 @@ describe('RegisterPage', () => {
 
     fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
+
+    // Explicitly inject LanguageService to debug
+    const langService = TestBed.inject(LanguageService);
+    // Ensure the public property on component is set if it wasn't auto-injected (though inject() handles it)
+    // component.languageService = langService; // inject() handles this.
+
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
   });
@@ -116,6 +126,9 @@ describe('RegisterPage', () => {
 
   it('should initialize form with default country values', () => {
     expect(component.registerForm).toBeDefined();
+    // In MockCountryService we return 'DO'
+    // effect() runs asynchronously or during change detection.
+    // We called fixture.detectChanges() in beforeEach.
     expect(component.configuration.get('country')?.value).toBe('DO');
     expect(component.configuration.get('currency')?.value).toBe('DOP');
   });
