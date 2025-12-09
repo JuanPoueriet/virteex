@@ -1,7 +1,8 @@
 
 import { CreateTaxDto } from "../../taxes/dto/create-tax.dto";
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from "typeorm";
 import { LocalizationTemplate } from "./localization-template.entity";
+import { FiscalRegion } from "./fiscal-region.entity";
 
 @Entity({ name: 'tax_templates' })
 export class TaxTemplate {
@@ -11,9 +12,18 @@ export class TaxTemplate {
     @Column()
     countryCode: string;
 
-    @Column({ type: 'jsonb' })
-    taxes: CreateTaxDto[];
+    @Column()
+    name: string; // Added name for identification
+
+    @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+    rate: number;
+
+    @Column({ default: 'VAT' })
+    type: string;
 
     @ManyToOne(() => LocalizationTemplate, template => template.taxTemplates)
     template: LocalizationTemplate;
+
+    @ManyToMany(() => FiscalRegion, region => region.defaultTaxes)
+    fiscalRegions: FiscalRegion[];
 }

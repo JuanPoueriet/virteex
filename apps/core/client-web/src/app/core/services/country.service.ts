@@ -1,7 +1,7 @@
 import { Injectable, signal, inject, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { catchError, Observable, of, tap } from 'rxjs';
+import { catchError, Observable, of, tap, map } from 'rxjs';
 import { GeoLocationService } from './geo-location.service';
 
 export interface CountryConfig {
@@ -14,7 +14,7 @@ export interface CountryConfig {
   taxIdLabel: string;
   taxIdRegex: string;
   taxIdMask: string;
-  fiscalRegionId?: string; // UUID of the fiscal region
+  fiscalRegionId?: string; // UUID real de la base de datos
   formSchema: any;
 }
 
@@ -25,81 +25,93 @@ export class CountryService {
   private http = inject(HttpClient);
   private geoLocation = inject(GeoLocationService);
 
-  // Signal que mantiene la configuración actual
+  // Signal que mantiene la configuración actual del país detectado o seleccionado
   currentCountry = signal<CountryConfig | null>(null);
   
-  // Computed para obtener solo el código de manera segura (fallback a 'do' si aún carga)
+  // Computed para obtener solo el código de manera segura (fallback a 'do' por defecto comercial)
   currentCountryCode = computed(() => this.currentCountry()?.code.toLowerCase() || 'do');
 
   /**
-   * Detecta el país desde el backend y actualiza la señal.
-   * Debe llamarse al iniciar componentes críticos como el Login.
+   * 1. Detecta la ubicación del usuario vía IP (GeoIP).
+   * 2. Llama al Backend para obtener la configuración fiscal REAL de ese país.
    */
   detectAndSetCountry(): void {
-    this.geoLocation.getGeoLocation().subscribe((res) => {
-      if (res.country) {
-        // Obtenemos la configuración completa basada en el código detectado por el backend
-        this.getCountryConfig(res.country).subscribe();
+    this.geoLocation.getGeoLocation().subscribe({
+      next: (res) => {
+        if (res && res.country) {
+          this.getCountryConfig(res.country).subscribe();
+        } else {
+          // Fallback por defecto si falla la GeoIP: República Dominicana
+          this.getCountryConfig('DO').subscribe();
+        }
+      },
+      error: () => {
+        // Si falla GeoIP, usar defecto
+        this.getCountryConfig('DO').subscribe();
       }
     });
   }
 
+  /**
+   * Obtiene la configuración desde el API.
+   * CRÍTICO: Obtiene el fiscalRegionId real de la BD para validaciones correctas.
+   */
   getCountryConfig(code: string): Observable<CountryConfig> {
     const cached = this.currentCountry();
-    // Si ya tenemos ese país cargado, no hacemos fetch
+
+    // Evitar llamadas duplicadas si ya tenemos la config
     if (cached && cached.code.toLowerCase() === code.toLowerCase()) {
       return of(cached);
     }
 
-    return this.http.get<CountryConfig>(`${environment.apiUrl}/localization/config/${code}`).pipe(
-      tap(config => {
-        // Map backend response
-        const mappedConfig: CountryConfig = {
-           code: config['countryCode'] || code,
-           name: config['name'] || code,
-           currencyCode: config['currency'] || 'USD',
-           currencySymbol: '$',
-           locale: 'es-DO',
-           phoneCode: '+1',
-           taxIdLabel: config['taxIdLabel'] || 'Tax ID',
-           taxIdRegex: config['taxIdRegex'] || '.*',
-           taxIdMask: config['taxIdMask'] || '',
-           fiscalRegionId: config['fiscalRegionId'], // Backend must return this!
-           formSchema: {}
+    return this.http.get<any>(`${environment.apiUrl}/localization/config/${code}`).pipe(
+      map(backendConfig => {
+        // Mapeo robusto de la respuesta del backend
+        const config: CountryConfig = {
+           code: backendConfig.countryCode || code.toUpperCase(),
+           name: backendConfig.name || code.toUpperCase(),
+           currencyCode: backendConfig.currency || 'USD',
+           currencySymbol: backendConfig.currency === 'USD' ? '$' : (backendConfig.currency === 'DOP' ? 'RD$' : '$'),
+           locale: backendConfig.locale || 'es-419', // Default LatAm Spanish
+           phoneCode: backendConfig.phoneCode || '',
+           taxIdLabel: backendConfig.taxIdLabel || 'Tax ID',
+           taxIdRegex: backendConfig.taxIdRegex || '.*',
+           taxIdMask: backendConfig.taxIdMask || '',
+           // CRÍTICO: Aquí asignamos el UUID real que viene de la BD.
+           // Si es undefined, el formulario no enviará basura.
+           fiscalRegionId: backendConfig.fiscalRegionId,
+           formSchema: backendConfig.formSchema || {}
         };
-        this.currentCountry.set(mappedConfig);
+        return config;
       }),
-      catchError(() => {
-        console.warn('Backend inalcanzable, usando mock local para:', code);
-        
-        // Mock básico para fallback
-        let mock: CountryConfig = {
-            code: 'do',
-            name: 'República Dominicana',
-            currencyCode: 'DOP',
-            currencySymbol: 'RD$',
-            locale: 'es-DO',
-            phoneCode: '+1',
-            taxIdLabel: 'RNC',
-            taxIdRegex: '^[0-9\\-\\s]{9,13}$',
-            taxIdMask: '000-00000-0',
-            fiscalRegionId: '00000000-0000-0000-0000-000000000000', // Dummy UUID to pass frontend check
+      tap(config => {
+        console.log(`[Localization] Configuración cargada para ${config.name}`, config);
+        this.currentCountry.set(config);
+      }),
+      catchError(err => {
+        console.error('Error crítico obteniendo configuración regional:', err);
+        // En un entorno PROD SaaS, aquí deberíamos notificar al usuario o reintentar.
+        // Retornamos un objeto mínimo seguro para no romper la UI, pero SIN IDs falsos.
+        const safeFallback: CountryConfig = {
+            code: code.toUpperCase(),
+            name: code.toUpperCase(),
+            currencyCode: 'USD',
+            currencySymbol: '$',
+            locale: 'en-US',
+            phoneCode: '',
+            taxIdLabel: 'Tax ID',
+            taxIdRegex: '.*',
+            taxIdMask: '',
+            fiscalRegionId: undefined, // Importante: undefined es mejor que un UUID inválido
             formSchema: {}
         };
-
-        if (code.toLowerCase() === 'co') {
-             mock = { ...mock, code: 'co', name: 'Colombia', currencyCode: 'COP', currencySymbol: '$', phoneCode: '+57', taxIdLabel: 'NIT' };
-        } else if (code.toLowerCase() === 'us') {
-             mock = { ...mock, code: 'us', name: 'United States', currencyCode: 'USD', currencySymbol: '$', phoneCode: '+1', locale: 'en-US', taxIdLabel: 'EIN' };
-        }
-
-        this.currentCountry.set(mock);
-        return of(mock);
+        this.currentCountry.set(safeFallback);
+        return of(safeFallback);
       })
     );
   }
 
-  // Helper to fetch details for tax ID
+  // Validación remota contra la DGII (DO) u otros servicios gubernamentales
   lookupTaxId(taxId: string, countryCode: string): Observable<any> {
       return this.http.get<any>(`${environment.apiUrl}/localization/lookup/${taxId}?country=${countryCode}`);
   }
