@@ -35,6 +35,18 @@ export class AuditTrailService {
     });
   }
 
+  async getLastLogin(userId: string): Promise<AuditLog | null> {
+    return this.auditLogRepository.findOne({
+      where: {
+        userId,
+        actionType: ActionType.LOGIN, // Filtramos solo eventos de login
+      },
+      order: {
+        timestamp: 'DESC', // Obtenemos el más reciente
+      },
+    });
+  }
+
   async find(entity?: string, entityId?: string): Promise<AuditLog[]> {
     return this.auditLogRepository.find({
         where: {
@@ -46,4 +58,6 @@ export class AuditTrailService {
         }
     });
   }
+
+  
 }

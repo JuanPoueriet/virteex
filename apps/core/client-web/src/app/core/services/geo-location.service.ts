@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { of, catchError, Observable, timer, switchMap } from 'rxjs';
+import { of, catchError, Observable, timer, switchMap, filter } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Router, NavigationStart } from '@angular/router'; // 1. Importar Router y eventos
 
 export interface GeoLocationResponse {
   country: string | null;
@@ -13,25 +14,26 @@ export interface GeoLocationResponse {
 })
 export class GeoLocationService {
   private http = inject(HttpClient);
+  private router = inject(Router); // 2. Inyectar Router
 
-  // SIGNAL FOR MODAL STATE
-  // This signal allows any component (like the modal itself) to know if there is a mismatch
   mismatchSignal = signal<{ detected: string, current: string } | null>(null);
 
-  // DEBUG / SIMULATION
-  // Set to null to strictly use backend source of truth
   private readonly SIMULATE_COUNTRY_CODE: string | null = null;
 
-  /**
-   * Fetches the real location from the backend.
-   * Applies simulation override if set (for dev purposes only).
-   */
+  constructor() {
+    // 3. Limpiar la señal cada vez que inicia una navegación
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationStart)
+    ).subscribe(() => {
+      this.mismatchSignal.set(null);
+    });
+  }
+
   getGeoLocation(): Observable<GeoLocationResponse> {
     if (this.SIMULATE_COUNTRY_CODE) {
       return of({ country: this.SIMULATE_COUNTRY_CODE, ip: '0.0.0.0 (simulated)' });
     }
 
-    // Backend endpoint
     return this.http.get<GeoLocationResponse>(`${environment.apiUrl}/geo/location`).pipe(
         catchError(() => {
             return of({ country: null, ip: '' });
@@ -39,22 +41,26 @@ export class GeoLocationService {
     );
   }
 
-  /**
-   * Detects location and compares it with the current route country.
-   * If mismatch, updates the signal after a delay to ensure UI is rendered.
-   */
   checkAndNotifyMismatch(routeCountryCode: string) {
-    // If routeCountryCode is empty or invalid, ignore
     if (!routeCountryCode) return;
 
-    // We add a delay to ensure the page has rendered fully and the user experience is smooth.
     timer(2000).pipe(
         switchMap(() => this.getGeoLocation())
     ).subscribe(response => {
+      // 4. VERIFICACIÓN CRÍTICA:
+      // Si al momento de completarse el timer, la URL actual NO contiene el código de país
+      // que estamos verificando, significa que el usuario navegó a otra parte (ej: login o dashboard).
+      // En ese caso, cancelamos la operación.
+      const currentUrl = this.router.url.toLowerCase();
+      const targetSegment = `/${routeCountryCode.toLowerCase()}/`;
+
+      if (!currentUrl.includes(targetSegment)) {
+        return; 
+      }
+
       const detected = response.country;
 
       if (detected && routeCountryCode.toLowerCase() !== detected.toLowerCase()) {
-        // Update the signal so the modal can open
         this.mismatchSignal.set({
             detected: detected.toUpperCase(),
             current: routeCountryCode.toUpperCase()
