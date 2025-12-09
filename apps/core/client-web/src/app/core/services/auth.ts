@@ -282,7 +282,7 @@ export class AuthService {
         tap((user) => {
           this._currentUser.set(user);
           this._authStatus.set(AuthStatus.authenticated);
-          this.router.navigate(['/app/dashboard']);
+          this.router.navigate(['/dashboard']);
         }),
         catchError((err) => this.errorHandlerService.handleError('register', err))
       );
@@ -482,7 +482,7 @@ export class AuthService {
           );
           // Usar Router en lugar de recarga forzada
           this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['/app/dashboard']);
+            this.router.navigate(['/dashboard']);
           });
         }),
         map((response) => response.user),
@@ -506,7 +506,7 @@ export class AuthService {
           );
           // Usar Router en lugar de recarga forzada
           this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['/app/dashboard']);
+            this.router.navigate(['/dashboard']);
           });
         }),
         map((response) => response.user),

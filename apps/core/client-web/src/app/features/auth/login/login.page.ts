@@ -170,7 +170,7 @@ export class LoginPage implements OnInit {
     if (user && user.preferredLanguage) {
       this.languageService.setLanguage(user.preferredLanguage);
     }
-    this.router.navigate(['/app/dashboard']);
+    this.router.navigate(['/dashboard']);
     this.isLoggingIn.set(false);
   }
 
