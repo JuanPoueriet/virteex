@@ -13,10 +13,12 @@ export class DominicanRepublicStrategy extends BaseFiscalStrategy {
   }
 
   async validateTaxId(taxId: string): Promise<boolean> {
-    if (!taxId || !/^\d{9,11}$/.test(taxId)) return false;
+    if (!taxId) return false;
 
-    // Implement Modulo 11 check for RNC
+    // Sanitize input (remove non-digits)
     const str = taxId.replace(/[^\d]/g, '');
+
+    // Check length (9 for RNC, 11 for Cedula)
     if (str.length !== 9 && str.length !== 11) return false;
 
     // RNC (9 digits)
@@ -79,8 +81,10 @@ export class DominicanRepublicStrategy extends BaseFiscalStrategy {
       countryCode: 'DO',
       name: 'República Dominicana',
       taxIdLabel: 'RNC',
-      taxIdRegex: '^\\d{9,11}$',
-      taxIdMask: '000-00000-0',
+      // Allow digits and hyphens.
+      // ^[\d\-]+$ is simple. Or ^(\d{3}-?\d{5}-?\d{1})|(\d{3}-?\d{7}-?\d{1})$ for more structure but maybe too complex for simple regex engine in frontend if needed.
+      taxIdRegex: '^[\\d\\-]+$',
+      taxIdMask: '000-00000-0', // This is primarily for UI masking libraries if used
       currency: 'DOP'
     };
   }

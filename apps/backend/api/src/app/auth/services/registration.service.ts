@@ -37,7 +37,7 @@ export class RegistrationService {
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
-    const {
+    let {
       email,
       taxId, // Renamed from rnc
       password,
@@ -107,19 +107,22 @@ export class RegistrationService {
         throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
       }
 
+      // Sanitize Tax ID (remove non-digits)
       if (taxId) {
-        // Scope Tax ID uniqueness by Fiscal Region to allow same ID in different countries
-        const whereClause: any = { taxId: taxId };
-        if (fiscalRegionId) {
-            whereClause.fiscalRegionId = fiscalRegionId;
-        }
+          taxId = taxId.replace(/[^\d]/g, '');
 
-        const existingOrg = await queryRunner.manager.findOne(Organization, {
-          where: whereClause,
-        });
-        if (existingOrg) {
-          throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
-        }
+          // Scope Tax ID uniqueness by Fiscal Region to allow same ID in different countries
+          const whereClause: any = { taxId: taxId };
+          if (fiscalRegionId) {
+              whereClause.fiscalRegionId = fiscalRegionId;
+          }
+
+          const existingOrg = await queryRunner.manager.findOne(Organization, {
+            where: whereClause,
+          });
+          if (existingOrg) {
+            throw new ConflictException('No se pudo completar el registro. Verifique que los datos sean correctos o contacte soporte.');
+          }
       }
 
       // Create Organization with additional fields if entity supports them, or just basic

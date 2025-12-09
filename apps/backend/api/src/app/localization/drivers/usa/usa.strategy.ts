@@ -27,7 +27,7 @@ export class USStrategy extends BaseFiscalStrategy {
       countryCode: 'US',
       name: 'United States',
       taxIdLabel: 'EIN/SSN',
-      taxIdRegex: '^\\d{9}$',
+      taxIdRegex: '^[\\d\\-]+$', // Changed from ^\d{9}$
       taxIdMask: '00-0000000',
       currency: 'USD'
     };
