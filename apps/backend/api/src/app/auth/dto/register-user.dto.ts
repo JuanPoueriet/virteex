@@ -29,10 +29,10 @@ export class RegisterUserDto {
     @IsOptional()
     taxId?: string;
 
-    @ApiProperty({ example: 'uuid-of-region', description: 'Fiscal Region ID' })
+    @ApiProperty({ example: 'uuid-of-region', description: 'Fiscal Region ID', required: false })
     @IsUUID('4', { message: 'El ID de la región fiscal no es válido.' })
-    @IsNotEmpty({ message: 'Debe seleccionar una región fiscal.' })
-    fiscalRegionId: string;
+    @IsOptional()
+    fiscalRegionId?: string;
 
     @ApiProperty({ example: 'John', description: 'User First Name' })
     @IsString({ message: 'El nombre debe ser un texto.' })

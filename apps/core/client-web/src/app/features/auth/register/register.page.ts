@@ -119,6 +119,13 @@ export class RegisterPage implements OnInit {
             const fiscalRegionIdControl = this.registerForm.get('configuration.fiscalRegionId');
             if (fiscalRegionIdControl && config.fiscalRegionId) {
                 fiscalRegionIdControl.setValue(config.fiscalRegionId);
+                // If the country has regions, require it.
+                fiscalRegionIdControl.setValidators([Validators.required]);
+                fiscalRegionIdControl.updateValueAndValidity();
+            } else if (fiscalRegionIdControl) {
+                // If not, make it optional (or ensure it is optional)
+                fiscalRegionIdControl.clearValidators();
+                fiscalRegionIdControl.updateValueAndValidity();
             }
         }
     });
@@ -159,7 +166,7 @@ export class RegisterPage implements OnInit {
       configuration: this.fb.group({
         country: ['DO', [Validators.required]], // Default, updated by GeoIP
         taxId: ['', [Validators.required]],
-        fiscalRegionId: ['', [Validators.required]], // Must be populated
+        fiscalRegionId: [''], // Default optional
         currency: ['DOP', [Validators.required]],
       }),
       // Step 3: Business Profile (Auto-filled)
@@ -216,20 +223,16 @@ export class RegisterPage implements OnInit {
 
     // Special logic for Step 2 (Configuration) -> Step 3 (Business)
     if (this.currentStep() === 2) {
-        // Ensure fiscalRegionId is present before proceeding
-        let fiscalRegionId = this.registerForm.get('configuration.fiscalRegionId')?.value;
+        // Ensure fiscalRegionId is present ONLY if required by logic
+        const fiscalRegionIdControl = this.registerForm.get('configuration.fiscalRegionId');
 
-        // Fallback if missing (e.g. backend config incomplete)
-        if (!fiscalRegionId && this.countryService.currentCountryCode()) {
-             // Use a placeholder UUID to allow UI to proceed. Backend will validate if it's strictly required or assign default.
-             fiscalRegionId = '00000000-0000-0000-0000-000000000000';
-             this.registerForm.get('configuration.fiscalRegionId')?.setValue(fiscalRegionId);
-        }
-
-        if (!fiscalRegionId) {
-             this.errorMessage.set('Error: No se ha detectado una región fiscal válida para este país.');
+        // If the control is invalid (e.g. required but empty), stop.
+        if (fiscalRegionIdControl && fiscalRegionIdControl.invalid) {
+             this.errorMessage.set('Error: Debe seleccionar una región fiscal válida para este país.');
              return;
         }
+
+        // We no longer inject a nil UUID.
     }
 
     this.stepsCompleted.update(completed => {
@@ -276,6 +279,10 @@ export class RegisterPage implements OnInit {
 
     this.recaptchaV3Service.execute('register').subscribe({
         next: (recaptchaToken) => {
+            // Handle optional fiscalRegionId: convert empty string to null
+            const regionId = formValue.configuration.fiscalRegionId;
+            const finalRegionId = (regionId && regionId.trim() !== '') ? regionId : null;
+
             const payload: RegisterPayload = {
                 firstName: formValue.accountInfo.firstName,
                 lastName: formValue.accountInfo.lastName,
@@ -283,7 +290,7 @@ export class RegisterPage implements OnInit {
                 password: formValue.accountInfo.passwordGroup.password,
                 organizationName: formValue.business.companyName,
                 taxId: formValue.configuration.taxId,
-                fiscalRegionId: formValue.configuration.fiscalRegionId,
+                fiscalRegionId: finalRegionId,
                 recaptchaToken,
                 // New Fields
                 industry: formValue.business.industry,

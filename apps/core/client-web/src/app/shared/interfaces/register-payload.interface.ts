@@ -4,7 +4,7 @@ export interface RegisterPayload {
     email: string;
     password: string;
     organizationName: string;
-    fiscalRegionId: string;
+    fiscalRegionId?: string | null;
     taxId?: string; // Renamed from rnc
     recaptchaToken?: string;
     plan?: string;
