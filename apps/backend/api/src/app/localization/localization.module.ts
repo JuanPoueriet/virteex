@@ -17,6 +17,7 @@ import { SharedModule } from '../shared/shared.module';
 import { TaxGroup } from './entities/tax-group.entity';
 import { ReportDefinition } from './entities/report-definition.entity';
 import { EInvoiceProviderConfig } from './entities/einvoice-provider-config.entity';
+import { FiscalDocumentTypeDefinition } from './entities/fiscal-document-type-definition.entity';
 import { LocalizationController } from './controllers/localization.controller';
 import { LocalizationListener } from './listeners/localization.listener';
 import { DominicanRepublicStrategy } from './drivers/dominican-republic/dominican-republic.strategy';
@@ -34,6 +35,7 @@ import { USStrategy } from './drivers/usa/usa.strategy';
       TaxGroup,
       ReportDefinition,
       EInvoiceProviderConfig,
+      FiscalDocumentTypeDefinition,
     ]),
     BullModule.registerQueue({
       name: 'localization',
