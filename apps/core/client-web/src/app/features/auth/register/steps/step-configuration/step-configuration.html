@@ -9,7 +9,7 @@
     <div class="flex items-center gap-2 text-sm">
         <span class="text-text-tertiary">{{ 'REGISTER.COUNTRY' | translate }}:</span>
         <span class="font-medium text-text-primary flex items-center gap-1">
-            <img [src]="'assets/flags/' + (countryService.currentCountryCode() || 'do').toLowerCase() + '.svg'" class="w-4 h-4 rounded-sm object-cover" (error)="onFlagError($event)">
+            <img [src]="'https://flagcdn.com/' + (countryService.currentCountryCode() || 'do').toLowerCase() + '.svg'" class="w-4 h-4 rounded-sm object-cover" (error)="onFlagError($event)">
             {{ countryService.currentCountry()?.name }}
         </span>
     </div>
@@ -30,30 +30,5 @@
     [errorMessage]="getTaxIdError()">
     <svg icon xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
   </app-auth-input>
-
-  <!-- Company Phone (Note: Original StepConfiguration html had companyPhone, but RegisterPage TS definition for 'configuration' group only has country, taxId, fiscalRegionId, currency. 'phone' was in 'accountInfo'.
-  Wait, RegisterPage TS shows 'configuration' group has: country, taxId, fiscalRegionId, currency.
-  The HTML I just read had 'companyPhone'.
-  Memory says: 'RegisterPage TS definition ...'
-  Let me double check RegisterPage.ts I read earlier.
-  RegisterPage.ts: configuration: { country, taxId, fiscalRegionId, currency }.
-  There is NO companyPhone in configuration group in the TS I read.
-  But the previous HTML had it. This implies a discrepancy I need to fix.
-  I will stick to the RegisterPage.ts structure I saw, which puts phone in 'accountInfo' (personal phone) or I might need to add it to business group if it's company phone.
-  Actually, let's add company phone to the Business group or Configuration group to match the UI expectation if needed.
-  However, since I already wrote RegisterPage.ts without it in configuration, and the user wants me to fix inconsistencies...
-  The 'accountInfo' phone is usually personal.
-  Let's look at RegisterPage.ts again. 'business' group has address, industry, employees.
-  I'll add companyPhone to 'business' group in RegisterPage.ts or just rely on the personal phone for now to be safe and simple,
-  OR better, I will assume the previous HTML was using a different form structure than the one I saw in RegisterPage.ts.
-  Wait, I read RegisterPage.ts from the file system. It was the *current* state.
-  The current RegisterPage.ts has 'phone' in 'accountInfo'.
-  The current 'StepConfiguration.html' has 'companyPhone' in 'configuration'.
-  This IS an inconsistency.
-  I will REMOVE companyPhone from this step to align with the TS I saw, or assume the user wants just one phone number for now.
-  I will stick to the 'phone' in StepAccountInfo (Account Info) as the primary contact.
-  If I need a company phone, I should add it to the 'business' group.
-  Let's keep it simple and clean. I will remove the companyPhone field from here, as 'phone' is already collected in step 1.
-  -->
 
 </form>

@@ -3,7 +3,44 @@
 
 [33m❯[39m Building...
 [32m✔[39m Building...
-[37mApplication bundle generation failed. [19.340 seconds] - 2025-12-09T03:19:42.454Z[39m
+[37m[1mInitial chunk files[22m[2m | [22m[1mNames[22m                  [2m | [22m [1mRaw size[22m[39m
+[37m[32mmain.js[39m[37m            [2m | [22m[2mmain[22m                   [2m | [22m[36m267.49 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-XPSX2BVV.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m [36m36.52 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-EQU2W7TZ.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m [36m14.87 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-PGDNUSQR.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m7.13 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-55MMCR2D.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m6.68 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-E2AKELJY.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m6.29 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-AN7JX625.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m4.72 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-7DZYWBD6.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m4.20 kB[39m[37m[2m | [22m[39m
+[37m[32mstyles.css[39m[37m         [2m | [22m[2mstyles[22m                 [2m | [22m  [36m3.00 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-A3UEBYVC.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m2.60 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-FHOR4FOP.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m2.30 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-653SOEEV.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.51 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-L5NJ76MK.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.02 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-WGHN6JCH.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m  [36m1.02 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-P6GSDH53.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m[36m402 bytes[39m[37m[2m | [22m[39m
+[37m[39m
+[37m[1m [22m                  [2m | [22m[1mInitial total[22m          [2m | [22m[1m359.75 kB[22m[39m
+[37m[39m
+[37m[1mLazy chunk files[22m   [2m | [[39m[37m22m[1mNames[22m                  [2m | [22m [1mRaw size[22m[39m
+[37m[32mchunk-AI6SLQLT.js[39m[37m  [2m | [22m[2mdashboard-page[22m         [2m | [22m[36m453.48 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-5R3MPPDM.js[39m[37m  [2m | [22m[2mregister-page[22m          [2m | [22m[36m104.83 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-SWNI562J.js[39m[37m  [2m | [22m[2muser-management-page[22m   [2m | [22m [36m91.15 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-LSCRKZET.js[39m[37m  [2m | [22m[2mmy-profile-page[22m        [2m | [22m [36m78.36 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-BMMNOFKB.js[39m[37m  [2m | [22m[2m-[22m                      [2m | [22m [36m62.09 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-3UREFB7X.js[39m[37m  [2m | [22m[2mlogin-page[22m             [2m | [22m [36m54.97 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-NIBPZ3KG.js[39m[37m  [2m | [22m[2mbranding-page[22m          [2m | [22m [36m51.70 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-CALQ7POI.js[39m[37m  [2m | [22m[2mjournal-entry-form-page[22m[2m | [22m [36m49.03 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-UMONQR3U.js[39m[37m  [2m | [22m[2maccount-form-page[22m      [2m | [22m [36m48.58 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-QDJHRGEQ.js[39m[37m  [2m | [22m[2mchart-of-accounts-page[22m [2m | [22m [36m44.88 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-LUHXQNG7.js[39m[37m  [2m | [22m[2mnew-page[22m               [2m | [22m [36m42.12 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-3VQU2UTD.js[39m[37m  [2m | [22m[2mpos-page[22m               [2m | [22m [36m36.09 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-D4UBKRHC.js[39m[37m  [2m | [22m[2mdata-imports-page[22m      [2m | [22m [36m35.38 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-UM7HLPG7.js[39m[37m  [2m | [22m[2mproduct-form-page[22m      [2m | [22m [36m33.45 kB[39m[37m[2m | [22m[39m
+[37m[32mchunk-Z5IDOHOM.js[39m[37m  [2m | [22m[2msubsidiaries-page[22m      [2m | [22m [36m33.01 kB[39m[37m[2m | [22m[39m
+[37m[2m...and 109 more lazy chunks files. Use "--verbose" to show all the files.[22m[39m
+[37m[39m
+[37mApplication bundle generation complete. [14.647 seconds] - 2025-12-09T15:58:28.451Z[39m
 [37m[39m
 [1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: LoaderComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m[39m[22m
 [1m[33m[39m[22m
@@ -21,15 +58,15 @@
 [1m[33m[39m[22m
 [1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: GeoMismatchModalComponent is not used within the template of RegisterPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
 [1m[33m[39m[22m
-[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:47:4:[39m[22m
-[1m[33m[37m      47 │     [32mGeoMismatchModalComponent[37m,[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:75:4:[39m[22m
+[1m[33m[37m      75 │     [32mGeoMismatchModalComponent[37m,[39m[22m
 [1m[33m         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
 [1m[33m[39m[22m
 [1m[33m[39m[22m
 [1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AuthInputComponent is not used within the template of RegisterPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
 [1m[33m[39m[22m
-[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:50:4:[39m[22m
-[1m[33m[37m      50 │     [32mAuthInputComponent[37m[39m[22m
+[1m[33m    apps/core/client-web/src/app/features/auth/register/register.page.ts:78:4:[39m[22m
+[1m[33m[37m      78 │     [32mAuthInputComponent[37m,[39m[22m
 [1m[33m         ╵     [32m~~~~~~~~~~~~~~~~~~[0m[39m[22m
 [1m[33m[39m[22m
 [1m[33m[39m[22m
@@ -40,7 +77,8 @@
 [1m[33m         ╵                                              [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
 [1m[33m[39m[22m
 [1m[33m[39m[22m
-[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113:[39m[22m[1m[33m RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113[39m[22m
+[1m[33m: RouterLink is not used within the template of InvoiceDetailPage[0m [1m[35m[plugin angular-compiler][0m[39m[22m
 [1m[33m[39m[22m
 [1m[33m    apps/core/client-web/src/app/features/invoices/detail/detail.page.ts:12:47:[39m[22m
 [1m[33m[37m      12 │   imports: [CommonModule, LucideAngularModule, [32mRouterLink[37m],[39m[22m
@@ -61,46 +99,6 @@
 [1m[33m         ╵     [32m~~~~~~~~~~~~~~~[0m[39m[22m
 [1m[33m[39m[22m
 [1m[33m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../../../shared/services/config.service' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    apps/core/client-web/src/app/features/auth/register/steps/step-business/step-business.component.ts:6:51:[39m[22m
-[1m[31m[37m      6 │ ...nOptions } from [32m'../../../../../../shared/services/config.service'[37m;[39m[22m
-[1m[31m        ╵                    [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'getRegistrationOptions' does not exist on type 'unknown'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    apps/core/client-web/src/app/features/auth/register/steps/step-business/step-business.component.ts:114:25:[39m[22m
-[1m[31m[37m      114 │       this.configService.[32mgetRegistrationOptions[37m().subscribe({[39m[22m
-[1m[31m          ╵                          [32m~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2305: Module '"@virteex/shared/types"' has no exported member 'Industry'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:4:9:[39m[22m
-[1m[31m[37m      4 │ import { [32mIndustry[37m, CompanySize } from '@virteex/shared/types';[39m[22m
-[1m[31m        ╵          [32m~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2305: Module '"@virteex/shared/types"' has no exported member 'CompanySize'.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:4:19:[39m[22m
-[1m[31m[37m      4 │ import { Industry, [32mCompanySize[37m } from '@virteex/shared/types';[39m[22m
-[1m[31m        ╵                    [32m~~~~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../environments/environment' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    apps/core/client-web/src/app/shared/services/config.service.ts:5:28:[39m[22m
-[1m[31m[37m      5 │ import { environment } [39m[22m[1m[31mfrom [32m'../../../../environments/environment'[37m;[39m[22m
-[1m[31m        ╵                             [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module './enums/registration.enums' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m    libs/shared/types/src/index.ts:1:14:[39m[22m
-[1m[31m[37m      1 │ export * from [32m'./enums/registration.enums'[37m;[39m[22m
-[1m[31m        ╵               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m[39m[22m
-[1m[31m[39m[22m
-[1m[31m[39m[22m
 [37mWatch mode enabled. Watching for file changes...[39m
+[37mNOTE: Raw file sizes do not reflect development server per-request transformations.[39m
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m

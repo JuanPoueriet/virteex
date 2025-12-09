@@ -17,7 +17,7 @@ export class StepConfiguration {
   private translate = inject(TranslateService);
 
   onFlagError(event: any) {
-    event.target.src = 'assets/flags/do.svg'; // Fallback
+    event.target.src = 'https://flagcdn.com/do.svg'; // Fallback
   }
 
   getTaxIdError(): string {
