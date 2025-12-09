@@ -496,6 +496,28 @@
     "REGISTERING": "Registering...",
     "HAS_ACCOUNT": "Already have an account?",
     "LOGIN_LINK": "Sign in",
+    "STEPS": {
+      "ACCOUNT": {
+        "TITLE": "Account Information",
+        "SUBTITLE": "Enter your personal details"
+      },
+      "CONFIGURATION": {
+        "TITLE": "Fiscal Configuration",
+        "SUBTITLE": "Country and currency details"
+      },
+      "BUSINESS": {
+        "TITLE": "Business Profile",
+        "SUBTITLE": "Tell us about your company"
+      },
+      "PLAN": {
+        "TITLE": "Choose your Plan",
+        "SUBTITLE": "Select the plan that best fits you"
+      }
+    },
+    "COUNTRY": "Country",
+    "CURRENCY": "Currency",
+    "TAX_ID": "Tax ID",
+    "FISCAL_REGION": "Fiscal Region",
     "ERRORS": {
       "SERVER_ERROR": "Error registering. Please try again."
     }
