@@ -20,6 +20,7 @@ import { FiscalStrategy } from '../drivers/fiscal-strategy.interface';
 import { DominicanRepublicStrategy } from '../drivers/dominican-republic/dominican-republic.strategy';
 import { GenericFiscalStrategy } from '../drivers/generic-fiscal.strategy';
 import { USStrategy } from '../drivers/usa/usa.strategy';
+import { DbDrivenFiscalStrategy } from '../drivers/db-driven-fiscal.strategy';
 import { TaxTemplate } from '../entities/tax-template.entity';
 
 @Injectable()
@@ -36,8 +37,9 @@ export class LocalizationService implements OnModuleInit {
     private readonly taxesService: TaxesService,
     private readonly doStrategy: DominicanRepublicStrategy,
     private readonly usStrategy: USStrategy,
-    private readonly genericStrategy: GenericFiscalStrategy
+    private readonly genericStrategy: GenericFiscalStrategy,
   ) {
+    // Inicialmente cargamos las estrategias hardcoded que tienen lógica especial
     this.strategies.set('DO', this.doStrategy);
     this.strategies.set('US', this.usStrategy);
     this.strategies.set('GENERIC', this.genericStrategy);
@@ -45,10 +47,31 @@ export class LocalizationService implements OnModuleInit {
 
   async onModuleInit() {
     await this.seedFiscalRegions();
+    await this.loadStrategies();
+  }
+
+  /**
+   * Carga dinámicamente estrategias para todos los países que están en la base de datos
+   * pero que no tienen una estrategia hardcoded (clase específica).
+   */
+  private async loadStrategies() {
+    const regions = await this.fiscalRegionRepository.find();
+    for (const region of regions) {
+      if (!this.strategies.has(region.countryCode)) {
+        this.logger.log(
+          `Registrando estrategia fiscal dinámica para: ${region.name} (${region.countryCode})`,
+        );
+        this.strategies.set(
+          region.countryCode,
+          new DbDrivenFiscalStrategy(region),
+        );
+      }
+    }
   }
 
   getStrategy(countryCode: string): FiscalStrategy {
-    return this.strategies.get(countryCode) || this.strategies.get('GENERIC');
+    const code = countryCode ? countryCode.toUpperCase() : 'GENERIC';
+    return this.strategies.get(code) || this.strategies.get('GENERIC');
   }
 
   async findAllFiscalRegions(): Promise<FiscalRegion[]> {
@@ -59,53 +82,143 @@ export class LocalizationService implements OnModuleInit {
     return this.fiscalRegionRepository.findOneBy({ id });
   }
 
-  async findRegionByCountryCode(countryCode: string): Promise<FiscalRegion | null> {
-      return this.fiscalRegionRepository.findOne({ where: { countryCode }});
+  async findRegionByCountryCode(
+    countryCode: string,
+  ): Promise<FiscalRegion | null> {
+    return this.fiscalRegionRepository.findOne({ where: { countryCode } });
   }
 
   private async seedFiscalRegions() {
     const regions = [
       {
-          countryCode: 'DO',
-          name: 'República Dominicana',
-          baseCurrency: 'DOP',
-          taxIdLabel: 'RNC',
-          fiscalAuthorityName: 'DGII',
-          provinceLabel: 'Provincia',
-          postalCodeRegex: '\\d{5}',
-          identityDocumentConfig: {
-              types: [
-                  { code: 'RNC', label: 'RNC', regex: '^\\d{9,11}$', isCompany: true },
-                  { code: 'CEDULA', label: 'Cédula', regex: '^\\d{11}$', isCompany: false }
-              ]
-          },
-          requiredFiscalReports: ['606', '607', '608', 'IT-1'],
-          electronicInvoicingDriver: 'DGII_E-FACTURA',
-          requiresElectronicInvoicing: true,
-          dateFormat: 'dd/MM/yyyy'
+        countryCode: 'DO',
+        name: 'República Dominicana',
+        baseCurrency: 'DOP',
+        taxIdLabel: 'RNC',
+        fiscalAuthorityName: 'DGII',
+        provinceLabel: 'Provincia',
+        postalCodeRegex: '\\d{5}',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'RNC',
+              label: 'RNC',
+              regex: '^\\d{9,11}$',
+              isCompany: true,
+            },
+            {
+              code: 'CEDULA',
+              label: 'Cédula',
+              regex: '^\\d{11}$',
+              isCompany: false,
+            },
+          ],
+        },
+        requiredFiscalReports: ['606', '607', '608', 'IT-1'],
+        electronicInvoicingDriver: 'DGII_E-FACTURA',
+        requiresElectronicInvoicing: true,
+        dateFormat: 'dd/MM/yyyy',
       },
       {
-          countryCode: 'US',
-          name: 'United States',
-          baseCurrency: 'USD',
-          taxIdLabel: 'EIN',
-          fiscalAuthorityName: 'IRS',
-          provinceLabel: 'State',
-          postalCodeRegex: '\\d{5}(-\\d{4})?',
-          identityDocumentConfig: {
-              types: [
-                  { code: 'EIN', label: 'EIN', regex: '^\\d{2}-\\d{7}$', isCompany: true },
-                  { code: 'SSN', label: 'SSN', regex: '^\\d{3}-\\d{2}-\\d{4}$', isCompany: false }
-              ]
-          },
-          dateFormat: 'MM/dd/yyyy',
-          thousandSeparator: ',',
-          decimalSeparator: '.'
+        countryCode: 'US',
+        name: 'United States',
+        baseCurrency: 'USD',
+        taxIdLabel: 'EIN',
+        fiscalAuthorityName: 'IRS',
+        provinceLabel: 'State',
+        postalCodeRegex: '\\d{5}(-\\d{4})?',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'EIN',
+              label: 'EIN',
+              regex: '^\\d{2}-\\d{7}$',
+              isCompany: true,
+            },
+            {
+              code: 'SSN',
+              label: 'SSN',
+              regex: '^\\d{3}-\\d{2}-\\d{4}$',
+              isCompany: false,
+            },
+          ],
+        },
+        dateFormat: 'MM/dd/yyyy',
+        thousandSeparator: ',',
+        decimalSeparator: '.',
       },
-      { countryCode: 'PA', name: 'Panamá', baseCurrency: 'PAB', taxIdLabel: 'RUC', provinceLabel: 'Provincia' },
-      { countryCode: 'CO', name: 'Colombia', baseCurrency: 'COP', taxIdLabel: 'NIT', provinceLabel: 'Departamento' },
-      { countryCode: 'MX', name: 'México', baseCurrency: 'MXN', taxIdLabel: 'RFC', provinceLabel: 'Estado' },
-      // ... others
+      {
+        countryCode: 'PA',
+        name: 'Panamá',
+        baseCurrency: 'PAB',
+        taxIdLabel: 'RUC',
+        fiscalAuthorityName: 'DGI',
+        provinceLabel: 'Provincia',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'RUC',
+              label: 'RUC',
+              regex: '^[0-9]+-[0-9]+-[0-9]+(-[0-9]+)?$',
+              isCompany: true,
+            },
+          ],
+        },
+      },
+      {
+        countryCode: 'CO',
+        name: 'Colombia',
+        baseCurrency: 'COP',
+        taxIdLabel: 'NIT',
+        fiscalAuthorityName: 'DIAN',
+        provinceLabel: 'Departamento',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'NIT',
+              label: 'NIT',
+              regex: '^\\d{9,10}$',
+              isCompany: true,
+            },
+          ],
+        },
+      },
+      {
+        countryCode: 'MX',
+        name: 'México',
+        baseCurrency: 'MXN',
+        taxIdLabel: 'RFC',
+        fiscalAuthorityName: 'SAT',
+        provinceLabel: 'Estado',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'RFC',
+              label: 'RFC',
+              regex: '^[A-Z&Ñ]{3,4}\\d{6}[A-V1-9][A-Z1-9][0-9A]$',
+              isCompany: true,
+            },
+          ],
+        },
+      },
+      {
+        countryCode: 'CL',
+        name: 'Chile',
+        baseCurrency: 'CLP',
+        taxIdLabel: 'RUT',
+        fiscalAuthorityName: 'SII',
+        provinceLabel: 'Región',
+        identityDocumentConfig: {
+          types: [
+            {
+              code: 'RUT',
+              label: 'RUT',
+              regex: '^\\d{7,8}-[0-9Kk]$',
+              isCompany: true,
+            },
+          ],
+        },
+      },
     ];
 
     for (const regionData of regions) {
@@ -117,37 +230,43 @@ export class LocalizationService implements OnModuleInit {
         this.logger.log(
           `Sembrando región fiscal para ${regionData.name} (${regionData.countryCode})...`,
         );
-        // Clean cast for seeding simplicity
         await this.fiscalRegionRepository.save(regionData as any);
       } else {
-        // Update existing to ensure new columns are populated
-        // In a real migration we would be careful, but for this task we ensure fields exist
+        // Actualizar datos existentes
         await this.fiscalRegionRepository.save({
-            ...regionExists,
-            ...regionData
+          ...regionExists,
+          ...regionData,
         } as any);
       }
     }
 
     // Seed Taxes for DO if not exist
-    const doRegion = await this.fiscalRegionRepository.findOneBy({ countryCode: 'DO' });
+    const doRegion = await this.fiscalRegionRepository.findOneBy({
+      countryCode: 'DO',
+    });
     if (doRegion) {
-        const itbis = await this.taxTemplateRepository.findOneBy({ countryCode: 'DO', name: 'ITBIS 18%' });
-        if (!itbis) {
-             const newTax = await this.taxTemplateRepository.save({
-                 countryCode: 'DO',
-                 name: 'ITBIS 18%',
-                 rate: 18,
-                 type: 'VAT'
-             });
-             // Link to region
-             doRegion.defaultTaxes = [newTax];
-             await this.fiscalRegionRepository.save(doRegion);
-        }
+      const itbis = await this.taxTemplateRepository.findOneBy({
+        countryCode: 'DO',
+        name: 'ITBIS 18%',
+      });
+      if (!itbis) {
+        const newTax = await this.taxTemplateRepository.save({
+          countryCode: 'DO',
+          name: 'ITBIS 18%',
+          rate: 18,
+          type: 'VAT',
+        });
+        // Link to region
+        doRegion.defaultTaxes = [newTax];
+        await this.fiscalRegionRepository.save(doRegion);
+      }
     }
   }
 
-  async applyFiscalPackage(organization: Organization, manager?: EntityManager) {
+  async applyFiscalPackage(
+    organization: Organization,
+    manager?: EntityManager,
+  ) {
     if (!organization.fiscalRegionId) {
       this.logger.warn(
         `La organización ${organization.id} no tiene una región fiscal asignada. Omitiendo la aplicación del paquete fiscal.`,
@@ -155,10 +274,12 @@ export class LocalizationService implements OnModuleInit {
       return;
     }
 
-    const regionRepo = manager ? manager.getRepository(FiscalRegion) : this.fiscalRegionRepository;
+    const regionRepo = manager
+      ? manager.getRepository(FiscalRegion)
+      : this.fiscalRegionRepository;
     const region = await regionRepo.findOne({
       where: { id: organization.fiscalRegionId },
-      relations: ['defaultTaxes']
+      relations: ['defaultTaxes'],
     });
 
     if (!region) {
@@ -173,15 +294,19 @@ export class LocalizationService implements OnModuleInit {
 
     // Apply Default Taxes from Relationship
     if (region.defaultTaxes && region.defaultTaxes.length > 0) {
-        for (const template of region.defaultTaxes) {
-             await this.taxesService.create({
-                 name: template.name,
-                 rate: template.rate,
-                 type: template.type as any,
-                 code: template.name.toUpperCase().replace(/\s+/g, '_'),
-                 description: `Impuesto por defecto ${template.name}`
-             }, organization.id, manager);
-        }
+      for (const template of region.defaultTaxes) {
+        await this.taxesService.create(
+          {
+            name: template.name,
+            rate: template.rate,
+            type: template.type as any,
+            code: template.name.toUpperCase().replace(/\s+/g, '_'),
+            description: `Impuesto por defecto ${template.name}`,
+          },
+          organization.id,
+          manager,
+        );
+      }
     }
 
     switch (region.countryCode) {
@@ -189,20 +314,36 @@ export class LocalizationService implements OnModuleInit {
         await this.applyPanamaPackage(organization.id, manager);
         break;
       case 'US':
-        await this.applyGenericCoaTemplate(organization.id, usGaapCoaTemplate.accounts, manager);
+        await this.applyGenericCoaTemplate(
+          organization.id,
+          usGaapCoaTemplate.accounts,
+          manager,
+        );
         break;
       case 'DO':
-        await this.applyGenericCoaTemplate(organization.id, usGaapCoaTemplate.accounts, manager);
+        await this.applyGenericCoaTemplate(
+          organization.id,
+          usGaapCoaTemplate.accounts,
+          manager,
+        );
         break;
       default:
-        this.logger.warn(
-          `No hay un paquete fiscal definido para el código de país: ${region.countryCode}. Usando genérico.`,
+        // Para países con estrategia dinámica pero sin paquete contable específico, usamos el genérico
+        this.logger.log(
+          `Usando paquete contable genérico para ${region.countryCode}`,
         );
-        await this.applyGenericCoaTemplate(organization.id, usGaapCoaTemplate.accounts, manager);
+        await this.applyGenericCoaTemplate(
+          organization.id,
+          usGaapCoaTemplate.accounts,
+          manager,
+        );
     }
   }
 
-  private async applyPanamaPackage(organizationId: string, manager?: EntityManager) {
+  private async applyPanamaPackage(
+    organizationId: string,
+    manager?: EntityManager,
+  ) {
     this.logger.log(
       `Aplicando impuestos de Panamá para la organización ${organizationId}...`,
     );
@@ -211,10 +352,21 @@ export class LocalizationService implements OnModuleInit {
     }
   }
 
-  private async applyGenericCoaTemplate(organizationId: string, accounts: AccountTemplateDto[], manager?: EntityManager) {
-    this.logger.log(`Aplicando plantilla de plan de cuentas para la organización ${organizationId}...`);
+  private async applyGenericCoaTemplate(
+    organizationId: string,
+    accounts: AccountTemplateDto[],
+    manager?: EntityManager,
+  ) {
+    this.logger.log(
+      `Aplicando plantilla de plan de cuentas para la organización ${organizationId}...`,
+    );
     for (const account of accounts) {
-      await this.createAccountFromTemplate(account, organizationId, null, manager);
+      await this.createAccountFromTemplate(
+        account,
+        organizationId,
+        null,
+        manager,
+      );
     }
   }
 
@@ -222,7 +374,7 @@ export class LocalizationService implements OnModuleInit {
     accountDto: AccountTemplateDto,
     organizationId: string,
     parentId: string | null,
-    manager?: EntityManager
+    manager?: EntityManager,
   ) {
     const { children, ...createAccountDto } = accountDto;
 
@@ -232,7 +384,7 @@ export class LocalizationService implements OnModuleInit {
         parentId,
       },
       organizationId,
-      manager
+      manager,
     );
 
     if (children && children.length > 0) {
@@ -241,7 +393,7 @@ export class LocalizationService implements OnModuleInit {
           child,
           organizationId,
           createdAccount.id,
-          manager
+          manager,
         );
       }
     }
