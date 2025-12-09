@@ -47,6 +47,9 @@ import { UserCacheModule } from './modules/user-cache.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PasswordService } from './services/password.service';
 import { AuthSubscriber } from './events/auth.events';
+import { RegistrationStrategyFactory } from './strategies/registration/registration-strategy.factory';
+import { DoRegistrationStrategy } from './strategies/registration/do-registration.strategy';
+import { UsRegistrationStrategy } from './strategies/registration/us-registration.strategy';
 
 @Module({
   imports: [
@@ -125,6 +128,9 @@ import { AuthSubscriber } from './events/auth.events';
     MfaOrchestratorService,
     PasswordService,
     AuthSubscriber,
+    RegistrationStrategyFactory,
+    DoRegistrationStrategy,
+    UsRegistrationStrategy,
     {
       provide: AbstractSmsProvider,
       useClass: TwilioSmsProvider

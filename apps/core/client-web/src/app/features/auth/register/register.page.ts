@@ -103,16 +103,11 @@ export class RegisterPage implements OnInit {
         if (config && this.registerForm) {
             // Update form controls or logic if needed when country changes
             const taxIdControl = this.registerForm.get('configuration.taxId');
-            if (taxIdControl && config.taxIdRegex) {
+            if (taxIdControl) {
                 try {
                   // Ensure regex is permissive enough for UI (allow hyphens/spaces)
                   // and robust against JSON escaping issues.
-                  let pattern = config.taxIdRegex;
-
-                  // Specific override for DO to ensure it accepts standard RNC/Cedula formats (9 or 11 digits, plus hyphens)
-                  if (this.countryService.currentCountryCode() === 'do') {
-                      pattern = '^[0-9\\-\\s]{9,13}$';
-                  }
+                  let pattern = config.taxIdRegex || '^[A-Za-z0-9\\-\\s]+$'; // Default lenient regex
 
                   taxIdControl.setValidators([Validators.required, Validators.pattern(pattern)]);
                   taxIdControl.updateValueAndValidity();

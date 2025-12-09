@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { OrganizationSubsidiary } from './organization-subsidiary.entity';
 import { User } from '../../users/entities/user.entity/user.entity';
 import { Plan } from '../../saas/entities/plan.entity';
 
 @Entity('organizations')
+@Index(['taxId', 'fiscalRegionId'], { unique: true, where: '"tax_id" IS NOT NULL' })
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
   id: string;
