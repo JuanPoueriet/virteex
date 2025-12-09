@@ -21,6 +21,7 @@ import { LocalizationController } from './controllers/localization.controller';
 import { LocalizationListener } from './listeners/localization.listener';
 import { DominicanRepublicStrategy } from './drivers/dominican-republic/dominican-republic.strategy';
 import { GenericFiscalStrategy } from './drivers/generic-fiscal.strategy';
+import { USStrategy } from './drivers/usa/usa.strategy';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { GenericFiscalStrategy } from './drivers/generic-fiscal.strategy';
     LocalizationConsumer,
     LocalizationListener,
     DominicanRepublicStrategy,
+    USStrategy,
     GenericFiscalStrategy
   ],
   controllers: [LocalizationAdminController, LocalizationController],

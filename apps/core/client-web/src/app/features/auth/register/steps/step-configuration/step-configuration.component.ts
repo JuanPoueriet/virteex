@@ -1,5 +1,5 @@
 
-import { Component, Input, Output, EventEmitter, inject, signal, effect, DestroyRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, effect, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Globe, CreditCard, Building2 } from 'lucide-angular';
@@ -7,6 +7,8 @@ import { CountryService, CountryConfig } from '../../../../../core/services/coun
 import { debounceTime, switchMap, tap, filter, distinctUntilChanged, catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { AsyncValidators } from '../../../../../shared/validators/async.validators';
 
 @Component({
   selector: 'app-step-configuration',
@@ -93,7 +95,7 @@ import { of } from 'rxjs';
     :host { display: block; }
   `]
 })
-export class StepConfiguration {
+export class StepConfiguration implements OnInit {
   @Input() form!: FormGroup;
   @Input() parentForm!: FormGroup;
 
@@ -103,6 +105,7 @@ export class StepConfiguration {
 
   countryService = inject(CountryService);
   destroyRef = inject(DestroyRef); // Inject DestroyRef
+  private http = inject(HttpClient);
 
   currentLabel = signal('Tax ID');
   currentPlaceholder = signal('Ingrese su identificación');
@@ -128,6 +131,15 @@ export class StepConfiguration {
   }
 
   ngOnInit() {
+      // Async validator for uniqueness
+      if (this.form) {
+          const taxControl = this.form.get('taxId');
+          if (taxControl) {
+              taxControl.addAsyncValidators(AsyncValidators.createTaxIdValidator(this.http));
+              taxControl.updateValueAndValidity();
+          }
+      }
+
       this.form.get('taxId')?.valueChanges.pipe(
           debounceTime(500),
           distinctUntilChanged(),
@@ -169,6 +181,10 @@ export class StepConfiguration {
   }
 
   getErrorMessage() {
+      const control = this.form.get('taxId');
+      if (control?.hasError('taxIdExists')) {
+          return 'Esta organización ya está registrada.';
+      }
       return 'Formato inválido';
   }
 }

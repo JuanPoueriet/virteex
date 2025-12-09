@@ -41,8 +41,25 @@ export class RegistrationService {
       fiscalRegionId,
       industry, // New field
       companySize, // New field
-      address // New field
+      address, // New field
+      fax, // Honeypot
     } = registerUserDto;
+
+    // Honeypot check: if 'fax' is populated, it's likely a bot.
+    if (fax) {
+      this.logger.warn(`Spam registration detected (Honeypot): ${email}`);
+      await this.simulateDelay(); // Waste bot's time
+      // Return a fake user object or void to make the bot think it succeeded
+      // We must return a User-like object to satisfy the controller return type if it expects one.
+      // Or we can throw a BadRequestException if we want to be explicit, but silent rejection is better for honeypots.
+      // However, throwing an error might trigger retries. Returning success is best.
+      // We'll create a dummy user in memory (not saved) to return.
+      const dummyUser = new User();
+      dummyUser.email = email;
+      dummyUser.firstName = firstName;
+      dummyUser.lastName = lastName;
+      return dummyUser;
+    }
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

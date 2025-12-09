@@ -19,6 +19,7 @@ import { usGaapCoaTemplate } from '../templates/us-gaap-coa.template';
 import { FiscalStrategy } from '../drivers/fiscal-strategy.interface';
 import { DominicanRepublicStrategy } from '../drivers/dominican-republic/dominican-republic.strategy';
 import { GenericFiscalStrategy } from '../drivers/generic-fiscal.strategy';
+import { USStrategy } from '../drivers/usa/usa.strategy';
 
 @Injectable()
 export class LocalizationService implements OnModuleInit {
@@ -31,9 +32,11 @@ export class LocalizationService implements OnModuleInit {
     private readonly coaService: ChartOfAccountsService,
     private readonly taxesService: TaxesService,
     private readonly doStrategy: DominicanRepublicStrategy,
+    private readonly usStrategy: USStrategy,
     private readonly genericStrategy: GenericFiscalStrategy
   ) {
     this.strategies.set('DO', this.doStrategy);
+    this.strategies.set('US', this.usStrategy);
     this.strategies.set('GENERIC', this.genericStrategy);
   }
 

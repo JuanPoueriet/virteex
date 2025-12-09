@@ -1,11 +1,9 @@
 
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, Input, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule, Building, Users, Globe, Briefcase } from 'lucide-angular';
-import { HttpClient } from '@angular/common/http';
-import { environment } from 'apps/core/client-web/src/environments/environment';
-// import { environment } from '../../../../../../../environments/environment';
+import { ConfigService, RegistrationOptions } from '../../../../../../shared/services/config.service';
 
 @Component({
   selector: 'app-step-business',
@@ -61,8 +59,8 @@ import { environment } from 'apps/core/client-web/src/environments/environment';
               class="pl-10 w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="" disabled selected>Selecciona una industria</option>
-              <option *ngFor="let industry of industries()" [value]="industry.id">
-                {{ industry.label }}
+              <option *ngFor="let industry of industries()" [value]="industry">
+                {{ industry }}
               </option>
             </select>
           </div>
@@ -82,8 +80,8 @@ import { environment } from 'apps/core/client-web/src/environments/environment';
               class="pl-10 w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="" disabled selected>Selecciona el tamaño</option>
-              <option *ngFor="let size of companySizes" [value]="size.id">
-                {{ size.label }}
+              <option *ngFor="let size of companySizes()" [value]="size">
+                {{ size }}
               </option>
             </select>
           </div>
@@ -95,7 +93,7 @@ import { environment } from 'apps/core/client-web/src/environments/environment';
     :host { display: block; }
   `]
 })
-export class StepBusiness {
+export class StepBusiness implements OnInit {
   @Input() form!: FormGroup;
 
   protected readonly BuildingIcon = Building;
@@ -103,33 +101,25 @@ export class StepBusiness {
   protected readonly GlobeIcon = Globe;
   protected readonly BriefcaseIcon = Briefcase;
 
-  private http = inject(HttpClient);
+  private configService = inject(ConfigService);
 
-  industries = signal<any[]>([]);
+  industries = signal<string[]>([]);
+  companySizes = signal<string[]>([]);
   isReadOnly = signal(false);
-
-  companySizes = [
-    { id: '1-10', label: '1 - 10 empleados' },
-    { id: '11-50', label: '11 - 50 empleados' },
-    { id: '51-200', label: '51 - 200 empleados' },
-    { id: '201+', label: 'Más de 200 empleados' }
-  ];
 
   constructor() {}
 
   ngOnInit() {
-      // Fetch industries dynamically
-      this.http.get<any[]>(`${environment.apiUrl}/common/industries`).subscribe({
-          next: (data) => this.industries.set(data),
-          error: () => {
-              // Fallback if API fails
-              this.industries.set([
-                  { id: 'tech', label: 'Tecnología y Software' },
-                  { id: 'retail', label: 'Comercio Minorista (Retail)' },
-                  { id: 'services', label: 'Servicios Profesionales' },
-                  { id: 'construction', label: 'Construcción e Inmobiliaria' },
-                  { id: 'other', label: 'Otro' }
-              ]);
+      // Fetch industries and sizes dynamically
+      this.configService.getRegistrationOptions().subscribe({
+          next: (options: RegistrationOptions) => {
+              this.industries.set(options.industries);
+              this.companySizes.set(options.companySizes);
+          },
+          error: (err) => {
+              console.error('Error fetching registration options:', err);
+              // Fallback? Ideally retry or show error. For now, empty or basic list is better than crash.
+              // We'll rely on the service to handle critical failures or the view to handle empty states.
           }
       });
 
