@@ -17,6 +17,8 @@ import { UsersService } from '../../users/users.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 
+import { AuthConfig } from '../auth.config';
+
 @Injectable()
 export class MfaOrchestratorService {
   constructor(
