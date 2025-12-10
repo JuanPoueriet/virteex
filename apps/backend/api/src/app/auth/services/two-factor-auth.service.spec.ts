@@ -6,6 +6,7 @@ import { UserSecurity } from '../../users/entities/user-security.entity';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UserCacheService } from '../modules/user-cache.service';
 import { authenticator } from 'otplib';
+import { ConfigService } from '@nestjs/config';
 
 describe('TwoFactorAuthService', () => {
   let service: TwoFactorAuthService;
@@ -13,10 +14,19 @@ describe('TwoFactorAuthService', () => {
   let userRepo: any;
   let userCacheService: any;
   let cryptoUtil: any;
+  let configService: any;
 
   beforeEach(async () => {
     userSecurityRepo = {
       save: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+          insert: jest.fn().mockReturnThis(),
+          into: jest.fn().mockReturnThis(),
+          values: jest.fn().mockReturnThis(),
+          orIgnore: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue({})
+      })),
+      findOne: jest.fn()
     };
     userRepo = {
         findOne: jest.fn()
@@ -28,6 +38,9 @@ describe('TwoFactorAuthService', () => {
         encrypt: jest.fn(val => `encrypted-${val}`),
         decrypt: jest.fn(val => val.replace('encrypted-', ''))
     };
+    configService = {
+        get: jest.fn(key => 'App')
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,7 +48,8 @@ describe('TwoFactorAuthService', () => {
         { provide: getRepositoryToken(UserSecurity), useValue: userSecurityRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: UserCacheService, useValue: userCacheService },
-        { provide: CryptoUtil, useValue: cryptoUtil }
+        { provide: CryptoUtil, useValue: cryptoUtil },
+        { provide: ConfigService, useValue: configService }
       ],
     }).compile();
 

@@ -50,6 +50,7 @@ import { AuthSubscriber } from './events/auth.events';
 import { RegistrationStrategyFactory } from './strategies/registration/registration-strategy.factory';
 import { DoRegistrationStrategy } from './strategies/registration/do-registration.strategy';
 import { UsRegistrationStrategy } from './strategies/registration/us-registration.strategy';
+import { AuthAuditListener } from './listeners/auth-audit.listener';
 
 @Module({
   imports: [
@@ -131,6 +132,7 @@ import { UsRegistrationStrategy } from './strategies/registration/us-registratio
     RegistrationStrategyFactory,
     DoRegistrationStrategy,
     UsRegistrationStrategy,
+    AuthAuditListener,
     {
       provide: AbstractSmsProvider,
       useClass: TwilioSmsProvider

@@ -97,7 +97,7 @@ export class AuthService {
             { id: user.id, type: '2fa_pending', tokenVersion: user.security.tokenVersion },
             {
               expiresIn: `${expirationSeconds}s`,
-              secret: this.configService.getOrThrow('JWT_SECRET')
+              secret: AuthConfig.JWT_2FA_TEMP_SECRET
             }
          );
 
@@ -179,6 +179,29 @@ export class AuthService {
 
   async verifyUserFromToken(token: string): Promise<User | null> {
     return this.sessionService.verifyUserFromToken(token);
+  }
+
+  async verify2faTempToken(token: string): Promise<User | null> {
+      try {
+          const payload = this.jwtService.verify(token, {
+              secret: AuthConfig.JWT_2FA_TEMP_SECRET
+          });
+
+          if (payload.type !== '2fa_pending') {
+              throw new UnauthorizedException('Invalid token type');
+          }
+
+          const user = await this.usersService.findUserByIdForAuth(payload.id);
+          if (!user || !user.security) return null;
+
+          if (user.security.tokenVersion !== payload.tokenVersion) {
+              return null;
+          }
+
+          return user;
+      } catch (e) {
+          throw new UnauthorizedException('Invalid or expired 2FA session token');
+      }
   }
 
   async changePassword(userId: string, currentPass: string, newPass: string): Promise<void> {

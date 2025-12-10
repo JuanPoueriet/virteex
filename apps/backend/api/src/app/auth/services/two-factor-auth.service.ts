@@ -142,40 +142,37 @@ export class TwoFactorAuthService {
   private async ensureSecurityEntity(user: User): Promise<UserSecurity> {
       let security = user.security;
 
-      // If not eagerly loaded or null, try to fetch
       if (!security) {
           const freshUser = await this.userRepository.findOne({ where: { id: user.id }, relations: ['security'] });
           if (!freshUser) throw new UnauthorizedException('User not found');
-
-          if (freshUser.security) {
-              return freshUser.security;
-          }
+          if (freshUser.security) return freshUser.security;
       } else {
-        return security;
+          return security;
       }
 
-      // If still missing, Upsert to handle race conditions
-      // This is the "Enterprise/10/10" way: Do not rely on "check then insert" logic.
-      // Use DB constraint to handle it.
-      // We insert safely. If it conflicts (user_id is unique/primary key on one-to-one), we return existing.
+      // Abstraction: Delegate creation to a safe method
+      return this.safeCreateSecurity(user.id);
+  }
 
+  /**
+   * Safely creates the security entity, handling race conditions via DB constraints.
+   */
+  private async safeCreateSecurity(userId: string): Promise<UserSecurity> {
       try {
-           const insertResult = await this.userSecurityRepository.createQueryBuilder()
+           await this.userSecurityRepository.createQueryBuilder()
               .insert()
               .into(UserSecurity)
-              .values({ userId: user.id, isTwoFactorEnabled: false }) // Explicitly set defaults if needed
-              .orIgnore() // If exists, do nothing
+              .values({ userId, isTwoFactorEnabled: false })
+              .orIgnore() // Handle race condition: if exists, do nothing
               .execute();
       } catch (e) {
-          // If error is not duplicate key, throw. But orIgnore handles duplicate.
-          // Fallback to fetch.
+          // Fallback if orIgnore fails for some provider-specific reason, though unlikely with Postgres
       }
 
-      // Fetch again guaranteed to exist now
-      const finalSecurity = await this.userSecurityRepository.findOne({ where: { userId: user.id } });
-      if (!finalSecurity) {
+      const security = await this.userSecurityRepository.findOne({ where: { userId } });
+      if (!security) {
           throw new Error('Failed to ensure security entity');
       }
-      return finalSecurity;
+      return security;
   }
 }

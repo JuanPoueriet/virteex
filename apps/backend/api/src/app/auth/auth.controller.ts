@@ -397,7 +397,7 @@ export class AuthController {
       @Ip() ip: string,
       @Headers('user-agent') userAgent: string
   ) {
-      const user = await this.authService.verifyUserFromToken(body.tempToken);
+      const user = await this.authService.verify2faTempToken(body.tempToken);
       if (!user) {
           throw new UnauthorizedException('Invalid or expired session');
       }

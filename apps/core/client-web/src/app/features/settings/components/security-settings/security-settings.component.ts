@@ -1,6 +1,6 @@
 
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, AfterViewInit, Inject, PLATFORM_ID, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth';
@@ -10,7 +10,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
-import * as L from 'leaflet';
 
 @Component({
   selector: 'app-security-settings',
@@ -25,6 +24,7 @@ export class SecuritySettingsComponent implements OnInit {
   private securityService = inject(SecurityService);
   private notificationService = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private platformId = inject(PLATFORM_ID);
 
   // Icons
   protected readonly ShieldIcon = Shield;
@@ -53,7 +53,9 @@ export class SecuritySettingsComponent implements OnInit {
   // Sessions
   sessions = signal<Session[]>([]);
   expandedSessionId = signal<string | null>(null);
-  private map: L.Map | undefined;
+  private map: any; // Leaflet Map type
+
+  @ViewChildren('mapContainer') mapContainers!: QueryList<ElementRef<HTMLDivElement>>;
 
   // Confirmation Modal
   showDisableConfirmation = signal(false);
@@ -152,16 +154,24 @@ export class SecuritySettingsComponent implements OnInit {
       this.destroyMap();
     } else {
       this.expandedSessionId.set(session.id);
-      setTimeout(() => this.initMap(session), 100); // Wait for DOM
+      // Wait for view update
+      setTimeout(() => this.initMap(session), 0);
     }
   }
 
-  private initMap(session: Session) {
+  private async initMap(session: Session) {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.destroyMap();
 
-    const element = document.getElementById(`map-${session.id}`);
-    if (!element) return;
+    // Dynamically import Leaflet only on browser side
+    const L = await import('leaflet');
+
+    const containerRef = this.mapContainers.find(c => c.nativeElement.dataset['sessionId'] === session.id);
+    if (!containerRef) return;
     
+    const element = containerRef.nativeElement;
+
     // Default coords if none (e.g. Santo Domingo)
     const lat = session.latitude || 18.4861;
     const lng = session.longitude || -69.9312;
