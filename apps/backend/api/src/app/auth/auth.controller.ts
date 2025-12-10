@@ -165,6 +165,7 @@ export class AuthController {
 
     // Check if 2FA is required
     if ('require2fa' in result && result.require2fa) {
+        this.cookieService.setCsrfCookie(res);
         return result;
     }
 

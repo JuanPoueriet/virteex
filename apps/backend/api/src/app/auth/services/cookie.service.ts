@@ -44,6 +44,11 @@ export class CookieService {
       });
     }
 
+    this.setCsrfCookie(res);
+  }
+
+  setCsrfCookie(res: Response): void {
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
     // CSRF Token (Readable by JS, not HttpOnly)
     // 10/10 SECURITY: Use CSPRNG for CSRF token generation
     const csrfToken = crypto.randomBytes(32).toString('hex');
