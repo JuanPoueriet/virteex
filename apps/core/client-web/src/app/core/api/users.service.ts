@@ -23,9 +23,6 @@ export interface UpdateProfileDto {
   firstName?: string;
   lastName?: string;
   preferredLanguage?: string;
-  phone?: string;
-  jobTitle?: string;
-  email?: string;
 }
 
 // Interfaz para la respuesta paginada
@@ -38,10 +35,6 @@ export interface PaginatedUsersResponse {
 export class UsersService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/users`;
-
-  getJobTitles(): Observable<string[]> {
-      return this.http.get<string[]>(`${this.apiUrl}/job-titles`);
-  }
 
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/profile`);

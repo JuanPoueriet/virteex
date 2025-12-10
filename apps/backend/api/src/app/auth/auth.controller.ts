@@ -34,7 +34,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 import { CsrfGuard } from './guards/csrf.guard';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
-import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -48,8 +47,7 @@ export class AuthController {
     private readonly webAuthnService: WebAuthnService,
     private readonly configService: ConfigService,
     private readonly cookieService: CookieService,
-    private readonly mfaOrchestratorService: MfaOrchestratorService,
-    private readonly jwtService: JwtService
+    private readonly mfaOrchestratorService: MfaOrchestratorService
   ) {}
 
   @Get('google')
@@ -450,19 +448,8 @@ export class AuthController {
   @Get('sessions')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'List active sessions (devices)' })
-  async getUserSessions(@CurrentUser() user: User, @Req() req: Request) {
-      let currentRefreshTokenId: string | undefined;
-      const token = req.cookies['refresh_token'];
-      if (token) {
-          try {
-             // We decode to get the 'jti' (ID)
-             const payload: any = this.jwtService.decode(token);
-             if (payload && payload.jti) {
-                 currentRefreshTokenId = payload.jti;
-             }
-          } catch(e) {}
-      }
-      return this.authService.getUserSessions(user.id, currentRefreshTokenId);
+  async getUserSessions(@CurrentUser() user: User) {
+    return this.authService.getUserSessions(user.id);
   }
 
   @Post('sessions/:id/revoke') // Using POST or DELETE is fine, usually DELETE for resource removal

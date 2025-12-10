@@ -21,6 +21,8 @@ import {
   Building2,
   Save,
   Image,
+  Shield,
+  Check,
 } from 'lucide-angular';
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
@@ -50,6 +52,8 @@ export class MyProfilePage implements OnInit {
   protected readonly CompanyIcon = Building2;
   protected readonly SaveIcon = Save;
   protected readonly ImageIcon = Image;
+  protected readonly ShieldIcon = Shield;
+  protected readonly CheckIcon = Check;
 
   profileForm!: FormGroup;
   passwordForm!: FormGroup;

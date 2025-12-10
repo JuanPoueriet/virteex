@@ -1,8 +1,0 @@
-export enum JobTitle {
-  CEO = 'CEO',
-  MANAGER = 'MANAGER',
-  ACCOUNTANT = 'ACCOUNTANT',
-  ADMIN = 'ADMIN',
-  EMPLOYEE = 'EMPLOYEE',
-  OTHER = 'OTHER'
-}

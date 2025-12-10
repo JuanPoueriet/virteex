@@ -52,6 +52,8 @@ describe('MyProfilePage', () => {
   });
 
   it('should initialize form with user data including phone and jobTitle', () => {
+    // Manually trigger ngOnChanges or wait for signals if needed,
+    // but here we just check if the form was created with values from currentUser
     expect(component.profileForm.get('phone')?.value).toBe('1234567890');
     expect(component.profileForm.get('jobTitle')?.value).toBe('Developer');
   });

@@ -202,25 +202,15 @@ export class SessionService implements OnModuleInit {
       const sanitizedUserAgent = this.sanitizeUserAgent(userAgent);
       const authResponse = await this.tokenService.generateAuthResponse(user, {}, ipAddress, sanitizedUserAgent);
 
-      // Parse UA for detailed storage
-      const parsedUA = this.securityAnalysisService.parseUserAgent(sanitizedUserAgent || '');
-
-      // Update new refresh token with extended info
-      const updateData: Partial<RefreshToken> = {
-          lastActiveAt: new Date(),
-          browser: parsedUA.browser,
-          os: parsedUA.os,
-          deviceType: parsedUA.deviceType,
-      };
-
+      // Update new refresh token with encrypted IP if available
       if (ipAddress) {
+          // Asynchronously update encrypted IP for forensic compliance (GDPR/CCPA)
+          // We don't await this to keep response fast
           const encryptedIp = this.encryptIp(ipAddress);
-          updateData.encryptedIp = encryptedIp;
+          this.refreshTokenRepository.update(authResponse.refreshTokenId, { encryptedIp }).catch(e =>
+              this.logger.error(`Failed to store encrypted IP: ${e.message}`)
+          );
       }
-
-      this.refreshTokenRepository.update(authResponse.refreshTokenId, updateData).catch(e =>
-          this.logger.error(`Failed to update refresh token metadata: ${e.message}`)
-      );
 
       if (payload.jti) {
         await this.refreshTokenRepository.update(payload.jti, {
@@ -253,27 +243,23 @@ export class SessionService implements OnModuleInit {
     }
   }
 
-  async getUserSessions(userId: string, currentRefreshTokenId?: string) {
+  async getUserSessions(userId: string) {
     const sessions = await this.refreshTokenRepository.find({
       where: {
         userId,
         isRevoked: false,
         expiresAt: MoreThan(new Date()),
       },
-      order: { lastActiveAt: 'DESC', createdAt: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
 
     return sessions.map((session) => ({
       id: session.id,
       ipAddress: session.ipAddress,
       userAgent: session.userAgent,
-      browser: session.browser,
-      os: session.os,
-      deviceType: session.deviceType,
-      lastActiveAt: session.lastActiveAt || session.createdAt,
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
-      isCurrent: currentRefreshTokenId ? session.id === currentRefreshTokenId : false,
+      isCurrent: false,
     }));
   }
 
