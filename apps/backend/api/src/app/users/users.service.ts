@@ -33,6 +33,16 @@ export class UsersService {
 
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto): Promise<User> {
     const user = await this.findOne(id);
+
+    // Security: Reset verification flags if sensitive data changes
+    if (updateProfileDto.email && updateProfileDto.email !== user.email) {
+      user.isEmailVerified = false;
+    }
+
+    if (updateProfileDto.phone && updateProfileDto.phone !== user.phone) {
+      user.isPhoneVerified = false;
+    }
+
     Object.assign(user, updateProfileDto);
     await this.userCacheService.clearUserSession(id);
     return this.userRepository.save(user);

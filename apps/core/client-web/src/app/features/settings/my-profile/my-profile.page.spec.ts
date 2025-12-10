@@ -8,8 +8,24 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { QRCodeModule } from 'angularx-qrcode';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
+
+@Component({
+  selector: 'app-security-settings',
+  standalone: true,
+  template: ''
+})
+class MockSecuritySettingsComponent {}
+
+@Component({
+  selector: 'app-phone-verification-modal',
+  standalone: true,
+  template: ''
+})
+class MockPhoneVerificationModalComponent {}
 
 class MockAuthService {
   currentUser = () => ({
@@ -50,8 +66,8 @@ describe('MyProfilePage', () => {
         BrowserAnimationsModule,
         HttpClientTestingModule,
         TranslateModule.forRoot(),
-        QRCodeModule,
-        FormsModule
+        FormsModule,
+        ReactiveFormsModule
       ],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
@@ -59,7 +75,20 @@ describe('MyProfilePage', () => {
         { provide: NotificationService, useClass: MockNotificationService },
         { provide: SecurityService, useClass: MockSecurityService }
       ]
-    }).compileComponents();
+    })
+    .overrideComponent(MyProfilePage, {
+      set: {
+        imports: [
+          CommonModule,
+          ReactiveFormsModule,
+          LucideAngularModule,
+          TranslateModule,
+          MockSecuritySettingsComponent,
+          MockPhoneVerificationModalComponent
+        ]
+      }
+    })
+    .compileComponents();
 
     fixture = TestBed.createComponent(MyProfilePage);
     component = fixture.componentInstance;

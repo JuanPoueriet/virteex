@@ -36,6 +36,17 @@ import { PhoneVerificationModalComponent } from '../components/phone-verificatio
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUtil } from '../../../shared/utils/file.util';
+import { catchError, of } from 'rxjs';
+
+// Typed Form Interface
+interface ProfileForm {
+  firstName: FormControl<string | null>;
+  lastName: FormControl<string | null>;
+  email: FormControl<string | null>;
+  phone: FormControl<string | null>;
+  jobTitle: FormControl<string | null>;
+  preferredLanguage: FormControl<string | null>;
+}
 
 @Component({
   selector: 'app-my-profile-page',
@@ -70,14 +81,7 @@ export class MyProfilePage implements OnInit {
   protected readonly ShieldIcon = Shield;
   protected readonly CheckIcon = Check;
 
-  profileForm!: FormGroup<{
-      firstName: FormControl<string | null>;
-      lastName: FormControl<string | null>;
-      email: FormControl<string | null>;
-      phone: FormControl<string | null>;
-      jobTitle: FormControl<string | null>;
-      preferredLanguage: FormControl<string | null>;
-  }>;
+  profileForm!: FormGroup<ProfileForm>;
 
   passwordForm!: FormGroup;
   avatarPreview = signal<string | ArrayBuffer | null>(null);
@@ -88,11 +92,21 @@ export class MyProfilePage implements OnInit {
   // Phone Verification State
   showPhoneModal = signal(false);
 
-  // Job Titles List (Loaded from backend)
-  jobTitles = toSignal(this.usersService.getJobTitles(), { initialValue: [] });
+  // Job Titles List (Loaded from backend) with Error Handling
+  jobTitles = toSignal(
+    this.usersService.getJobTitles().pipe(
+      catchError((err) => {
+        console.error('Failed to load job titles', err);
+        return of([] as string[]);
+      })
+    ),
+    { initialValue: [] }
+  );
 
   ngOnInit(): void {
     const user = this.currentUser();
+    const browserLang = navigator.language.split('-')[0];
+    const defaultLang = ['es', 'en'].includes(browserLang) ? browserLang : 'es';
 
     this.profileForm = this.fb.group({
       firstName: [user?.firstName || '', Validators.required],
@@ -100,8 +114,8 @@ export class MyProfilePage implements OnInit {
       email: [user?.email || '', [Validators.required, Validators.email]],
       phone: [user?.phone || '', Validators.required],
       jobTitle: [user?.jobTitle || '', Validators.required],
-      preferredLanguage: [user?.preferredLanguage || 'es']
-    });
+      preferredLanguage: [user?.preferredLanguage || defaultLang]
+    }) as FormGroup<ProfileForm>;
 
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
