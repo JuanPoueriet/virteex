@@ -1,23 +1,15 @@
 <div class="settings-page-container">
   <div class="page-header">
-    <h2>Mi Perfil</h2>
-    <p class="text-secondary">Administra tu información personal y configuración de seguridad.</p>
+    <h2>Configuración de Cuenta</h2>
+    <p>Administra tu identidad, información de contacto y seguridad.</p>
   </div>
 
   <div class="profile-layout">
-    <!-- Información Personal -->
-    <div class="settings-section">
-      <div class="section-header">
-        <h3>Información Personal</h3>
-        <p>Actualiza tus datos de contacto y rol.</p>
-      </div>
 
-      <div class="card">
-        <div class="card-body">
-          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-
-            <div class="profile-header">
-              <div class="avatar-upload">
+    <!-- Left Column: Identity & Public Info -->
+    <div class="left-column">
+        <div class="card identity-card">
+            <div class="avatar-wrapper">
                  <input
                   type="file"
                   id="avatarUrl"
@@ -31,178 +23,196 @@
                       alt="Avatar"
                       class="avatar-image"
                     />
-                    <div class="avatar-overlay">
-                      <lucide-icon [img]="ImageIcon" size="20"></lucide-icon>
-                    </div>
                   } @else {
                     <div class="avatar-placeholder">
-                       <lucide-icon [img]="ImageIcon" size="24"></lucide-icon>
+                       <lucide-icon [img]="ImageIcon" size="48"></lucide-icon>
                     </div>
                   }
+                  <div class="avatar-overlay">
+                    <lucide-icon [img]="ImageIcon" size="24"></lucide-icon>
+                  </div>
                 </label>
-              </div>
-              <div class="profile-info-text">
-                <h4>Foto de Perfil</h4>
-                <p>Formatos permitidos: JPG, PNG. Máximo 2MB.</p>
-              </div>
             </div>
 
-            <div class="form-grid">
-              <div class="form-field">
-                <label for="firstName">Nombre</label>
-                <input id="firstName" type="text" formControlName="firstName" class="form-input" placeholder="Tu nombre" />
-              </div>
-              <div class="form-field">
-                <label for="lastName">Apellido</label>
-                <input id="lastName" type="text" formControlName="lastName" class="form-input" placeholder="Tu apellido" />
-              </div>
+            <div class="user-names">
+                <h3>{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</h3>
+                <p>{{ currentUser()?.email }}</p>
             </div>
 
-            <div class="form-field">
-              <label for="email">Correo Electrónico</label>
-              <input id="email" type="email" formControlName="email" class="form-input" readonly />
-              <span class="help-text">El correo electrónico no se puede cambiar.</span>
-            </div>
-
-            <div class="form-grid">
-              <div class="form-field">
-                <label for="phone">Teléfono</label>
-                <div class="flex gap-2">
-                    <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1 (000) 000-0000" />
-                    @if (!currentUser()?.isPhoneVerified) {
-                        <button type="button" (click)="openPhoneVerification()" class="px-4 py-2 bg-yellow-500/10 text-yellow-500 rounded-xl hover:bg-yellow-500/20 text-sm font-medium whitespace-nowrap">
-                            Verificar
-                        </button>
-                    } @else {
-                        <div class="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-500 rounded-xl">
-                            <span class="text-sm font-medium">Verificado</span>
-                        </div>
-                    }
+            <div class="user-meta">
+                <div class="meta-item">
+                    <lucide-icon [img]="CompanyIcon" size="16"></lucide-icon>
+                    <span>{{ currentUser()?.organization?.legalName || 'Sin Organización' }}</span>
                 </div>
-              </div>
-              <div class="form-field">
-                <label for="jobTitle">Cargo</label>
-                <input id="jobTitle" type="text" formControlName="jobTitle" class="form-input" placeholder="Ej. Gerente de Ventas" />
-              </div>
+                <div class="meta-item">
+                    <lucide-icon [img]="UserIcon" size="16"></lucide-icon>
+                    <span>{{ currentUser()?.jobTitle || 'Sin Cargo Definido' }}</span>
+                </div>
             </div>
-
-            <div class="form-actions">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                [disabled]="profileForm.pristine || profileForm.invalid"
-              >
-                <lucide-icon [img]="SaveIcon" size="18"></lucide-icon>
-                <span>Guardar Cambios</span>
-              </button>
-            </div>
-          </form>
         </div>
-      </div>
+
+        <!-- Quick Stats or Info could go here -->
     </div>
 
-    <!-- Seguridad (Contraseña) -->
-    <div class="settings-section">
-      <div class="section-header">
-        <h3>Contraseña</h3>
-        <p>Actualiza tu contraseña de acceso.</p>
-      </div>
+    <!-- Right Column: Forms & Security -->
+    <div class="right-column">
 
-      <div class="card">
-        <div class="card-body">
-          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-            <!-- Accessibility: Hidden username field -->
-            <input type="text" name="username" autocomplete="username" hidden style="display:none">
+        <!-- Personal Info Form -->
+        <div class="settings-section">
+             <div class="section-header">
+                <h3>
+                    <lucide-icon [img]="UserIcon" size="20"></lucide-icon>
+                    Información Básica
+                </h3>
+             </div>
 
-            <div class="form-field">
-              <label for="currentPassword">Contraseña Actual</label>
-              <input
-                id="currentPassword"
-                type="password"
-                formControlName="currentPassword"
-                class="form-input"
-                autocomplete="current-password"
-              />
-            </div>
+             <div class="card card-body">
+                  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="firstName">Nombre</label>
+                        <input id="firstName" type="text" formControlName="firstName" class="form-input" placeholder="Tu nombre" />
+                      </div>
+                      <div class="form-field">
+                        <label for="lastName">Apellido</label>
+                        <input id="lastName" type="text" formControlName="lastName" class="form-input" placeholder="Tu apellido" />
+                      </div>
+                    </div>
 
-            <div class="form-grid">
-              <div class="form-field">
-                <label for="newPassword">Nueva Contraseña</label>
-                <input
-                  id="newPassword"
-                  type="password"
-                  formControlName="newPassword"
-                  class="form-input"
-                  autocomplete="new-password"
-                />
-              </div>
-              <div class="form-field">
-                <label for="confirmPassword">Confirmar Contraseña</label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  formControlName="confirmPassword"
-                  class="form-input"
-                  autocomplete="new-password"
-                />
-              </div>
-            </div>
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="email">Correo Electrónico</label>
+                        <input id="email" type="email" formControlName="email" class="form-input" />
+                      </div>
+                      <div class="form-field">
+                        <label for="phone">Teléfono</label>
+                        <div class="flex gap-2">
+                             <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1..." />
 
-            <div class="form-actions">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                [disabled]="passwordForm.invalid"
-              >
-                <lucide-icon [img]="SaveIcon" size="18"></lucide-icon>
-                <span>Actualizar Contraseña</span>
-              </button>
-            </div>
-          </form>
+                             @if (currentUser()?.isPhoneVerified) {
+                                <div class="verify-badge verified" title="Teléfono Verificado">
+                                    <lucide-icon [img]="CheckIcon" size="12"></lucide-icon>
+                                </div>
+                             } @else {
+                                <button type="button" (click)="openPhoneVerification()" class="verify-badge unverified" title="Click para verificar">
+                                    Verificar
+                                </button>
+                             }
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="jobTitle">Cargo / Puesto</label>
+                        <div class="relative">
+                            <select id="jobTitle" formControlName="jobTitle" class="form-input">
+                                <option value="" disabled>Selecciona tu cargo</option>
+                                @for (title of jobTitles(); track title) {
+                                    <option [value]="title">{{ title }}</option>
+                                }
+                            </select>
+                            <div *ngIf="jobTitles().length === 0" class="absolute right-8 top-3 text-xs text-secondary">
+                                Cargando...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                      <button type="submit" class="btn btn-primary" [disabled]="profileForm.pristine || profileForm.invalid">
+                        Guardar Cambios
+                      </button>
+                    </div>
+                  </form>
+             </div>
         </div>
-      </div>
+
+        <!-- Security Settings (Password, 2FA, Sessions) -->
+         <div class="settings-section">
+             <div class="section-header">
+                <h3>
+                    <lucide-icon [img]="ShieldIcon" size="20"></lucide-icon>
+                    Seguridad y Acceso
+                </h3>
+             </div>
+
+             <!-- Password Change -->
+             <div class="card card-body mb-6">
+                <h4 class="text-base font-semibold mb-4 text-primary">Cambiar Contraseña</h4>
+                <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+                    <input type="text" name="username" autocomplete="username" hidden style="display:none">
+
+                    <div class="form-field">
+                      <label for="currentPassword">Contraseña Actual</label>
+                      <input id="currentPassword" type="password" formControlName="currentPassword" class="form-input" autocomplete="current-password" />
+                    </div>
+
+                    <div class="form-grid">
+                      <div class="form-field">
+                        <label for="newPassword">Nueva Contraseña</label>
+                        <input id="newPassword" type="password" formControlName="newPassword" class="form-input" autocomplete="new-password" />
+                      </div>
+                      <div class="form-field">
+                        <label for="confirmPassword">Confirmar</label>
+                        <input id="confirmPassword" type="password" formControlName="confirmPassword" class="form-input" autocomplete="new-password" />
+                      </div>
+                    </div>
+
+                    <div class="form-actions">
+                         <button type="submit" class="btn btn-secondary" [disabled]="passwordForm.invalid">
+                            Actualizar Contraseña
+                         </button>
+                    </div>
+                </form>
+             </div>
+
+             <!-- Advanced Security (2FA, Sessions) -->
+             <app-security-settings></app-security-settings>
+         </div>
+
     </div>
-
-    <!-- Seguridad Avanzada (2FA & Sesiones) -->
-    <app-security-settings></app-security-settings>
-
   </div>
 </div>
 
 <!-- Phone Verification Modal -->
 @if (showPhoneModal()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div class="bg-card-bg border border-border-color rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animation-fade-in">
+        <div class="bg-card-bg border border-border-color rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6 transform transition-all scale-100">
             <div class="text-center">
+                <div class="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
+                    <lucide-icon [img]="PhoneIcon" size="24"></lucide-icon>
+                </div>
                 <h3 class="text-xl font-bold text-text-primary">Verificar Teléfono</h3>
-                <p class="text-text-secondary text-sm mt-1">Ingresa tu número de teléfono para recibir un código SMS.</p>
+                <p class="text-text-secondary text-sm mt-1">
+                    Te enviaremos un código de seguridad por SMS.
+                </p>
             </div>
 
             <div class="space-y-4">
                 @if (!otpSent()) {
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium text-text-secondary">Número de Teléfono</label>
-                        <input type="tel" [formControl]="phoneControl" class="w-full form-input" placeholder="+1809...">
+                    <div class="form-field">
+                        <label>Número de Teléfono</label>
+                        <input type="tel" [formControl]="phoneControl" class="form-input text-lg" placeholder="+1..." />
                     </div>
                 } @else {
-                    <div class="space-y-2">
-                         <label class="text-sm font-medium text-text-secondary">Código de Verificación</label>
-                         <input type="text" [formControl]="otpControl" class="w-full form-input text-center text-2xl tracking-widest" maxlength="6">
+                    <div class="form-field">
+                         <label>Código de Verificación</label>
+                         <input type="text" [formControl]="otpControl" class="form-input text-center text-3xl tracking-[0.5em] font-mono" maxlength="6" autofocus />
+                         <p class="text-xs text-center mt-2 text-text-tertiary">Ingresa el código de 6 dígitos</p>
                     </div>
                 }
             </div>
 
-            <div class="flex gap-3">
-                <button (click)="closePhoneVerification()" class="flex-1 px-4 py-2 bg-card-bg hover:bg-hover-bg border border-border-color text-text-primary rounded-xl transition-colors">
+            <div class="flex gap-3 pt-2">
+                <button (click)="closePhoneVerification()" class="flex-1 btn btn-secondary">
                     Cancelar
                 </button>
                 @if (!otpSent()) {
-                    <button (click)="sendPhoneOtp()" [disabled]="phoneControl.invalid || isVerifyingPhone()" class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl transition-colors flex items-center justify-center">
+                    <button (click)="sendPhoneOtp()" [disabled]="phoneControl.invalid || isVerifyingPhone()" class="flex-1 btn btn-primary">
                         @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
-                        Enviar Código
+                        Enviar SMS
                     </button>
                 } @else {
-                     <button (click)="verifyPhoneOtp()" [disabled]="otpControl.invalid || isVerifyingPhone()" class="flex-1 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl transition-colors flex items-center justify-center">
+                     <button (click)="verifyPhoneOtp()" [disabled]="otpControl.invalid || isVerifyingPhone()" class="flex-1 btn btn-primary">
                         @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
                         Verificar
                     </button>

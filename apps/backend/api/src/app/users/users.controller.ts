@@ -121,7 +121,7 @@ export class UsersController {
     await this.userCacheService.clearUserSession(id);
     return result;
   }
-  
+
   @Put(':id/status')
   @HttpCode(HttpStatus.OK)
   async setOnlineStatus(
