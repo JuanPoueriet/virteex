@@ -1,223 +1,181 @@
-<div class="settings-page-container">
-  <div class="page-header">
-    <h2>Configuración de Cuenta</h2>
-    <p>Administra tu identidad, información de contacto y seguridad.</p>
+<div class="space-y-6">
+  <!-- Profile Header & Avatar -->
+  <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+    <div class="flex flex-col md:flex-row items-center gap-6">
+      <div class="relative group">
+        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg">
+          <img [src]="avatarPreview() || 'assets/images/default-avatar.png'"
+               alt="Profile"
+               class="w-full h-full object-cover">
+        </div>
+        <label class="absolute bottom-0 right-0 p-2 bg-primary-600 rounded-full cursor-pointer hover:bg-primary-700 transition-colors shadow-md group-hover:scale-110">
+          <lucide-icon [img]="ImageIcon" class="w-4 h-4 text-white"></lucide-icon>
+          <input type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*">
+        </label>
+      </div>
+
+      <div class="text-center md:text-left">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ currentUser()?.firstName }} {{ currentUser()?.lastName }}
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400">{{ currentUser()?.email }}</p>
+        <div class="mt-2 flex items-center justify-center md:justify-start gap-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+            {{ currentUser()?.roles?.[0]?.name }}
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="profile-layout">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Personal Information -->
+    <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <lucide-icon [img]="UserIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          {{ 'SETTINGS.PROFILE.PERSONAL_INFO' | translate }}
+        </h2>
+      </div>
 
-    <!-- Left Column: Identity & Public Info -->
-    <div class="left-column">
-        <div class="card identity-card">
-            <div class="avatar-wrapper">
-                 <input
-                  type="file"
-                  id="avatarUrl"
-                  (change)="onFileSelected($event)"
-                  accept="image/png, image/jpeg"
-                />
-                <label for="avatarUrl" class="avatar-label">
-                   @if(avatarPreview()){
-                    <img
-                      [src]="avatarPreview()"
-                      alt="Avatar"
-                      class="avatar-image"
-                    />
-                  } @else {
-                    <div class="avatar-placeholder">
-                       <lucide-icon [img]="ImageIcon" size="48"></lucide-icon>
-                    </div>
-                  }
-                  <div class="avatar-overlay">
-                    <lucide-icon [img]="ImageIcon" size="24"></lucide-icon>
-                  </div>
-                </label>
-            </div>
-
-            <div class="user-names">
-                <h3>{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</h3>
-                <p>{{ currentUser()?.email }}</p>
-            </div>
-
-            <div class="user-meta">
-                <div class="meta-item">
-                    <lucide-icon [img]="CompanyIcon" size="16"></lucide-icon>
-                    <span>{{ currentUser()?.organization?.legalName || 'Sin Organización' }}</span>
-                </div>
-                <div class="meta-item">
-                    <lucide-icon [img]="UserIcon" size="16"></lucide-icon>
-                    <span>{{ currentUser()?.jobTitle || 'Sin Cargo Definido' }}</span>
-                </div>
-            </div>
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'SETTINGS.PROFILE.FIRST_NAME' | translate }}
+            </label>
+            <input type="text" formControlName="firstName"
+                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'SETTINGS.PROFILE.LAST_NAME' | translate }}
+            </label>
+            <input type="text" formControlName="lastName"
+                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+          </div>
         </div>
 
-        <!-- Quick Stats or Info could go here -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'SETTINGS.PROFILE.EMAIL' | translate }}
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <lucide-icon [img]="MailIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+            </span>
+            <input type="email" formControlName="email"
+                   class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
+                   readonly>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'SETTINGS.PROFILE.PHONE' | translate }}
+          </label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <lucide-icon [img]="PhoneIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+              </span>
+              <input type="tel" formControlName="phone"
+                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+            </div>
+            <button type="button"
+                    (click)="openPhoneVerification()"
+                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+              {{ 'SETTINGS.PROFILE.VERIFY' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'SETTINGS.PROFILE.JOB_TITLE' | translate }}
+          </label>
+          <div class="relative">
+             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <lucide-icon [img]="CompanyIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+             </span>
+             <select formControlName="jobTitle"
+                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 appearance-none">
+                 <option value="" disabled>{{ 'SETTINGS.PROFILE.SELECT_JOB_TITLE' | translate }}</option>
+                 <option *ngFor="let title of jobTitles()" [value]="title">{{ title }}</option>
+             </select>
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end">
+          <button type="submit"
+                  [disabled]="profileForm.invalid || profileForm.pristine || isLoading"
+                  class="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+            <lucide-icon *ngIf="!isLoading" [img]="SaveIcon" class="w-4 h-4"></lucide-icon>
+            <span *ngIf="isLoading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+            {{ 'SETTINGS.PROFILE.SAVE_CHANGES' | translate }}
+          </button>
+        </div>
+      </form>
     </div>
 
-    <!-- Right Column: Forms & Security -->
-    <div class="right-column">
+    <!-- Security Settings (Password & 2FA) -->
+    <div class="space-y-6">
+       <!-- Password Change -->
+       <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+          <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <lucide-icon [img]="ShieldIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ 'SETTINGS.PROFILE.SECURITY' | translate }}
+            </h2>
+          </div>
 
-        <!-- Personal Info Form -->
-        <div class="settings-section">
-             <div class="section-header">
-                <h3>
-                    <lucide-icon [img]="UserIcon" size="20"></lucide-icon>
-                    Información Básica
-                </h3>
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-4">
+             <!-- Hidden username for accessibility -->
+             <input type="text" autocomplete="username" class="hidden" value="{{currentUser()?.email}}">
+
+             <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                   {{ 'SETTINGS.PROFILE.CURRENT_PASSWORD' | translate }}
+                </label>
+                <input type="password" formControlName="currentPassword" autocomplete="current-password"
+                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
              </div>
 
-             <div class="card card-body">
-                  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <label for="firstName">Nombre</label>
-                        <input id="firstName" type="text" formControlName="firstName" class="form-input" placeholder="Tu nombre" />
-                      </div>
-                      <div class="form-field">
-                        <label for="lastName">Apellido</label>
-                        <input id="lastName" type="text" formControlName="lastName" class="form-input" placeholder="Tu apellido" />
-                      </div>
-                    </div>
-
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <label for="email">Correo Electrónico</label>
-                        <input id="email" type="email" formControlName="email" class="form-input" />
-                      </div>
-                      <div class="form-field">
-                        <label for="phone">Teléfono</label>
-                        <div class="flex gap-2">
-                             <input id="phone" type="tel" formControlName="phone" class="form-input" placeholder="+1..." />
-
-                             @if (currentUser()?.isPhoneVerified) {
-                                <div class="verify-badge verified" title="Teléfono Verificado">
-                                    <lucide-icon [img]="CheckIcon" size="12"></lucide-icon>
-                                </div>
-                             } @else {
-                                <button type="button" (click)="openPhoneVerification()" class="verify-badge unverified" title="Click para verificar">
-                                    Verificar
-                                </button>
-                             }
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="form-field">
-                        <label for="jobTitle">Cargo / Puesto</label>
-                        <div class="relative">
-                            <select id="jobTitle" formControlName="jobTitle" class="form-input">
-                                <option value="" disabled>Selecciona tu cargo</option>
-                                @for (title of jobTitles(); track title) {
-                                    <option [value]="title">{{ title }}</option>
-                                }
-                            </select>
-                            <div *ngIf="jobTitles().length === 0" class="absolute right-8 top-3 text-xs text-secondary">
-                                Cargando...
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                      <button type="submit" class="btn btn-primary" [disabled]="profileForm.pristine || profileForm.invalid">
-                        Guardar Cambios
-                      </button>
-                    </div>
-                  </form>
-             </div>
-        </div>
-
-        <!-- Security Settings (Password, 2FA, Sessions) -->
-         <div class="settings-section">
-             <div class="section-header">
-                <h3>
-                    <lucide-icon [img]="ShieldIcon" size="20"></lucide-icon>
-                    Seguridad y Acceso
-                </h3>
+             <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                   {{ 'SETTINGS.PROFILE.NEW_PASSWORD' | translate }}
+                </label>
+                <input type="password" formControlName="newPassword" autocomplete="new-password"
+                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
              </div>
 
-             <!-- Password Change -->
-             <div class="card card-body mb-6">
-                <h4 class="text-base font-semibold mb-4 text-primary">Cambiar Contraseña</h4>
-                <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-                    <input type="text" name="username" autocomplete="username" hidden style="display:none">
-
-                    <div class="form-field">
-                      <label for="currentPassword">Contraseña Actual</label>
-                      <input id="currentPassword" type="password" formControlName="currentPassword" class="form-input" autocomplete="current-password" />
-                    </div>
-
-                    <div class="form-grid">
-                      <div class="form-field">
-                        <label for="newPassword">Nueva Contraseña</label>
-                        <input id="newPassword" type="password" formControlName="newPassword" class="form-input" autocomplete="new-password" />
-                      </div>
-                      <div class="form-field">
-                        <label for="confirmPassword">Confirmar</label>
-                        <input id="confirmPassword" type="password" formControlName="confirmPassword" class="form-input" autocomplete="new-password" />
-                      </div>
-                    </div>
-
-                    <div class="form-actions">
-                         <button type="submit" class="btn btn-secondary" [disabled]="passwordForm.invalid">
-                            Actualizar Contraseña
-                         </button>
-                    </div>
-                </form>
+             <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                   {{ 'SETTINGS.PROFILE.CONFIRM_PASSWORD' | translate }}
+                </label>
+                <input type="password" formControlName="confirmPassword" autocomplete="new-password"
+                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
              </div>
 
-             <!-- Advanced Security (2FA, Sessions) -->
-             <app-security-settings></app-security-settings>
-         </div>
+             <div class="pt-2 flex justify-end">
+                <button type="submit"
+                        [disabled]="passwordForm.invalid"
+                        class="px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm font-medium disabled:opacity-50">
+                   {{ 'SETTINGS.PROFILE.UPDATE_PASSWORD' | translate }}
+                </button>
+             </div>
+          </form>
+       </div>
 
+       <!-- 2FA & Sessions -->
+       <app-security-settings></app-security-settings>
     </div>
   </div>
 </div>
 
 <!-- Phone Verification Modal -->
-@if (showPhoneModal()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animation-fade-in">
-        <div class="bg-card-bg border border-border-color rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6 transform transition-all scale-100">
-            <div class="text-center">
-                <div class="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
-                    <lucide-icon [img]="PhoneIcon" size="24"></lucide-icon>
-                </div>
-                <h3 class="text-xl font-bold text-text-primary">Verificar Teléfono</h3>
-                <p class="text-text-secondary text-sm mt-1">
-                    Te enviaremos un código de seguridad por SMS.
-                </p>
-            </div>
-
-            <div class="space-y-4">
-                @if (!otpSent()) {
-                    <div class="form-field">
-                        <label>Número de Teléfono</label>
-                        <input type="tel" [formControl]="phoneControl" class="form-input text-lg" placeholder="+1..." />
-                    </div>
-                } @else {
-                    <div class="form-field">
-                         <label>Código de Verificación</label>
-                         <input type="text" [formControl]="otpControl" class="form-input text-center text-3xl tracking-[0.5em] font-mono" maxlength="6" autofocus />
-                         <p class="text-xs text-center mt-2 text-text-tertiary">Ingresa el código de 6 dígitos</p>
-                    </div>
-                }
-            </div>
-
-            <div class="flex gap-3 pt-2">
-                <button (click)="closePhoneVerification()" class="flex-1 btn btn-secondary">
-                    Cancelar
-                </button>
-                @if (!otpSent()) {
-                    <button (click)="sendPhoneOtp()" [disabled]="phoneControl.invalid || isVerifyingPhone()" class="flex-1 btn btn-primary">
-                        @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
-                        Enviar SMS
-                    </button>
-                } @else {
-                     <button (click)="verifyPhoneOtp()" [disabled]="otpControl.invalid || isVerifyingPhone()" class="flex-1 btn btn-primary">
-                        @if(isVerifyingPhone()) { <span class="animate-spin mr-2">⏳</span> }
-                        Verificar
-                    </button>
-                }
-            </div>
-        </div>
-    </div>
-}
+<app-phone-verification-modal
+   [isOpen]="showPhoneModal"
+   (close)="showPhoneModal.set(false)"
+   (verified)="onPhoneVerified()">
+</app-phone-verification-modal>

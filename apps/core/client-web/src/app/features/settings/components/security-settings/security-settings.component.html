@@ -1,0 +1,153 @@
+<div class="space-y-6">
+
+  <!-- 2FA Section -->
+  <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+    <div class="flex items-start justify-between">
+      <div class="flex gap-4">
+        <div class="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+          <lucide-icon [img]="SmartphoneIcon" class="w-6 h-6 text-primary-600 dark:text-primary-400"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {{ 'SETTINGS.SECURITY.2FA_TITLE' | translate }}
+          </h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-lg">
+            {{ 'SETTINGS.SECURITY.2FA_DESCRIPTION' | translate }}
+          </p>
+
+          <div *ngIf="is2faEnabled()" class="mt-3 flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
+            <lucide-icon [img]="CheckCircleIcon" class="w-4 h-4"></lucide-icon>
+            {{ 'SETTINGS.SECURITY.2FA_ACTIVE' | translate }}
+          </div>
+        </div>
+      </div>
+
+      <button *ngIf="!is2faEnabled()"
+              (click)="start2faSetup()"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+        {{ 'SETTINGS.SECURITY.ENABLE_2FA' | translate }}
+      </button>
+
+      <button *ngIf="is2faEnabled()"
+              (click)="disable2fa()"
+              class="px-4 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm font-medium">
+        {{ 'SETTINGS.SECURITY.DISABLE_2FA' | translate }}
+      </button>
+    </div>
+
+    <!-- 2FA Setup Flow -->
+    <div *ngIf="showSetup2fa()" class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fadeIn">
+
+      <!-- Step 1: Scan QR -->
+      <div *ngIf="backupCodes().length === 0" class="flex flex-col md:flex-row gap-8">
+        <div class="flex-1">
+          <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">
+            {{ 'SETTINGS.SECURITY.SETUP_STEP_1' | translate }}
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <li>{{ 'SETTINGS.SECURITY.DOWNLOAD_APP' | translate }}</li>
+            <li>{{ 'SETTINGS.SECURITY.SCAN_QR' | translate }}</li>
+            <li>{{ 'SETTINGS.SECURITY.ENTER_CODE' | translate }}</li>
+          </ol>
+
+          <div class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'SETTINGS.SECURITY.VERIFICATION_CODE' | translate }}
+            </label>
+            <div class="flex gap-2">
+              <input type="text" [(ngModel)]="verificationCode" maxlength="6"
+                     class="w-40 px-4 py-2 text-center text-xl tracking-widest rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                     placeholder="000000">
+              <button (click)="verifyAndEnable2fa()"
+                      [disabled]="verificationCode().length !== 6"
+                      class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">
+                {{ 'SETTINGS.SECURITY.VERIFY' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200">
+           <qrcode [qrdata]="qrCodeData()" [width]="200" [errorCorrectionLevel]="'M'"></qrcode>
+           <p class="mt-2 text-xs text-gray-500 font-mono">{{ twoFactorSecret() }}</p>
+        </div>
+      </div>
+
+      <!-- Step 2: Backup Codes -->
+      <div *ngIf="backupCodes().length > 0" class="space-y-4">
+        <div class="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
+          <lucide-icon [img]="AlertTriangleIcon" class="w-5 h-5 flex-shrink-0"></lucide-icon>
+          <p class="text-sm">
+            {{ 'SETTINGS.SECURITY.BACKUP_CODES_WARNING' | translate }}
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg font-mono text-sm">
+          <div *ngFor="let code of backupCodes()" class="text-center text-gray-700 dark:text-gray-300">
+            {{ code }}
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 mt-4">
+           <input type="checkbox" id="backupConfirm" [ngModel]="hasSavedBackupCodes()" (ngModelChange)="hasSavedBackupCodes.set($event)"
+                  class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500">
+           <label for="backupConfirm" class="text-sm text-gray-700 dark:text-gray-300 select-none cursor-pointer">
+              {{ 'SETTINGS.SECURITY.I_HAVE_SAVED_CODES' | translate }}
+           </label>
+        </div>
+
+        <div class="flex justify-end pt-4">
+          <button (click)="finish2faSetup()"
+                  [disabled]="!hasSavedBackupCodes()"
+                  class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ 'SETTINGS.SECURITY.DONE' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Sessions -->
+  <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+    <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+      <lucide-icon [img]="MonitorIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        {{ 'SETTINGS.SECURITY.ACTIVE_SESSIONS' | translate }}
+      </h2>
+    </div>
+
+    <div class="space-y-4">
+      <div *ngFor="let session of sessions()" class="flex items-center justify-between p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+        <div class="flex items-center gap-4">
+          <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+             <lucide-icon [img]="session.deviceType === 'mobile' ? SmartphoneIcon : LaptopIcon"
+                          class="w-6 h-6 text-gray-500 dark:text-gray-400"></lucide-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+              {{ session.browser }} on {{ session.os }}
+            </h4>
+            <div class="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <span class="flex items-center gap-1">
+                <lucide-icon [img]="GlobeIcon" class="w-3 h-3"></lucide-icon>
+                {{ session.ip }}
+              </span>
+              <span>
+                {{ session.lastActiveAt | date:'medium' }}
+              </span>
+              <span *ngIf="session.isCurrent" class="text-green-600 dark:text-green-400 font-medium px-2 py-0.5 bg-green-50 dark:bg-green-900/20 rounded-full">
+                {{ 'SETTINGS.SECURITY.CURRENT_SESSION' | translate }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button *ngIf="!session.isCurrent"
+                (click)="revokeSession(session.id)"
+                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+          {{ 'SETTINGS.SECURITY.REVOKE' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
