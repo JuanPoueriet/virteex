@@ -24,6 +24,7 @@
       [type]="inputType"
       [placeholder]="placeholder"
       [formControl]="control"
+      [attr.autocomplete]="autocomplete || null"
       (blur)="onTouched()"
       [class.error]="hasError"
       [style.padding-left]="hasIcon ? '3rem' : '1rem'"

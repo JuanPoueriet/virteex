@@ -67,6 +67,7 @@
           [placeholder]="'LOGIN.EMAIL_PLACEHOLDER' | translate"
           [hasIcon]="true"
           [required]="true"
+          autocomplete="username"
           [errorMessage]="getErrorMessage('email')">
           <lucide-icon icon [img]="icons.Mail" size="18"></lucide-icon>
         </app-auth-input>
@@ -79,6 +80,7 @@
             placeholder="••••••••"
             [hasIcon]="true"
             [required]="true"
+            autocomplete="current-password"
             [errorMessage]="getErrorMessage('password')">
             <lucide-icon icon [img]="icons.Lock" size="18"></lucide-icon>
           </app-auth-input>

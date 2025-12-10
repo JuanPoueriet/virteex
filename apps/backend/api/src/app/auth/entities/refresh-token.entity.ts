@@ -37,4 +37,16 @@ export class RefreshToken {
 
   @Column({ name: 'encrypted_ip', nullable: true, select: false })
   encryptedIp?: string;
+
+  @Column({ nullable: true })
+  browser?: string;
+
+  @Column({ nullable: true })
+  os?: string;
+
+  @Column({ name: 'device_type', nullable: true })
+  deviceType?: string;
+
+  @Column({ name: 'last_active_at', type: 'timestamptz', nullable: true })
+  lastActiveAt?: Date;
 }
