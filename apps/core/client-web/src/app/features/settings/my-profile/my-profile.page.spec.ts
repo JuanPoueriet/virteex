@@ -20,6 +20,7 @@ class MockAuthService {
 
 class MockUsersService {
   updateProfile = jest.fn().mockReturnValue(of({}));
+  getJobTitles = jest.fn().mockReturnValue(of(['CEO', 'Developer']));
 }
 
 class MockNotificationService {

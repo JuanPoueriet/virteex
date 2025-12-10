@@ -26,6 +26,7 @@ import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
 import { UsersService } from '../../../core/api/users.service';
 import { SecuritySettingsComponent } from './security-settings.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-my-profile-page',
@@ -64,15 +65,18 @@ export class MyProfilePage implements OnInit {
   phoneControl = this.fb.control('', [Validators.required]);
   otpControl = this.fb.control('', [Validators.required, Validators.minLength(6)]);
 
+  // Job Titles List (Loaded from backend)
+  jobTitles = toSignal(this.usersService.getJobTitles(), { initialValue: [] });
+
   ngOnInit(): void {
     const user = this.currentUser();
 
     this.profileForm = this.fb.group({
       firstName: [user?.firstName, Validators.required],
       lastName: [user?.lastName, Validators.required],
-      email: [{ value: user?.email, disabled: true }],
-      phone: [user?.phone || ''],
-      jobTitle: [user?.jobTitle || ''],
+      email: [user?.email, [Validators.required, Validators.email]],
+      phone: [user?.phone || '', Validators.required],
+      jobTitle: [user?.jobTitle || '', Validators.required],
       preferredLanguage: [user?.preferredLanguage || 'es']
     });
 
@@ -159,13 +163,13 @@ export class MyProfilePage implements OnInit {
   saveProfile(): void {
     if (this.profileForm.valid) {
       this.isLoading = true;
-      const { firstName, lastName, preferredLanguage } = this.profileForm.value;
+      const { firstName, lastName, preferredLanguage, email, phone, jobTitle } = this.profileForm.value;
 
-      this.usersService.updateProfile({ firstName, lastName, preferredLanguage }).subscribe({
+      this.usersService.updateProfile({ firstName, lastName, preferredLanguage, email, phone, jobTitle }).subscribe({
         next: () => {
           this.notificationService.showSuccess('Perfil actualizado exitosamente.');
           // Update local state if needed via AuthService
-          // this.authService.updateCurrentUser(updatedUser);
+          this.authService.checkAuthStatus().subscribe(); // Refresh user data
           this.profileForm.markAsPristine();
           this.isLoading = false;
           this.cdr.markForCheck();
