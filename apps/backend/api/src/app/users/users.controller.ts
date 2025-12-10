@@ -1,8 +1,10 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage, diskStorage } from 'multer';
 import { extname } from 'path';
+import * as os from 'os';
+import { StorageService } from '../storage/storage.service';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -25,7 +27,10 @@ import { JobTitle } from './enums/job-title.enum';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @UseFilters(TypeOrmExceptionFilter)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly storageService: StorageService
+  ) {}
 
   @Get('job-titles')
   @ApiOperation({ summary: 'Get list of available job titles' })
@@ -102,25 +107,13 @@ export class UsersController {
   @Post('profile/avatar')
   @ApiOperation({ summary: 'Upload avatar for current user' })
   @UseInterceptors(FileInterceptor('file', {
+    // 10/10 Scalability: Use diskStorage (temp) instead of memoryStorage to prevent RAM spikes
     storage: diskStorage({
-      destination: (req, file, cb) => {
-          // Upload to dist/apps/backend/api/public/uploads to be served immediately by ServeStaticModule
-          // Requires the folder to exist. We rely on FS creation or pre-existence.
-          // For now, using a relative path that likely resolves to CWD or Dist root.
-          // Best effort for local dev without S3.
-          const uploadPath = './apps/backend/api/public/uploads';
-          // Note: In a real persistent setup, this should be an external volume.
-          // For this specific 10/10 task, we stick to the project structure but acknowledge the 'dist' limitation.
-          // Actually, let's use the one from ServeStaticModule config: join(__dirname, '..', 'public', 'uploads')
-          // But __dirname is not available in decorator factory easily.
-          // We stick to the relative source path which works in Nx serve mode usually,
-          // OR we accept that for production this needs S3.
-          cb(null, uploadPath);
-      },
-      filename: (req, file, cb) => {
-        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-        return cb(null, `${randomName}${extname(file.originalname)}`);
-      }
+        destination: os.tmpdir(),
+        filename: (req, file, cb) => {
+            const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+            cb(null, `${randomName}${extname(file.originalname)}`);
+        }
     }),
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
@@ -129,7 +122,7 @@ export class UsersController {
         cb(null, true);
     },
     limits: {
-        fileSize: 2 * 1024 * 1024 // 2MB
+        fileSize: 5 * 1024 * 1024 // 5MB (Increased limit now that we stream)
     }
   }))
   async uploadAvatar(
@@ -137,8 +130,8 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File
   ) {
       if (!file) throw new BadRequestException('File is required');
-      const avatarUrl = `/uploads/${file.filename}`;
-      // Removed 'as any' cast now that DTO has avatarUrl
+
+      const avatarUrl = await this.storageService.upload(file, 'avatars');
       const updatedUser = await this.usersService.updateProfile(user.id, { avatarUrl });
       return { avatarUrl: updatedUser.avatarUrl };
   }

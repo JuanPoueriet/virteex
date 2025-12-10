@@ -4,14 +4,18 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  DestroyRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
   FormBuilder,
   FormGroup,
   Validators,
+  FormControl
 } from '@angular/forms';
 import {
   LucideAngularModule,
@@ -27,14 +31,23 @@ import {
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/notification';
 import { UsersService } from '../../../core/api/users.service';
-import { SecuritySettingsComponent } from './security-settings.component';
+import { SecuritySettingsComponent } from '../components/security-settings/security-settings.component';
+import { PhoneVerificationModalComponent } from '../components/phone-verification-modal/phone-verification-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
+import { FileUtil } from '../../../shared/utils/file.util';
 
 @Component({
   selector: 'app-my-profile-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SecuritySettingsComponent, TranslateModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    SecuritySettingsComponent,
+    TranslateModule,
+    PhoneVerificationModalComponent
+  ],
   templateUrl: './my-profile.page.html',
   styleUrls: ['./my-profile.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +58,7 @@ export class MyProfilePage implements OnInit {
   private usersService = inject(UsersService);
   private notificationService = inject(NotificationService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   // Icons
   protected readonly UserIcon = UserIcon;
@@ -56,7 +70,15 @@ export class MyProfilePage implements OnInit {
   protected readonly ShieldIcon = Shield;
   protected readonly CheckIcon = Check;
 
-  profileForm!: FormGroup;
+  profileForm!: FormGroup<{
+      firstName: FormControl<string | null>;
+      lastName: FormControl<string | null>;
+      email: FormControl<string | null>;
+      phone: FormControl<string | null>;
+      jobTitle: FormControl<string | null>;
+      preferredLanguage: FormControl<string | null>;
+  }>;
+
   passwordForm!: FormGroup;
   avatarPreview = signal<string | ArrayBuffer | null>(null);
 
@@ -65,10 +87,6 @@ export class MyProfilePage implements OnInit {
 
   // Phone Verification State
   showPhoneModal = signal(false);
-  isVerifyingPhone = signal(false);
-  otpSent = signal(false);
-  phoneControl = this.fb.control('', [Validators.required]);
-  otpControl = this.fb.control('', [Validators.required, Validators.minLength(6)]);
 
   // Job Titles List (Loaded from backend)
   jobTitles = toSignal(this.usersService.getJobTitles(), { initialValue: [] });
@@ -77,9 +95,9 @@ export class MyProfilePage implements OnInit {
     const user = this.currentUser();
 
     this.profileForm = this.fb.group({
-      firstName: [user?.firstName, Validators.required],
-      lastName: [user?.lastName, Validators.required],
-      email: [user?.email, [Validators.required, Validators.email]],
+      firstName: [user?.firstName || '', Validators.required],
+      lastName: [user?.lastName || '', Validators.required],
+      email: [user?.email || '', [Validators.required, Validators.email]],
       phone: [user?.phone || '', Validators.required],
       jobTitle: [user?.jobTitle || '', Validators.required],
       preferredLanguage: [user?.preferredLanguage || 'es']
@@ -99,79 +117,47 @@ export class MyProfilePage implements OnInit {
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      // Preview
-      const reader = new FileReader();
-      reader.onload = () => {
-         this.avatarPreview.set(reader.result);
-         this.cdr.markForCheck();
-      };
-      reader.readAsDataURL(file);
+      // 10/10: Use shared utility for validation and reading
+      const error = FileUtil.validateImage(file, 2); // 2MB limit
+      if (error) {
+          this.notificationService.showError(error); // Should ideally be a translation key
+          return;
+      }
+
+      FileUtil.readFileAsDataUrl(file).then(dataUrl => {
+          this.avatarPreview.set(dataUrl);
+          this.cdr.markForCheck();
+      }).catch(err => console.error('Error reading file', err));
 
       // Upload via UsersService
-      this.usersService.uploadAvatar(file).subscribe({
+      this.usersService.uploadAvatar(file)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
           next: (res) => {
               this.notificationService.showSuccess('SETTINGS.PROFILE.AVATAR_UPDATED');
-              this.authService.checkAuthStatus().subscribe(); // Refresh user
+              this.authService.checkAuthStatus().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
           },
-          error: () => {
-              this.notificationService.showError('SETTINGS.PROFILE.ERRORS.AVATAR_UPLOAD');
+          error: (error: HttpErrorResponse) => {
+              if (error.status === 413) {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.FILE_TOO_LARGE');
+              } else if (error.status === 400 && error.error?.message?.includes('image')) {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.INVALID_FORMAT');
+              } else {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.AVATAR_UPLOAD');
+              }
           }
       });
     }
   }
 
-  // --- Phone Verification Logic ---
-
   openPhoneVerification() {
     this.showPhoneModal.set(true);
-    this.otpSent.set(false);
-    this.otpControl.reset();
-    this.phoneControl.reset();
   }
 
-  closePhoneVerification() {
-    this.showPhoneModal.set(false);
-  }
-
-  sendPhoneOtp() {
-    if (this.phoneControl.invalid) return;
-
-    this.isVerifyingPhone.set(true);
-    this.authService.sendPhoneOtp(this.phoneControl.value!).subscribe({
-        next: () => {
-            this.otpSent.set(true);
-            this.isVerifyingPhone.set(false);
-            this.notificationService.showSuccess('SETTINGS.PROFILE.OTP_SENT');
-            this.cdr.markForCheck();
-        },
-        error: (err) => {
-            this.isVerifyingPhone.set(false);
-            this.notificationService.showError('SETTINGS.PROFILE.ERRORS.OTP_SEND');
-            this.cdr.markForCheck();
-        }
-    });
-  }
-
-  verifyPhoneOtp() {
-    if (this.otpControl.invalid || this.phoneControl.invalid) return;
-
-    this.isVerifyingPhone.set(true);
-    this.authService.verifyPhoneOtp(this.otpControl.value!, this.phoneControl.value!).subscribe({
-        next: () => {
-            this.isVerifyingPhone.set(false);
-            this.notificationService.showSuccess('SETTINGS.PROFILE.PHONE_VERIFIED');
-            this.showPhoneModal.set(false);
-
-            // Reload user info to update UI state
-            this.authService.checkAuthStatus().subscribe();
-            this.cdr.markForCheck();
-        },
-        error: (err) => {
-            this.isVerifyingPhone.set(false);
-            this.notificationService.showError('SETTINGS.PROFILE.ERRORS.OTP_INVALID');
-            this.cdr.markForCheck();
-        }
-    });
+  onPhoneVerified() {
+    // Reload user info to update UI state
+    this.authService.checkAuthStatus().subscribe();
+    this.cdr.markForCheck();
   }
 
   saveProfile(): void {
@@ -179,11 +165,20 @@ export class MyProfilePage implements OnInit {
       this.isLoading = true;
       const { firstName, lastName, preferredLanguage, email, phone, jobTitle } = this.profileForm.value;
 
-      this.usersService.updateProfile({ firstName, lastName, preferredLanguage, email, phone, jobTitle }).subscribe({
+      // Clean payload
+      const payload = {
+          firstName: firstName!,
+          lastName: lastName!,
+          preferredLanguage: preferredLanguage!,
+          email: email!,
+          phone: phone!,
+          jobTitle: jobTitle!
+      };
+
+      this.usersService.updateProfile(payload).subscribe({
         next: () => {
           this.notificationService.showSuccess('SETTINGS.PROFILE.UPDATED');
-          // Update local state if needed via AuthService
-          this.authService.checkAuthStatus().subscribe(); // Refresh user data
+          this.authService.checkAuthStatus().subscribe();
           this.profileForm.markAsPristine();
           this.isLoading = false;
           this.cdr.markForCheck();
