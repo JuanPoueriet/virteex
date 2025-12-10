@@ -1,9 +1,11 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { memoryStorage, diskStorage } from 'multer';
 import { extname } from 'path';
 import * as os from 'os';
+import * as fs from 'fs/promises';
 import { StorageService } from '../storage/storage.service';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
@@ -105,6 +107,7 @@ export class UsersController {
   }
 
   @Post('profile/avatar')
+  @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Upload avatar for current user' })
   @UseInterceptors(FileInterceptor('file', {
     // 10/10 Scalability: Use diskStorage (temp) instead of memoryStorage to prevent RAM spikes
@@ -131,9 +134,15 @@ export class UsersController {
   ) {
       if (!file) throw new BadRequestException('File is required');
 
-      const avatarUrl = await this.storageService.upload(file, 'avatars');
-      const updatedUser = await this.usersService.updateProfile(user.id, { avatarUrl });
-      return { avatarUrl: updatedUser.avatarUrl };
+      try {
+        const avatarUrl = await this.storageService.upload(file, 'avatars');
+        const updatedUser = await this.usersService.updateProfile(user.id, { avatarUrl });
+        return { avatarUrl: updatedUser.avatarUrl };
+      } finally {
+        if (file.path) {
+          await fs.unlink(file.path).catch(() => {});
+        }
+      }
   }
 
   @Get(':id')
