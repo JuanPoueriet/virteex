@@ -8,6 +8,7 @@ import { randomInt } from 'crypto';
 
 import { User } from '../../users/entities/user.entity/user.entity';
 import { VerificationCode, VerificationType } from '../entities/verification-code.entity';
+import { MailService } from '../../mail/mail.service';
 import { AbstractSmsProvider } from './abstract-sms.provider';
 import { SecurityAnalysisService } from './security-analysis.service';
 import { AuditTrailService } from '../../audit/audit.service';
@@ -33,8 +34,55 @@ export class MfaOrchestratorService {
     private readonly auditService: AuditTrailService,
     private readonly tokenService: TokenService,
     private readonly usersService: UsersService,
-    private readonly twoFactorAuthService: TwoFactorAuthService
+    private readonly twoFactorAuthService: TwoFactorAuthService,
+    private readonly mailService: MailService
   ) {}
+
+  async sendEmailOtp(userId: string, email: string) {
+    const user = await this.usersService.findOne(userId);
+    if (!user) throw new BadRequestException('User not found');
+
+    const code = randomInt(100000, 999999).toString();
+    const hash = await argon2.hash(code);
+
+    await this.verificationCodeRepository.delete({ userId, type: VerificationType.EMAIL_VERIFY });
+
+    const verificationCode = this.verificationCodeRepository.create({
+      userId,
+      code: hash,
+      payload: email,
+      type: VerificationType.EMAIL_VERIFY,
+      expiresAt: new Date(Date.now() + AuthConfig.MFA_CODE_EXPIRATION),
+    });
+
+    await this.verificationCodeRepository.save(verificationCode);
+
+    await this.mailService.sendVerificationCodeEmail(email, code, user.firstName);
+  }
+
+  async verifyEmailOtp(userId: string, code: string) {
+    const record = await this.verificationCodeRepository.findOne({
+      where: { userId, type: VerificationType.EMAIL_VERIFY },
+    });
+
+    if (!record) {
+      throw new BadRequestException('No verification code found or expired.');
+    }
+
+    if (new Date() > record.expiresAt) {
+      await this.verificationCodeRepository.delete(record.id);
+      throw new BadRequestException('Verification code expired.');
+    }
+
+    const isValid = await argon2.verify(record.code, code);
+    if (!isValid) {
+      throw new BadRequestException('Invalid verification code.');
+    }
+
+    await this.verificationCodeRepository.delete(record.id);
+
+    return { message: 'Email verified successfully.' };
+  }
 
   async sendPhoneOtp(userId: string, phoneNumber: string) {
     const code = randomInt(100000, 999999).toString();

@@ -1,7 +1,7 @@
 
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, AfterViewInit, Inject, PLATFORM_ID, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, ViewChildren, QueryList, ElementRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin } from 'lucide-angular';
+import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin, Copy, Download, RefreshCw, X, ArrowRight } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth';
 import { SecurityService, Session } from '../../../../core/api/security.service';
@@ -10,6 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
+
+type SetupStep = 'EMAIL_VERIFY' | 'QR_SETUP' | 'BACKUP_CODES';
 
 @Component({
   selector: 'app-security-settings',
@@ -36,24 +38,36 @@ export class SecuritySettingsComponent implements OnInit {
   protected readonly AlertTriangleIcon = AlertTriangle;
   protected readonly CheckCircleIcon = CheckCircle;
   protected readonly MapPinIcon = MapPin;
+  protected readonly CopyIcon = Copy;
+  protected readonly DownloadIcon = Download;
+  protected readonly RefreshIcon = RefreshCw;
+  protected readonly XIcon = X;
+  protected readonly ArrowRightIcon = ArrowRight;
 
   currentUser = this.authService.currentUser;
 
   // 2FA State
   is2faEnabled = signal(false);
-  showSetup2fa = signal(false);
+  showSetupModal = signal(false);
+  currentStep = signal<SetupStep>('EMAIL_VERIFY');
+
+  // Step 1: Email Verify
+  emailCode = signal('');
+  isResendingEmail = signal(false);
+
+  // Step 2: QR Setup
   qrCodeData = signal<string>('');
   twoFactorSecret = signal<string>('');
   verificationCode = signal('');
-  backupCodes = signal<string[]>([]);
 
-  // 10/10 Improvement: Checkbox to confirm backup codes saved
+  // Step 3: Backup Codes
+  backupCodes = signal<string[]>([]);
   hasSavedBackupCodes = signal(false);
 
   // Sessions
   sessions = signal<Session[]>([]);
   expandedSessionId = signal<string | null>(null);
-  private map: any; // Leaflet Map type
+  private map: any;
 
   @ViewChildren('mapContainer') mapContainers!: QueryList<ElementRef<HTMLDivElement>>;
 
@@ -71,23 +85,73 @@ export class SecuritySettingsComponent implements OnInit {
       .subscribe(sessions => this.sessions.set(sessions));
   }
 
+  // --- 2FA Setup Flow ---
+
   start2faSetup() {
+    this.currentStep.set('EMAIL_VERIFY');
+    this.emailCode.set('');
+    this.showSetupModal.set(true);
+    this.sendEmailVerification();
+  }
+
+  closeSetupModal() {
+    this.showSetupModal.set(false);
+    this.emailCode.set('');
+    this.verificationCode.set('');
+    this.backupCodes.set([]);
+    this.hasSavedBackupCodes.set(false);
+  }
+
+  // Step 1 Logic
+  sendEmailVerification() {
+    this.isResendingEmail.set(true);
+    this.securityService.sendEmailVerification()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.notificationService.showSuccess('SETTINGS.SECURITY.EMAIL_CODE_SENT');
+          this.isResendingEmail.set(false);
+        },
+        error: () => {
+          this.notificationService.showError('SETTINGS.SECURITY.ERRORS.SEND_FAILED');
+          this.isResendingEmail.set(false);
+        }
+      });
+  }
+
+  verifyEmailCode() {
+    if (!this.emailCode() || this.emailCode().length < 6) return;
+
+    this.securityService.verifyEmailVerification(this.emailCode())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          // Proceed to QR Step
+          this.generateQrCode();
+        },
+        error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE')
+      });
+  }
+
+  // Step 2 Logic
+  private generateQrCode() {
     this.securityService.generate2faSecret()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.twoFactorSecret.set(res.secret);
           this.qrCodeData.set(res.otpauthUrl);
-          this.showSetup2fa.set(true);
-          this.backupCodes.set([]); // Reset
-          this.hasSavedBackupCodes.set(false);
+          this.currentStep.set('QR_SETUP');
         },
-        error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.SETUP_FAILED')
+        error: () => {
+            this.notificationService.showError('SETTINGS.SECURITY.ERRORS.SETUP_FAILED');
+            this.closeSetupModal();
+        }
       });
   }
 
   verifyAndEnable2fa() {
-    if (!this.verificationCode()) return;
+    if (!this.verificationCode() || this.verificationCode().length < 6) return;
 
     this.securityService.enable2fa(this.verificationCode())
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -95,23 +159,48 @@ export class SecuritySettingsComponent implements OnInit {
         next: (res) => {
           this.is2faEnabled.set(true);
           this.backupCodes.set(res.backupCodes);
+          this.currentStep.set('BACKUP_CODES');
           this.notificationService.showSuccess('SETTINGS.SECURITY.2FA_ENABLED');
-          // Don't close immediately, show backup codes
         },
         error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE')
       });
   }
 
-  finish2faSetup() {
-      if (this.backupCodes().length > 0 && !this.hasSavedBackupCodes()) {
+  copySecret() {
+      navigator.clipboard.writeText(this.twoFactorSecret()).then(() => {
+          this.notificationService.showSuccess('SETTINGS.SECURITY.COPIED');
+      });
+  }
+
+  // Step 3 Logic
+  copyBackupCodes() {
+      const text = this.backupCodes().join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+          this.notificationService.showSuccess('SETTINGS.SECURITY.COPIED');
+      });
+  }
+
+  downloadBackupCodes() {
+      const text = this.backupCodes().join('\n');
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'backup-codes.txt';
+      a.click();
+      window.URL.revokeObjectURL(url);
+  }
+
+  completeSetup() {
+      if (!this.hasSavedBackupCodes()) {
           this.notificationService.showError('SETTINGS.SECURITY.CONFIRM_BACKUP_CODES');
           return;
       }
-      this.showSetup2fa.set(false);
-      this.backupCodes.set([]);
-      this.verificationCode.set('');
+      this.closeSetupModal();
       this.authService.checkAuthStatus().subscribe();
   }
+
+  // --- End 2FA Setup Flow ---
 
   confirmDisable2fa() {
     this.showDisableConfirmation.set(true);
@@ -154,25 +243,17 @@ export class SecuritySettingsComponent implements OnInit {
       this.destroyMap();
     } else {
       this.expandedSessionId.set(session.id);
-      // Wait for view update
       setTimeout(() => this.initMap(session), 0);
     }
   }
 
   private async initMap(session: Session) {
     if (!isPlatformBrowser(this.platformId)) return;
-
     this.destroyMap();
-
-    // Dynamically import Leaflet only on browser side
     const L = await import('leaflet');
-
     const containerRef = this.mapContainers.find(c => c.nativeElement.dataset['sessionId'] === session.id);
     if (!containerRef) return;
-    
     const element = containerRef.nativeElement;
-
-    // Default coords if none (e.g. Santo Domingo)
     const lat = session.latitude || 18.4861;
     const lng = session.longitude || -69.9312;
 
@@ -188,13 +269,11 @@ export class SecuritySettingsComponent implements OnInit {
         keyboard: false
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: ''
-    }).addTo(this.map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '' }).addTo(this.map);
 
     L.circleMarker([lat, lng], {
         radius: 8,
-        fillColor: '#F97316', // Orange-500
+        fillColor: '#F97316',
         color: '#fff',
         weight: 2,
         opacity: 1,

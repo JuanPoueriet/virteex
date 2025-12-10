@@ -368,6 +368,23 @@ export class AuthController {
     return this.twoFactorAuthService.generateBackupCodes(user);
   }
 
+  @Post('2fa/send-email-verification')
+  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @ApiOperation({ summary: 'Send email verification code for 2FA setup' })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
+  async sendEmailVerification(@CurrentUser() user: User) {
+    await this.mfaOrchestratorService.sendEmailOtp(user.id, user.email);
+    return { message: 'Verification code sent to email' };
+  }
+
+  @Post('2fa/verify-email-verification')
+  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @ApiOperation({ summary: 'Verify email code for 2FA setup' })
+  @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
+  async verifyEmailVerification(@CurrentUser() user: User, @Body('code') code: string) {
+    return this.mfaOrchestratorService.verifyEmailOtp(user.id, code);
+  }
+
   @Post('send-phone-otp')
   @UseGuards(JwtAuthGuard, CsrfGuard)
   @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } }) // Rate limit: 3 per minute

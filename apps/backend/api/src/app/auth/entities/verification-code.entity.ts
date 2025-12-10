@@ -5,6 +5,7 @@ import { User } from '../../users/entities/user.entity/user.entity';
 export enum VerificationType {
   PHONE_VERIFY = 'PHONE_VERIFY',
   LOGIN_2FA = 'LOGIN_2FA',
+  EMAIL_VERIFY = 'EMAIL_VERIFY',
 }
 
 @Entity({ name: 'verification_codes' })

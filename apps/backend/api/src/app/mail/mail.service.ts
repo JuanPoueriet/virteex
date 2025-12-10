@@ -82,4 +82,18 @@ export class MailService {
       },
     });
   }
+
+  async sendVerificationCodeEmail(email: string, code: string, name: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Código de verificación 2FA',
+      template: './verification-code',
+      context: {
+        name: name || 'Usuario',
+        code,
+        appName: this.configService.get<string>('APP_NAME', 'Virteex ERP'),
+        currentYear: new Date().getFullYear(),
+      },
+    });
+  }
 }
