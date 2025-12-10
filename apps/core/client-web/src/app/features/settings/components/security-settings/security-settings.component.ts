@@ -7,14 +7,14 @@ import { AuthService } from '../../../../core/services/auth';
 import { SecurityService } from '../../../../core/api/security.service';
 import { NotificationService } from '../../../../core/services/notification';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { QRCodeModule } from 'angularx-qrcode';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeModule, FormsModule, ConfirmationModalComponent],
+  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeComponent, FormsModule, ConfirmationModalComponent],
   templateUrl: './security-settings.component.html',
   styleUrls: ['./security-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

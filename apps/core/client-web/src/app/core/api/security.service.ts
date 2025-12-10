@@ -7,8 +7,10 @@ export interface Session {
   id: string;
   ipAddress: string;
   userAgent: string;
-  createdAt: string;
-  expiresAt: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  lastActiveAt: string;
   isCurrent: boolean;
 }
 
@@ -28,19 +30,19 @@ export class SecurityService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  getSessions(): Observable<Session[]> {
+  getActiveSessions(): Observable<Session[]> {
     return this.http.get<Session[]>(`${this.apiUrl}/sessions`);
   }
 
   revokeSession(sessionId: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/sessions/${sessionId}/revoke`, {});
+    return this.http.delete<void>(`${this.apiUrl}/sessions/${sessionId}`);
   }
 
-  initiate2faSetup(): Observable<TwoFactorSetupResponse> {
+  generate2faSecret(): Observable<TwoFactorSetupResponse> {
     return this.http.post<TwoFactorSetupResponse>(`${this.apiUrl}/2fa/generate`, {});
   }
 
-  verifyAndEnable2fa(token: string): Observable<{ backupCodes: string[] }> {
+  enable2fa(token: string): Observable<{ backupCodes: string[] }> {
     return this.http.post<{ backupCodes: string[] }>(`${this.apiUrl}/2fa/enable`, { token });
   }
 
