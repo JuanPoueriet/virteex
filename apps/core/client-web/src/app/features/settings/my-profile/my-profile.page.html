@@ -5,10 +5,10 @@
       <div class="profile-header__avatar-container">
         <div class="profile-header__avatar">
           <img [src]="avatarPreview() || 'assets/images/default-avatar.png'"
-               alt="Profile">
+               alt="Profile Avatar">
         </div>
-        <label class="profile-header__upload-btn">
-          <lucide-icon [img]="ImageIcon" class="w-4 h-4"></lucide-icon>
+        <label class="profile-header__upload-btn" title="{{ 'SETTINGS.PROFILE.CHANGE_AVATAR' | translate }}">
+          <lucide-icon [img]="ImageIcon" class="w-5 h-5"></lucide-icon>
           <input type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*">
         </label>
       </div>
@@ -20,7 +20,7 @@
         <p>{{ currentUser()?.email }}</p>
         <div class="mt-2">
           <span class="profile-header__role-badge">
-            {{ currentUser()?.roles?.[0]?.name }}
+            {{ currentUser()?.roles?.[0]?.name || 'User' }}
           </span>
         </div>
       </div>
@@ -32,7 +32,7 @@
     <div class="profile-card">
       <div class="profile-card__header">
         <lucide-icon [img]="UserIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
-        <h2 class="profile-card__title">
+        <h2>
           {{ 'SETTINGS.PROFILE.PERSONAL_INFO' | translate }}
         </h2>
       </div>
@@ -41,11 +41,15 @@
         <div class="form-grid">
           <div class="form-group">
             <label>{{ 'SETTINGS.PROFILE.FIRST_NAME' | translate }}</label>
-            <input type="text" formControlName="firstName">
+            <div class="form-group__input-wrapper">
+               <input type="text" formControlName="firstName" placeholder="John">
+            </div>
           </div>
           <div class="form-group">
             <label>{{ 'SETTINGS.PROFILE.LAST_NAME' | translate }}</label>
-            <input type="text" formControlName="lastName">
+            <div class="form-group__input-wrapper">
+               <input type="text" formControlName="lastName" placeholder="Doe">
+            </div>
           </div>
         </div>
 
@@ -53,7 +57,7 @@
           <label>{{ 'SETTINGS.PROFILE.EMAIL' | translate }}</label>
           <div class="form-group__input-wrapper">
             <span class="form-group__icon">
-              <lucide-icon [img]="MailIcon" class="w-4 h-4"></lucide-icon>
+              <lucide-icon [img]="MailIcon" class="w-5 h-5"></lucide-icon>
             </span>
             <input type="email" formControlName="email" class="has-icon" readonly>
           </div>
@@ -61,12 +65,12 @@
 
         <div class="form-group">
           <label>{{ 'SETTINGS.PROFILE.PHONE' | translate }}</label>
-          <div class="flex gap-2">
+          <div class="flex gap-3">
             <div class="form-group__input-wrapper flex-1">
               <span class="form-group__icon">
-                <lucide-icon [img]="PhoneIcon" class="w-4 h-4"></lucide-icon>
+                <lucide-icon [img]="PhoneIcon" class="w-5 h-5"></lucide-icon>
               </span>
-              <input type="tel" formControlName="phone" class="has-icon">
+              <input type="tel" formControlName="phone" class="has-icon" placeholder="+1 (555) 000-0000">
             </div>
             <button type="button"
                     (click)="openPhoneVerification()"
@@ -80,7 +84,7 @@
           <label>{{ 'SETTINGS.PROFILE.JOB_TITLE' | translate }}</label>
           <div class="form-group__input-wrapper">
              <span class="form-group__icon">
-                <lucide-icon [img]="CompanyIcon" class="w-4 h-4"></lucide-icon>
+                <lucide-icon [img]="CompanyIcon" class="w-5 h-5"></lucide-icon>
              </span>
              <select formControlName="jobTitle" class="has-icon">
                  <option value="" disabled>{{ 'SETTINGS.PROFILE.SELECT_JOB_TITLE' | translate }}</option>
@@ -89,12 +93,15 @@
           </div>
         </div>
 
-        <div class="pt-4 flex justify-end">
+        <div class="pt-6 flex justify-end">
           <button type="submit"
                   [disabled]="profileForm.invalid || profileForm.pristine || isLoading"
                   class="btn btn--primary">
-            <lucide-icon *ngIf="!isLoading" [img]="SaveIcon" class="w-4 h-4"></lucide-icon>
-            <span *ngIf="isLoading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+            @if (isLoading) {
+              <span class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+            } @else {
+              <lucide-icon [img]="SaveIcon" class="w-4 h-4"></lucide-icon>
+            }
             {{ 'SETTINGS.PROFILE.SAVE_CHANGES' | translate }}
           </button>
         </div>
@@ -102,12 +109,12 @@
     </div>
 
     <!-- Security Settings (Password & 2FA) -->
-    <div class="space-y-6">
+    <div class="space-y-8">
        <!-- Password Change -->
        <div class="profile-card">
           <div class="profile-card__header">
             <lucide-icon [img]="ShieldIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
-            <h2 class="profile-card__title">
+            <h2>
               {{ 'SETTINGS.PROFILE.SECURITY' | translate }}
             </h2>
           </div>
@@ -118,20 +125,26 @@
 
              <div class="form-group">
                 <label>{{ 'SETTINGS.PROFILE.CURRENT_PASSWORD' | translate }}</label>
-                <input type="password" formControlName="currentPassword" autocomplete="current-password">
+                <div class="form-group__input-wrapper">
+                    <input type="password" formControlName="currentPassword" autocomplete="current-password" placeholder="••••••••">
+                </div>
              </div>
 
              <div class="form-group">
                 <label>{{ 'SETTINGS.PROFILE.NEW_PASSWORD' | translate }}</label>
-                <input type="password" formControlName="newPassword" autocomplete="new-password">
+                <div class="form-group__input-wrapper">
+                    <input type="password" formControlName="newPassword" autocomplete="new-password" placeholder="••••••••">
+                </div>
              </div>
 
              <div class="form-group">
                 <label>{{ 'SETTINGS.PROFILE.CONFIRM_PASSWORD' | translate }}</label>
-                <input type="password" formControlName="confirmPassword" autocomplete="new-password">
+                <div class="form-group__input-wrapper">
+                    <input type="password" formControlName="confirmPassword" autocomplete="new-password" placeholder="••••••••">
+                </div>
              </div>
 
-             <div class="pt-2 flex justify-end">
+             <div class="pt-4 flex justify-end">
                 <button type="submit"
                         [disabled]="passwordForm.invalid"
                         class="btn btn--secondary">
