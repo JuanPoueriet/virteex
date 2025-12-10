@@ -1,15 +1,16 @@
 
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle } from 'lucide-angular';
+import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth';
-import { SecurityService } from '../../../../core/api/security.service';
+import { SecurityService, Session } from '../../../../core/api/security.service';
 import { NotificationService } from '../../../../core/services/notification';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'app-security-settings',
@@ -34,6 +35,7 @@ export class SecuritySettingsComponent implements OnInit {
   protected readonly GlobeIcon = Globe;
   protected readonly AlertTriangleIcon = AlertTriangle;
   protected readonly CheckCircleIcon = CheckCircle;
+  protected readonly MapPinIcon = MapPin;
 
   currentUser = this.authService.currentUser;
 
@@ -49,7 +51,9 @@ export class SecuritySettingsComponent implements OnInit {
   hasSavedBackupCodes = signal(false);
 
   // Sessions
-  sessions = signal<any[]>([]);
+  sessions = signal<Session[]>([]);
+  expandedSessionId = signal<string | null>(null);
+  private map: L.Map | undefined;
 
   // Confirmation Modal
   showDisableConfirmation = signal(false);
@@ -125,7 +129,8 @@ export class SecuritySettingsComponent implements OnInit {
       });
   }
 
-  revokeSession(sessionId: string) {
+  revokeSession(sessionId: string, event: Event) {
+    event.stopPropagation();
     this.securityService.revokeSession(sessionId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -135,5 +140,62 @@ export class SecuritySettingsComponent implements OnInit {
         },
         error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.REVOKE_FAILED')
       });
+  }
+
+  disable2fa() {
+    this.confirmDisable2fa();
+  }
+
+  toggleSessionDetails(session: Session) {
+    if (this.expandedSessionId() === session.id) {
+      this.expandedSessionId.set(null);
+      this.destroyMap();
+    } else {
+      this.expandedSessionId.set(session.id);
+      setTimeout(() => this.initMap(session), 100); // Wait for DOM
+    }
+  }
+
+  private initMap(session: Session) {
+    this.destroyMap();
+
+    const element = document.getElementById(`map-${session.id}`);
+    if (!element) return;
+    
+    // Default coords if none (e.g. Santo Domingo)
+    const lat = session.latitude || 18.4861;
+    const lng = session.longitude || -69.9312;
+
+    this.map = L.map(element, {
+        center: [lat, lng],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: ''
+    }).addTo(this.map);
+
+    L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: '#F97316', // Orange-500
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 1
+    }).addTo(this.map);
+  }
+
+  private destroyMap() {
+    if (this.map) {
+      this.map.remove();
+      this.map = undefined;
+    }
   }
 }

@@ -30,6 +30,7 @@ import { TokenService } from './token.service';
 import { UserSecurity } from '../../users/entities/user-security.entity';
 import { AuthEvents, AuthAuditActionEvent } from '../events/auth.events';
 import { AuthError } from '../enums/auth-error.enum';
+import { GeoService } from '../../geo/geo.service';
 
 @Injectable()
 export class SessionService implements OnModuleInit {
@@ -48,7 +49,8 @@ export class SessionService implements OnModuleInit {
     private readonly userCacheService: UserCacheService,
     private readonly securityAnalysisService: SecurityAnalysisService,
     private readonly tokenService: TokenService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
+    private readonly geoService: GeoService
   ) {}
 
   onModuleInit() {
@@ -216,6 +218,15 @@ export class SessionService implements OnModuleInit {
       if (ipAddress) {
           const encryptedIp = this.encryptIp(ipAddress);
           updateData.encryptedIp = encryptedIp;
+          
+          const location = this.geoService.getLocation(ipAddress);
+          if (location) {
+             updateData.country = location.country;
+             updateData.city = location.city;
+             updateData.region = location.region;
+             updateData.latitude = location.ll ? location.ll[0] : null;
+             updateData.longitude = location.ll ? location.ll[1] : null;
+          }
       }
 
       this.refreshTokenRepository.update(authResponse.refreshTokenId, updateData).catch(e =>
@@ -274,6 +285,11 @@ export class SessionService implements OnModuleInit {
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
       isCurrent: currentRefreshTokenId ? session.id === currentRefreshTokenId : false,
+      country: session.country,
+      city: session.city,
+      region: session.region,
+      latitude: session.latitude,
+      longitude: session.longitude,
     }));
   }
 

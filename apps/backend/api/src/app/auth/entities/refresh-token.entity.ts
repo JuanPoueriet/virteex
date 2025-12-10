@@ -47,6 +47,21 @@ export class RefreshToken {
   @Column({ name: 'device_type', nullable: true })
   deviceType?: string;
 
+  @Column({ nullable: true })
+  country?: string;
+
+  @Column({ nullable: true })
+  city?: string;
+
+  @Column({ nullable: true })
+  region?: string;
+
+  @Column({ type: 'float', nullable: true })
+  latitude?: number;
+
+  @Column({ type: 'float', nullable: true })
+  longitude?: number;
+
   @Column({ name: 'last_active_at', type: 'timestamptz', nullable: true })
   lastActiveAt?: Date;
 }

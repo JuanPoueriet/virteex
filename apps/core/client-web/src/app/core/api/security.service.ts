@@ -11,7 +11,13 @@ export interface Session {
   os: string;
   deviceType: string;
   lastActiveAt: string;
+  createdAt: string;
   isCurrent: boolean;
+  country?: string;
+  city?: string;
+  region?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface TwoFactorSetupResponse {

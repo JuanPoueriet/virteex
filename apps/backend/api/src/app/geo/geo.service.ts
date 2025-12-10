@@ -4,6 +4,7 @@ import * as geoip from 'geoip-lite';
 export interface GeoLocation {
     country: string | null;
     city: string | null;
+    region: string | null;
     ll: [number, number] | null; // Latitude, Longitude
     ip: string;
 }
@@ -28,7 +29,7 @@ export class GeoService {
     if (this.isLocalOrPrivate(ip)) {
       this.logger.debug(`Local or Private IP detected: ${ip}. Defaulting to 'DO' (Dominican Republic) for dev.`);
       // Default to DO for localhost development if not overridden
-      return { country: 'DO', city: 'Santo Domingo', ll: [18.4861, -69.9312], ip };
+      return { country: 'DO', city: 'Santo Domingo', region: 'Distrito Nacional', ll: [18.4861, -69.9312], ip };
     }
 
     // 3. Real Lookup
@@ -38,6 +39,7 @@ export class GeoService {
     return {
       country: geo ? geo.country : null,
       city: geo ? geo.city : null,
+      region: geo ? geo.region : null,
       ll: geo ? geo.ll : null,
       ip
     };

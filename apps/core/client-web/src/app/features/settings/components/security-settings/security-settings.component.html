@@ -111,42 +111,117 @@
   <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
     <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
       <lucide-icon [img]="MonitorIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-        {{ 'SETTINGS.SECURITY.ACTIVE_SESSIONS' | translate }}
-      </h2>
+      <div class="flex-1">
+         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+           {{ 'SETTINGS.SECURITY.ACTIVE_SESSIONS' | translate }}
+         </h2>
+         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+           {{ 'SETTINGS.SECURITY.SESSIONS_DESCRIPTION' | translate }}
+         </p>
+      </div>
     </div>
 
     <div class="space-y-4">
-      <div *ngFor="let session of sessions()" class="flex items-center justify-between p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-        <div class="flex items-center gap-4">
-          <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-             <lucide-icon [img]="session.deviceType === 'mobile' ? SmartphoneIcon : LaptopIcon"
-                          class="w-6 h-6 text-gray-500 dark:text-gray-400"></lucide-icon>
-          </div>
-          <div>
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white">
-              {{ session.browser }} on {{ session.os }}
-            </h4>
-            <div class="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
-              <span class="flex items-center gap-1">
-                <lucide-icon [img]="GlobeIcon" class="w-3 h-3"></lucide-icon>
-                {{ session.ip }}
-              </span>
-              <span>
-                {{ session.lastActiveAt | date:'medium' }}
-              </span>
-              <span *ngIf="session.isCurrent" class="text-green-600 dark:text-green-400 font-medium px-2 py-0.5 bg-green-50 dark:bg-green-900/20 rounded-full">
-                {{ 'SETTINGS.SECURITY.CURRENT_SESSION' | translate }}
-              </span>
-            </div>
-          </div>
+      <div *ngFor="let session of sessions()" 
+           class="group rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-card-bg overflow-hidden transition-all duration-300"
+           [class.ring-2]="session.isCurrent"
+           [class.ring-primary-500]="session.isCurrent"
+           [class.ring-opacity-50]="session.isCurrent">
+        
+        <!-- Header / Summary -->
+        <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50"
+             (click)="toggleSessionDetails(session)">
+           <div class="flex items-center gap-4">
+             <div class="relative">
+                <div class="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                   <lucide-icon [img]="session.deviceType === 'mobile' ? SmartphoneIcon : LaptopIcon"
+                                class="w-6 h-6 text-gray-600 dark:text-gray-300"></lucide-icon>
+                </div>
+                <!-- Status Dot -->
+                <div *ngIf="session.isCurrent || expandedSessionId() === session.id" 
+                     class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-card-bg"></div>
+             </div>
+             
+             <div>
+               <div class="flex items-center gap-2">
+                 <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                   {{ session.city || 'Unknown Location' }} {{ session.ipAddress }}
+                 </h4>
+                 <span *ngIf="session.isCurrent" 
+                       class="px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 rounded-full">
+                    {{ 'SETTINGS.SECURITY.CURRENT_SESSION' | translate }}
+                 </span>
+               </div>
+               
+               <div class="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span *ngIf="session.isCurrent" class="flex items-center gap-1 text-green-600 dark:text-green-400">
+                     <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                     {{ 'SETTINGS.SECURITY.ACTIVE_NOW' | translate }}
+                  </span>
+                  <span *ngIf="!session.isCurrent">
+                     {{ 'SETTINGS.SECURITY.LAST_ACTIVE' | translate }}: {{ session.lastActiveAt | date:'mediumDate' }}
+                  </span>
+                  <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+                  <span>{{ 'SETTINGS.SECURITY.SEEN_IN' | translate }} {{ session.country || 'Unknown' }}</span>
+               </div>
+             </div>
+           </div>
+
+           <div class="flex items-center gap-3">
+              <button class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                 {{ expandedSessionId() === session.id ? ('SETTINGS.SECURITY.LESS_DETAILS' | translate) : ('SETTINGS.SECURITY.DETAILS' | translate) }}
+              </button>
+           </div>
         </div>
 
-        <button *ngIf="!session.isCurrent"
-                (click)="revokeSession(session.id)"
-                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-          {{ 'SETTINGS.SECURITY.REVOKE' | translate }}
-        </button>
+        <!-- Expanded Details -->
+        <div *ngIf="expandedSessionId() === session.id" class="border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/20">
+           <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                 <div>
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                       {{ 'SETTINGS.SECURITY.DEVICE' | translate }}
+                    </span>
+                    <p class="text-sm text-gray-900 dark:text-white mt-1">
+                       {{ session.browser }} on {{ session.os }}
+                    </p>
+                 </div>
+
+                 <div>
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                       {{ 'SETTINGS.SECURITY.LAST_LOCATION' | translate }}
+                    </span>
+                    <p class="text-sm text-gray-900 dark:text-white mt-1">
+                       {{ session.city }}, {{ session.region }}, {{ session.country }}
+                    </p>
+                 </div>
+
+                 <div>
+                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                       {{ 'SETTINGS.SECURITY.SIGNED_IN' | translate }}
+                    </span>
+                    <p class="text-sm text-gray-900 dark:text-white mt-1">
+                       {{ session.createdAt | date:'medium' }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                       {{ session.city }}, {{ session.country }}
+                    </p>
+                 </div>
+
+                 <div *ngIf="!session.isCurrent" class="pt-2">
+                    <button (click)="revokeSession(session.id, $event)"
+                            class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 font-medium hover:underline">
+                       {{ 'SETTINGS.SECURITY.REVOKE_SESSION' | translate }}
+                    </button>
+                 </div>
+              </div>
+
+              <!-- Map Container -->
+              <div class="relative h-48 md:h-full min-h-[200px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                  <div [id]="'map-' + session.id" class="w-full h-full z-0"></div>
+              </div>
+           </div>
+        </div>
       </div>
     </div>
   </div>

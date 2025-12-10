@@ -18,6 +18,7 @@ import { UsersService } from '../../users/users.service';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 import { AuthError } from '../enums/auth-error.enum';
 import { UserStatus } from '../../users/entities/user.entity/user.entity';
+import { GeoService } from '../../geo/geo.service';
 
 @Injectable()
 export class TokenService {
@@ -29,7 +30,8 @@ export class TokenService {
     private readonly userCacheService: UserCacheService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly geoService: GeoService
   ) {}
 
   async validateTokenAndGetUser(payload: JwtPayload): Promise<AuthenticatedUser> {
@@ -127,6 +129,17 @@ export class TokenService {
       ipAddress,
       userAgent,
     });
+
+    if (ipAddress) {
+       const location = this.geoService.getLocation(ipAddress);
+       if (location) {
+          refreshTokenRecord.country = location.country;
+          refreshTokenRecord.city = location.city;
+          refreshTokenRecord.region = location.region;
+          refreshTokenRecord.latitude = location.ll ? location.ll[0] : null;
+          refreshTokenRecord.longitude = location.ll ? location.ll[1] : null;
+       }
+    }
 
     await this.refreshTokenRepository.save(refreshTokenRecord);
 
