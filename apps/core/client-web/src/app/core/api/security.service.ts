@@ -59,4 +59,12 @@ export class SecurityService {
   generateBackupCodes(): Observable<BackupCodesResponse> {
     return this.http.post<BackupCodesResponse>(`${this.apiUrl}/2fa/backup-codes/generate`, {});
   }
+
+  sendEmailVerification(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/2fa/send-email-verification`, {});
+  }
+
+  verifyEmailVerification(code: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/2fa/verify-email-verification`, { code });
+  }
 }
