@@ -51,6 +51,12 @@ export class UsersService {
     return this.http.patch<User>(`${this.apiUrl}/profile`, data);
   }
 
+  uploadAvatar(file: File): Observable<{ avatarUrl: string }> {
+      const formData = new FormData();
+      formData.append('file', file);
+      return this.http.post<{ avatarUrl: string }>(`${this.apiUrl}/profile/avatar`, formData);
+  }
+
   getUsers(options: {
     page: number;
     pageSize: number;

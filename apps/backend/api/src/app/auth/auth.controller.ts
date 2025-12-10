@@ -19,6 +19,7 @@ import { Throttle } from '@nestjs/throttler';
 import { GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
 import { ConfigService } from '@nestjs/config';
@@ -287,6 +288,19 @@ export class AuthController {
     const user = await this.passwordRecoveryService.resetPassword(resetPasswordDto);
     const { passwordHash, ...userResult } = user;
     return userResult;
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe())
+  @ApiOperation({ summary: 'Change password for authenticated user' })
+  async changePassword(
+      @CurrentUser() user: User,
+      @Body() changePasswordDto: ChangePasswordDto
+  ) {
+      await this.authService.changePassword(user.id, changePasswordDto.currentPassword, changePasswordDto.newPassword);
+      return { message: 'Password updated successfully' };
   }
 
   @Post('impersonate')

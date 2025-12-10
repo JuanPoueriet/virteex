@@ -384,12 +384,8 @@ export class UsersService {
   }
 
   async update(id: string, partialEntity: any): Promise<void> {
-    // Check if security fields are in partialEntity, if so, we need to update security
-    // This method seems generic, so it's risky.
-    // If partialEntity contains fields moved to security, we must split them.
-    // However, looking at the code, it's safer to not use generic update for security fields.
-    // I will assume for now this is used for simple updates.
-    // Ideally, I should check keys.
+    // SECURITY 10/10: Prevent generic updates to sensitive security fields.
+    // Explicit methods (e.g., changePassword, updateProfile, enable2fa) must be used instead.
     const securityKeys = [
         'passwordHash', 'tokenVersion', 'failedLoginAttempts', 'lockoutUntil',
         'passwordResetToken', 'passwordResetExpires', 'isTwoFactorEnabled', 'twoFactorSecret'
@@ -398,25 +394,7 @@ export class UsersService {
     const hasSecurityKeys = Object.keys(partialEntity).some(k => securityKeys.includes(k));
 
     if (hasSecurityKeys) {
-        const user = await this.userRepository.findOne({ where: { id }, relations: ['security'] });
-        if (user) {
-            if (!user.security) user.security = new UserSecurity();
-            const securityUpdates: any = {};
-            const userUpdates: any = {};
-
-            Object.keys(partialEntity).forEach(key => {
-                if (securityKeys.includes(key)) {
-                    securityUpdates[key] = partialEntity[key];
-                } else {
-                    userUpdates[key] = partialEntity[key];
-                }
-            });
-
-            Object.assign(user.security, securityUpdates);
-            Object.assign(user, userUpdates);
-            await this.userRepository.save(user);
-            return;
-        }
+        throw new Error('Security fields cannot be updated via generic update method. Use specific service methods.');
     }
 
     await this.userRepository.update(id, partialEntity);

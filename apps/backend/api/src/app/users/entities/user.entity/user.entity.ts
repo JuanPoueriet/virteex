@@ -51,6 +51,9 @@ export class User {
   @Column({ nullable: true })
   department?: string;
 
+  @Column({ name: 'job_title', nullable: true })
+  jobTitle?: string;
+
   @Column({
     type: 'enum',
     enum: UserStatus,

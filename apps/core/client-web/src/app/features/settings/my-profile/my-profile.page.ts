@@ -29,11 +29,12 @@ import { NotificationService } from '../../../core/services/notification';
 import { UsersService } from '../../../core/api/users.service';
 import { SecuritySettingsComponent } from './security-settings.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-my-profile-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SecuritySettingsComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SecuritySettingsComponent, TranslateModule],
   templateUrl: './my-profile.page.html',
   styleUrls: ['./my-profile.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,15 +99,24 @@ export class MyProfilePage implements OnInit {
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
+      // Preview
       const reader = new FileReader();
       reader.onload = () => {
          this.avatarPreview.set(reader.result);
          this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
-      this.profileForm.markAsDirty();
-      // Here you would upload the file immediately or wait for save
-      // For now, we just preview.
+
+      // Upload via UsersService
+      this.usersService.uploadAvatar(file).subscribe({
+          next: (res) => {
+              this.notificationService.showSuccess('SETTINGS.PROFILE.AVATAR_UPDATED');
+              this.authService.checkAuthStatus().subscribe(); // Refresh user
+          },
+          error: () => {
+              this.notificationService.showError('SETTINGS.PROFILE.ERRORS.AVATAR_UPLOAD');
+          }
+      });
     }
   }
 
@@ -131,12 +141,12 @@ export class MyProfilePage implements OnInit {
         next: () => {
             this.otpSent.set(true);
             this.isVerifyingPhone.set(false);
-            this.notificationService.showSuccess('Código enviado.');
+            this.notificationService.showSuccess('SETTINGS.PROFILE.OTP_SENT');
             this.cdr.markForCheck();
         },
         error: (err) => {
             this.isVerifyingPhone.set(false);
-            this.notificationService.showError('Error al enviar código.');
+            this.notificationService.showError('SETTINGS.PROFILE.ERRORS.OTP_SEND');
             this.cdr.markForCheck();
         }
     });
@@ -149,7 +159,7 @@ export class MyProfilePage implements OnInit {
     this.authService.verifyPhoneOtp(this.otpControl.value!, this.phoneControl.value!).subscribe({
         next: () => {
             this.isVerifyingPhone.set(false);
-            this.notificationService.showSuccess('Teléfono verificado exitosamente.');
+            this.notificationService.showSuccess('SETTINGS.PROFILE.PHONE_VERIFIED');
             this.showPhoneModal.set(false);
 
             // Reload user info to update UI state
@@ -158,7 +168,7 @@ export class MyProfilePage implements OnInit {
         },
         error: (err) => {
             this.isVerifyingPhone.set(false);
-            this.notificationService.showError('Código incorrecto.');
+            this.notificationService.showError('SETTINGS.PROFILE.ERRORS.OTP_INVALID');
             this.cdr.markForCheck();
         }
     });
@@ -171,7 +181,7 @@ export class MyProfilePage implements OnInit {
 
       this.usersService.updateProfile({ firstName, lastName, preferredLanguage, email, phone, jobTitle }).subscribe({
         next: () => {
-          this.notificationService.showSuccess('Perfil actualizado exitosamente.');
+          this.notificationService.showSuccess('SETTINGS.PROFILE.UPDATED');
           // Update local state if needed via AuthService
           this.authService.checkAuthStatus().subscribe(); // Refresh user data
           this.profileForm.markAsPristine();
@@ -180,7 +190,7 @@ export class MyProfilePage implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.notificationService.showError('Error al actualizar el perfil.');
+          this.notificationService.showError('SETTINGS.PROFILE.ERRORS.UPDATE_FAILED');
           this.isLoading = false;
           this.cdr.markForCheck();
         }
@@ -194,18 +204,19 @@ export class MyProfilePage implements OnInit {
         this.passwordForm.value.newPassword !==
         this.passwordForm.value.confirmPassword
       ) {
-        this.notificationService.showError(
-          'Las nuevas contraseñas no coinciden.'
-        );
+        this.notificationService.showError('SETTINGS.PROFILE.ERRORS.PASSWORDS_DO_NOT_MATCH');
         return;
       }
-      // Implement password change logic calling AuthService or UsersService
-      console.log('Password change requested:', this.passwordForm.value);
-      // Mock success for now as the endpoint might be missing in this exact context or handled by Auth
-      this.notificationService.showSuccess(
-        'Contraseña actualizada exitosamente (Simulado).'
-      );
-      this.passwordForm.reset();
+
+      this.authService.changePassword(this.passwordForm.value).subscribe({
+          next: () => {
+              this.notificationService.showSuccess('SETTINGS.PROFILE.PASSWORD_CHANGED');
+              this.passwordForm.reset();
+          },
+          error: (err) => {
+              this.notificationService.showError('SETTINGS.PROFILE.ERRORS.PASSWORD_CHANGE_FAILED');
+          }
+      });
     }
   }
 }

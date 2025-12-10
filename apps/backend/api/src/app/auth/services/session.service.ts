@@ -293,6 +293,19 @@ export class SessionService implements OnModuleInit {
     return { message: 'Sesión revocada exitosamente.' };
   }
 
+  async terminateOtherSessions(userId: string, currentSessionId: string) {
+    // Revoke all tokens for user except current (if provided)
+    // For password change we usually want to revoke ALL including current if we want them to re-login,
+    // or keep current. The requirement is usually to invalidate OTHERS.
+    // However, for password change, 'tokenVersion' increment in AuthService handles everything anyway.
+    // So this method is actually redundant if we use tokenVersion.
+    // BUT, if we want to mark them as revoked in DB for audit:
+    await this.refreshTokenRepository.update(
+        { userId, isRevoked: false },
+        { isRevoked: true, revokedAt: new Date() }
+    );
+  }
+
   async terminateAllSessions(userId: string) {
       await this.userCacheService.clearUserSession(userId);
       // Optional: Revoke all refresh tokens in DB if stricter security is needed

@@ -180,4 +180,25 @@ export class AuthService {
   async verifyUserFromToken(token: string): Promise<User | null> {
     return this.sessionService.verifyUserFromToken(token);
   }
+
+  async changePassword(userId: string, currentPass: string, newPass: string): Promise<void> {
+      const user = await this.usersService.findOne(userId); // ensure loaded with security if possible, or use findUserByIdForAuth
+      const userWithSec = await this.usersService.findUserByIdForAuth(userId); // To get passwordHash
+
+      if (!userWithSec?.security?.passwordHash) {
+          throw new AuthException(AuthError.INVALID_CREDENTIALS, 400, 'User has no password set (Social Login?)');
+      }
+
+      const isValid = await this.passwordService.verify(userWithSec.security.passwordHash, currentPass);
+      if (!isValid) {
+          throw new AuthException(AuthError.INVALID_CREDENTIALS, 401, 'Invalid current password');
+      }
+
+      const newHash = await this.passwordService.hash(newPass);
+      userWithSec.security.passwordHash = newHash;
+      userWithSec.security.tokenVersion = (userWithSec.security.tokenVersion || 0) + 1; // Invalidate other sessions
+
+      await this.usersService.save(userWithSec);
+      await this.sessionService.terminateOtherSessions(userId, ''); // Optionally kill other sessions
+  }
 }
