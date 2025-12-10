@@ -12,6 +12,8 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import * as crypto from 'crypto';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 
 import { CacheModule } from './cache/cache.module';
@@ -112,6 +114,10 @@ const envValidation = Joi.object({
 
 
     CacheModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'), // Dist structure usually apps/backend/api/public
+      serveRoot: '/',
+    }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({

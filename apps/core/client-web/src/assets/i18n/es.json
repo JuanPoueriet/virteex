@@ -6,6 +6,54 @@
       "TITLE": "Personalización Avanzada",
       "DESCRIPTION": "Completa la información para personalizar la apariencia de tu aplicación.",
       "SAVE_BUTTON": "Guardar Cambios"
+    },
+    "SECURITY": {
+        "2FA_TITLE": "Autenticación de Dos Factores (2FA)",
+        "2FA_DESC": "Protege tu cuenta con una capa extra de seguridad.",
+        "TWO_STEP_VERIF": "Verificación en dos pasos",
+        "ACCOUNT_PROTECTED": "Tu cuenta está protegida.",
+        "ACCOUNT_NOT_PROTECTED": "Tu cuenta no está protegida.",
+        "ACTIVATE_2FA": "Activar 2FA",
+        "DEACTIVATE": "Desactivar",
+        "BACKUP_CODES": "Códigos de Recuperación",
+        "BACKUP_CODES_DESC": "Úsalos si pierdes acceso a tu dispositivo.",
+        "GENERATE_NEW": "Generar Nuevos",
+        "SAVE_CODES_WARNING": "Guarda estos códigos en un lugar seguro.",
+        "ACTIVE_SESSIONS": "Sesiones Activas",
+        "SESSIONS_DESC": "Gestiona los dispositivos donde has iniciado sesión.",
+        "CURRENT": "Actual",
+        "LOGOUT_SESSION": "Cerrar sesión",
+        "SETUP_2FA": "Configurar 2FA",
+        "SCAN_QR": "Escanea el código QR",
+        "OPEN_AUTH_APP": "(Abre tu App de Autenticación)",
+        "ENTER_MANUALLY": "O ingresa esta clave manualmente",
+        "2FA_ACTIVATED": "2FA Activado exitosamente.",
+        "2FA_DEACTIVATED": "2FA Desactivado.",
+        "NEW_CODES_GENERATED": "Nuevos códigos generados.",
+        "SESSION_REVOKED": "Sesión cerrada.",
+        "ERRORS": {
+             "LOAD_SESSIONS": "Error al cargar sesiones.",
+             "REVOKE_SESSION": "Error al cerrar sesión.",
+             "INIT_2FA": "Error al iniciar configuración 2FA.",
+             "INVALID_CODE": "Código incorrecto.",
+             "DISABLE_2FA": "Error al desactivar 2FA.",
+             "GENERATE_CODES": "Error al generar códigos."
+        }
+    },
+    "PROFILE": {
+        "UPDATED": "Perfil actualizado exitosamente.",
+        "PASSWORD_CHANGED": "Contraseña actualizada exitosamente.",
+        "AVATAR_UPDATED": "Imagen actualizada exitosamente.",
+        "OTP_SENT": "Código enviado.",
+        "PHONE_VERIFIED": "Teléfono verificado exitosamente.",
+        "ERRORS": {
+            "UPDATE_FAILED": "Error al actualizar el perfil.",
+            "PASSWORD_CHANGE_FAILED": "Error al cambiar la contraseña.",
+            "PASSWORDS_DO_NOT_MATCH": "Las contraseñas no coinciden.",
+            "AVATAR_UPLOAD": "Error al subir la imagen.",
+            "OTP_SEND": "Error al enviar código.",
+            "OTP_INVALID": "Código incorrecto."
+        }
     }
   },
   "SECTIONS": {
@@ -137,6 +185,13 @@
   },
   "ACTIONS": {
     "CREATE_NEW": "Crear Nuevo"
+  },
+  "COMMON": {
+      "CANCEL": "Cancelar",
+      "VERIFY": "Verificar",
+      "LOADING": "Cargando",
+      "COPY": "Copiar",
+      "COPIED": "Copiado"
   },
   "ALT": {
     "COMPANY_LOGO": "Logo de la empresa"
