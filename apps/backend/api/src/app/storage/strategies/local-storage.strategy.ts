@@ -24,9 +24,22 @@ export class LocalStorageStrategy implements StorageService {
     const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
     const fullPath = path.join(this.uploadDir, filename);
 
-    await fs.promises.writeFile(fullPath, file.buffer);
-    this.logger.log(`File saved to ${fullPath}`);
+    if (file.buffer) {
+        await fs.promises.writeFile(fullPath, file.buffer);
+    } else if (file.path) {
+        // Handle temporary file from diskStorage
+        await fs.promises.copyFile(file.path, fullPath);
+        // Optionally clean up temp file, though Multer might do it or we rely on OS tmp cleanup
+        try {
+            await fs.promises.unlink(file.path);
+        } catch (err) {
+            this.logger.warn(`Failed to delete temp file ${file.path}: ${err.message}`);
+        }
+    } else {
+        throw new Error('File has no buffer or path');
+    }
 
+    this.logger.log(`File saved to ${fullPath}`);
     return `${this.baseUrl}/${filename}`;
   }
 

@@ -2,11 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MyProfilePage } from './my-profile.page';
 import { AuthService } from '../../../core/services/auth';
 import { UsersService } from '../../../core/api/users.service';
+import { SecurityService } from '../../../core/api/security.service';
 import { NotificationService } from '../../../core/services/notification';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
+import { QRCodeModule } from 'angularx-qrcode';
+import { FormsModule } from '@angular/forms';
 
 class MockAuthService {
   currentUser = () => ({
@@ -15,8 +18,10 @@ class MockAuthService {
     email: 'test@example.com',
     phone: '1234567890',
     jobTitle: 'Developer',
-    preferredLanguage: 'en'
+    preferredLanguage: 'en',
+    isTwoFactorEnabled: false
   });
+  checkAuthStatus = jest.fn().mockReturnValue(of({}));
 }
 
 class MockUsersService {
@@ -29,17 +34,30 @@ class MockNotificationService {
   showError = jest.fn();
 }
 
+class MockSecurityService {
+  getActiveSessions = jest.fn().mockReturnValue(of([]));
+  generate2faSecret = jest.fn().mockReturnValue(of({ secret: 'XYZ', otpauthUrl: 'otpauth://...' }));
+}
+
 describe('MyProfilePage', () => {
   let component: MyProfilePage;
   let fixture: ComponentFixture<MyProfilePage>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MyProfilePage, BrowserAnimationsModule, HttpClientTestingModule, TranslateModule.forRoot()],
+      imports: [
+        MyProfilePage,
+        BrowserAnimationsModule,
+        HttpClientTestingModule,
+        TranslateModule.forRoot(),
+        QRCodeModule,
+        FormsModule
+      ],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: UsersService, useClass: MockUsersService },
         { provide: NotificationService, useClass: MockNotificationService },
+        { provide: SecurityService, useClass: MockSecurityService }
       ]
     }).compileComponents();
 
@@ -53,8 +71,6 @@ describe('MyProfilePage', () => {
   });
 
   it('should initialize form with user data including phone and jobTitle', () => {
-    // Manually trigger ngOnChanges or wait for signals if needed,
-    // but here we just check if the form was created with values from currentUser
     expect(component.profileForm.get('phone')?.value).toBe('1234567890');
     expect(component.profileForm.get('jobTitle')?.value).toBe('Developer');
   });

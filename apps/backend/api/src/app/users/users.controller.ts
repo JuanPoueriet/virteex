@@ -1,8 +1,9 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { memoryStorage, diskStorage } from 'multer';
 import { extname } from 'path';
+import * as os from 'os';
 import { StorageService } from '../storage/storage.service';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
@@ -106,7 +107,14 @@ export class UsersController {
   @Post('profile/avatar')
   @ApiOperation({ summary: 'Upload avatar for current user' })
   @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
+    // 10/10 Scalability: Use diskStorage (temp) instead of memoryStorage to prevent RAM spikes
+    storage: diskStorage({
+        destination: os.tmpdir(),
+        filename: (req, file, cb) => {
+            const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+            cb(null, `${randomName}${extname(file.originalname)}`);
+        }
+    }),
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
             return cb(new BadRequestException('Only image files are allowed!'), false);
@@ -114,7 +122,7 @@ export class UsersController {
         cb(null, true);
     },
     limits: {
-        fileSize: 2 * 1024 * 1024 // 2MB
+        fileSize: 5 * 1024 * 1024 // 5MB (Increased limit now that we stream)
     }
   }))
   async uploadAvatar(
