@@ -139,6 +139,18 @@
     "SECURITY": "Security",
     "ALL_RIGHTS_RESERVED": "All rights reserved."
   },
+  "COMMON": {
+      "CANCEL": "Cancel",
+      "CONTINUE": "Continue",
+      "CONFIRM": "Confirm",
+      "DONE": "Done",
+      "DOWNLOAD": "Download",
+      "VERIFY": "Verify",
+      "SENDING": "Sending...",
+      "LOADING": "Loading",
+      "COPY": "Copy",
+      "COPIED": "Copied"
+  },
   "ACTIONS": {
     "CREATE_NEW": "Create New"
   },

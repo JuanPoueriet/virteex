@@ -1,0 +1,58 @@
+
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300;
+}
+
+.modal-content {
+  @apply bg-white dark:bg-card-bg rounded-xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 w-full max-w-md animate-in zoom-in-95 duration-300;
+}
+
+.modal-header {
+  @apply px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30;
+
+  h3 {
+    @apply text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2;
+  }
+
+  &__close-btn {
+    @apply text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+}
+
+.modal-body {
+  @apply p-6 space-y-6;
+}
+
+.info-text {
+  @apply text-sm text-gray-600 dark:text-gray-300 leading-relaxed;
+}
+
+.form-group {
+  @apply space-y-1.5;
+
+  label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  input {
+    @apply w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+           focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 shadow-sm;
+
+    &.otp-input {
+      @apply text-center text-2xl tracking-[0.5em] font-mono;
+    }
+  }
+
+  &__error {
+    @apply mt-1.5 text-xs text-red-500 flex items-center gap-1;
+  }
+}
+
+.btn-primary {
+  @apply w-full flex justify-center items-center px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700
+         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:-translate-y-0.5;
+}
+
+.btn-link {
+  @apply text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors hover:underline decoration-2 underline-offset-2;
+}
