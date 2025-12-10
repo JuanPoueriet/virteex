@@ -1,133 +1,164 @@
 
-import {
-  Controller,
-  Get,
-  UseGuards,
-  Patch,
-  Param,
-  Body,
-  Post,
-  HttpCode,
-  HttpStatus,
-  Put,
-  Delete,
-  ParseUUIDPipe,
-  Query,
-} from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from './entities/user.entity/user.entity';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UserCacheService } from '../auth/modules/user-cache.service';
+import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { PermissionsGuard } from '../auth/guards/permissions/permissions.guard';
+import { Permissions } from '../auth/decorators/permissions.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User, UserStatus } from './entities/user.entity/user.entity';
+import { UserResponseDto } from '../auth/dto/user-response.dto';
+import { plainToInstance } from 'class-transformer';
+import { CheckPermissions } from '../auth/decorators/check-permissions.decorator';
+import { IsOrganizationOwner } from '../auth/policies/is-organization-owner.policy';
+import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { JobTitle } from './enums/job-title.enum';
 
+@ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseFilters(TypeOrmExceptionFilter)
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly userCacheService: UserCacheService
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
-  @Get('profile')
-  getProfile(@CurrentUser() user: User) {
-    return this.usersService.findOne(user.id);
+  @Get('job-titles')
+  @ApiOperation({ summary: 'Get list of available job titles' })
+  getJobTitles() {
+    return Object.values(JobTitle);
   }
 
-  @Patch('profile')
-  updateProfile(
+  @Post('invite')
+  @Permissions('users.create')
+  @ApiOperation({ summary: 'Invite a new user to the organization' })
+  async inviteUser(
+    @Body() inviteUserDto: InviteUserDto,
     @CurrentUser() user: User,
-    @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.usersService.updateProfile(user.id, updateProfileDto);
+    const newUser = await this.usersService.inviteUser(
+      inviteUserDto,
+      user.organizationId,
+    );
+    return plainToInstance(UserResponseDto, newUser, { excludeExtraneousValues: true });
   }
 
   @Get()
-  findAll(
+  @Permissions('users.view')
+  @ApiOperation({ summary: 'List users in organization' })
+  async findAll(
     @CurrentUser() user: User,
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 10,
-    @Query('searchTerm') searchTerm?: string,
-    @Query('statusFilter') statusFilter?: string,
-    @Query('sortColumn') sortColumn?: string,
-    @Query('sortDirection') sortDirection?: 'ASC' | 'DESC',
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('search') search = '',
+    @Query('status') status = 'all',
+    @Query('sortColumn') sortColumn = 'createdAt',
+    @Query('sortDirection') sortDirection: 'ASC' | 'DESC' = 'DESC',
   ) {
-    const options = {
-      page: +page,
-      pageSize: +pageSize,
-      searchTerm,
-      statusFilter,
-      sortColumn,
-      sortDirection,
+    const { data, total } = await this.usersService.findAllByOrg(
+      user.organizationId,
+      {
+        page,
+        pageSize,
+        searchTerm: search,
+        statusFilter: status,
+        sortColumn,
+        sortDirection,
+      },
+    );
+
+    return {
+      data: plainToInstance(UserResponseDto, data, { excludeExtraneousValues: true }),
+      total,
+      page,
+      pageSize,
     };
-    return this.usersService.findAllByOrg(user.organizationId, options);
   }
 
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getProfile(@CurrentUser() user: User) {
+    const fullUser = await this.usersService.findOne(user.id);
+    return plainToInstance(UserResponseDto, fullUser, { excludeExtraneousValues: true });
+  }
+
+  @Patch('profile')
+  @ApiOperation({ summary: 'Update current user profile' })
+  async updateProfile(
+    @CurrentUser() user: User,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    const updatedUser = await this.usersService.updateProfile(
+      user.id,
+      updateProfileDto,
+    );
+    return plainToInstance(UserResponseDto, updatedUser, { excludeExtraneousValues: true });
+  }
+
+  @Get(':id')
+  @Permissions('users.view')
+  @ApiOperation({ summary: 'Get user by ID' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
+    // Ideally ensure user belongs to same org
+    const foundUser = await this.usersService.findOne(id);
+    return plainToInstance(UserResponseDto, foundUser, { excludeExtraneousValues: true });
+  }
 
   @Patch(':id')
-  async updateUser(
+  @Permissions('users.edit')
+  @ApiOperation({ summary: 'Update user (Admin)' })
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() user: User,
   ) {
-    const result = await this.usersService.updateUser(id, updateUserDto, user.organizationId);
-    // Invalidate user cache as roles/permissions might have changed
-    await this.userCacheService.clearUserSession(id);
-    return result;
+    const updatedUser = await this.usersService.updateUser(
+      id,
+      updateUserDto,
+      user.organizationId,
+    );
+    return plainToInstance(UserResponseDto, updatedUser, { excludeExtraneousValues: true });
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @Permissions('users.delete')
+  @CheckPermissions(IsOrganizationOwner)
+  @ApiOperation({ summary: 'Remove user' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
-    const result = await this.usersService.remove(id, user.organizationId);
-    await this.userCacheService.clearUserSession(id);
-    return result;
+    return this.usersService.remove(id, user.organizationId);
   }
 
-  @Post('invite')
-  async invite(
-    @Body() inviteUserDto: InviteUserDto,
-    @CurrentUser() user: User,
-  ): Promise<User> {
-    const organizationId = user.organizationId;
-    return this.usersService.inviteUser(inviteUserDto, organizationId);
+  @Patch(':id/status')
+  @Permissions('users.edit')
+  async updateStatus(
+      @Param('id', ParseUUIDPipe) id: string,
+      @Body('status') status: UserStatus,
+      @CurrentUser() user: User
+  ) {
+      const updatedUser = await this.usersService.updateUserStatus(id, status, user.organizationId);
+      return plainToInstance(UserResponseDto, updatedUser, { excludeExtraneousValues: true });
   }
 
   @Post(':id/reset-password')
-  @HttpCode(HttpStatus.OK)
-  async sendPasswordReset(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: User,
+  @Permissions('users.edit')
+  async resetPassword(
+      @Param('id', ParseUUIDPipe) id: string,
+      @CurrentUser() user: User
   ) {
-    await this.usersService.resetPassword(id, user.organizationId);
-    return { message: 'Password reset email sent successfully.' };
+      await this.usersService.resetPassword(id, user.organizationId);
+      return { message: 'Password reset email sent.' };
   }
 
-   @Post(':id/force-logout')
-  @HttpCode(HttpStatus.OK)
-  async forceLogout(@Param('id') id: string, @CurrentUser() admin: User) {
-    // forceLogout usually clears cache/tokens inside service, but we can ensure it here.
-    const result = await this.usersService.forceLogout(id);
-    await this.userCacheService.clearUserSession(id);
-    return result;
+  @Get(':id/activity')
+  @Permissions('users.view')
+  async getActivityLog(@Param('id', ParseUUIDPipe) id: string) {
+      return this.usersService.getActivityLog(id);
   }
 
-  @Post(':id/block-and-logout')
-  @HttpCode(HttpStatus.OK)
-  async blockAndLogout(@Param('id') id: string, @CurrentUser() admin: User) {
-    const result = await this.usersService.blockAndLogout(id);
-    await this.userCacheService.clearUserSession(id);
-    return result;
-  }
-
-  @Put(':id/status')
-  @HttpCode(HttpStatus.OK)
-  async setOnlineStatus(
-    @Param('id') id: string,
-    @Body('isOnline') isOnline: boolean,
-  ): Promise<User> {
-    return this.usersService.setOnlineStatus(id, isOnline);
+  @Post(':id/force-logout')
+  @Permissions('users.edit')
+  async forceLogout(@Param('id', ParseUUIDPipe) id: string) {
+      return this.usersService.forceLogout(id);
   }
 }
