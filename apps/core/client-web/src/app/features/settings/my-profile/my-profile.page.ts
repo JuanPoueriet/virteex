@@ -4,8 +4,11 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  DestroyRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -45,6 +48,7 @@ export class MyProfilePage implements OnInit {
   private usersService = inject(UsersService);
   private notificationService = inject(NotificationService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   // Icons
   protected readonly UserIcon = UserIcon;
@@ -108,13 +112,22 @@ export class MyProfilePage implements OnInit {
       reader.readAsDataURL(file);
 
       // Upload via UsersService
-      this.usersService.uploadAvatar(file).subscribe({
+      this.usersService.uploadAvatar(file)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
           next: (res) => {
               this.notificationService.showSuccess('SETTINGS.PROFILE.AVATAR_UPDATED');
-              this.authService.checkAuthStatus().subscribe(); // Refresh user
+              this.authService.checkAuthStatus().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(); // Refresh user
           },
-          error: () => {
-              this.notificationService.showError('SETTINGS.PROFILE.ERRORS.AVATAR_UPLOAD');
+          error: (error: HttpErrorResponse) => {
+              // Enhanced error handling with specific feedback
+              if (error.status === 413) {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.FILE_TOO_LARGE');
+              } else if (error.status === 400 && error.error?.message?.includes('image')) {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.INVALID_FORMAT');
+              } else {
+                 this.notificationService.showError('SETTINGS.PROFILE.ERRORS.AVATAR_UPLOAD');
+              }
           }
       });
     }
