@@ -1,26 +1,25 @@
-<div class="space-y-6">
+<div class="profile-page">
   <!-- Profile Header & Avatar -->
-  <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-    <div class="flex flex-col md:flex-row items-center gap-6">
-      <div class="relative group">
-        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg">
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="profile-header__avatar-container">
+        <div class="profile-header__avatar">
           <img [src]="avatarPreview() || 'assets/images/default-avatar.png'"
-               alt="Profile"
-               class="w-full h-full object-cover">
+               alt="Profile">
         </div>
-        <label class="absolute bottom-0 right-0 p-2 bg-primary-600 rounded-full cursor-pointer hover:bg-primary-700 transition-colors shadow-md group-hover:scale-110">
-          <lucide-icon [img]="ImageIcon" class="w-4 h-4 text-white"></lucide-icon>
+        <label class="profile-header__upload-btn">
+          <lucide-icon [img]="ImageIcon" class="w-4 h-4"></lucide-icon>
           <input type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*">
         </label>
       </div>
 
-      <div class="text-center md:text-left">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+      <div class="profile-header__info">
+        <h1>
           {{ currentUser()?.firstName }} {{ currentUser()?.lastName }}
         </h1>
-        <p class="text-gray-500 dark:text-gray-400">{{ currentUser()?.email }}</p>
-        <div class="mt-2 flex items-center justify-center md:justify-start gap-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+        <p>{{ currentUser()?.email }}</p>
+        <div class="mt-2">
+          <span class="profile-header__role-badge">
             {{ currentUser()?.roles?.[0]?.name }}
           </span>
         </div>
@@ -28,78 +27,62 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="settings-grid">
     <!-- Personal Information -->
-    <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-      <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+    <div class="profile-card">
+      <div class="profile-card__header">
         <lucide-icon [img]="UserIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 class="profile-card__title">
           {{ 'SETTINGS.PROFILE.PERSONAL_INFO' | translate }}
         </h2>
       </div>
 
       <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'SETTINGS.PROFILE.FIRST_NAME' | translate }}
-            </label>
-            <input type="text" formControlName="firstName"
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>{{ 'SETTINGS.PROFILE.FIRST_NAME' | translate }}</label>
+            <input type="text" formControlName="firstName">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'SETTINGS.PROFILE.LAST_NAME' | translate }}
-            </label>
-            <input type="text" formControlName="lastName"
-                   class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+          <div class="form-group">
+            <label>{{ 'SETTINGS.PROFILE.LAST_NAME' | translate }}</label>
+            <input type="text" formControlName="lastName">
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'SETTINGS.PROFILE.EMAIL' | translate }}
-          </label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <lucide-icon [img]="MailIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+        <div class="form-group">
+          <label>{{ 'SETTINGS.PROFILE.EMAIL' | translate }}</label>
+          <div class="form-group__input-wrapper">
+            <span class="form-group__icon">
+              <lucide-icon [img]="MailIcon" class="w-4 h-4"></lucide-icon>
             </span>
-            <input type="email" formControlName="email"
-                   class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
-                   readonly>
+            <input type="email" formControlName="email" class="has-icon" readonly>
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'SETTINGS.PROFILE.PHONE' | translate }}
-          </label>
+        <div class="form-group">
+          <label>{{ 'SETTINGS.PROFILE.PHONE' | translate }}</label>
           <div class="flex gap-2">
-            <div class="relative flex-1">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <lucide-icon [img]="PhoneIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+            <div class="form-group__input-wrapper flex-1">
+              <span class="form-group__icon">
+                <lucide-icon [img]="PhoneIcon" class="w-4 h-4"></lucide-icon>
               </span>
-              <input type="tel" formControlName="phone"
-                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+              <input type="tel" formControlName="phone" class="has-icon">
             </div>
             <button type="button"
                     (click)="openPhoneVerification()"
-                    class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium">
+                    class="btn btn--verify">
               {{ 'SETTINGS.PROFILE.VERIFY' | translate }}
             </button>
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'SETTINGS.PROFILE.JOB_TITLE' | translate }}
-          </label>
-          <div class="relative">
-             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <lucide-icon [img]="CompanyIcon" class="w-4 h-4 text-gray-400"></lucide-icon>
+        <div class="form-group">
+          <label>{{ 'SETTINGS.PROFILE.JOB_TITLE' | translate }}</label>
+          <div class="form-group__input-wrapper">
+             <span class="form-group__icon">
+                <lucide-icon [img]="CompanyIcon" class="w-4 h-4"></lucide-icon>
              </span>
-             <select formControlName="jobTitle"
-                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 appearance-none">
+             <select formControlName="jobTitle" class="has-icon">
                  <option value="" disabled>{{ 'SETTINGS.PROFILE.SELECT_JOB_TITLE' | translate }}</option>
                  <option *ngFor="let title of jobTitles()" [value]="title">{{ title }}</option>
              </select>
@@ -109,7 +92,7 @@
         <div class="pt-4 flex justify-end">
           <button type="submit"
                   [disabled]="profileForm.invalid || profileForm.pristine || isLoading"
-                  class="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                  class="btn btn--primary">
             <lucide-icon *ngIf="!isLoading" [img]="SaveIcon" class="w-4 h-4"></lucide-icon>
             <span *ngIf="isLoading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
             {{ 'SETTINGS.PROFILE.SAVE_CHANGES' | translate }}
@@ -121,10 +104,10 @@
     <!-- Security Settings (Password & 2FA) -->
     <div class="space-y-6">
        <!-- Password Change -->
-       <div class="bg-white dark:bg-card-bg rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-          <div class="flex items-center gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+       <div class="profile-card">
+          <div class="profile-card__header">
             <lucide-icon [img]="ShieldIcon" class="w-5 h-5 text-primary-500"></lucide-icon>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 class="profile-card__title">
               {{ 'SETTINGS.PROFILE.SECURITY' | translate }}
             </h2>
           </div>
@@ -133,34 +116,25 @@
              <!-- Hidden username for accessibility -->
              <input type="text" autocomplete="username" class="hidden" value="{{currentUser()?.email}}">
 
-             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                   {{ 'SETTINGS.PROFILE.CURRENT_PASSWORD' | translate }}
-                </label>
-                <input type="password" formControlName="currentPassword" autocomplete="current-password"
-                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+             <div class="form-group">
+                <label>{{ 'SETTINGS.PROFILE.CURRENT_PASSWORD' | translate }}</label>
+                <input type="password" formControlName="currentPassword" autocomplete="current-password">
              </div>
 
-             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                   {{ 'SETTINGS.PROFILE.NEW_PASSWORD' | translate }}
-                </label>
-                <input type="password" formControlName="newPassword" autocomplete="new-password"
-                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+             <div class="form-group">
+                <label>{{ 'SETTINGS.PROFILE.NEW_PASSWORD' | translate }}</label>
+                <input type="password" formControlName="newPassword" autocomplete="new-password">
              </div>
 
-             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                   {{ 'SETTINGS.PROFILE.CONFIRM_PASSWORD' | translate }}
-                </label>
-                <input type="password" formControlName="confirmPassword" autocomplete="new-password"
-                       class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+             <div class="form-group">
+                <label>{{ 'SETTINGS.PROFILE.CONFIRM_PASSWORD' | translate }}</label>
+                <input type="password" formControlName="confirmPassword" autocomplete="new-password">
              </div>
 
              <div class="pt-2 flex justify-end">
                 <button type="submit"
                         [disabled]="passwordForm.invalid"
-                        class="px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors text-sm font-medium disabled:opacity-50">
+                        class="btn btn--secondary">
                    {{ 'SETTINGS.PROFILE.UPDATE_PASSWORD' | translate }}
                 </button>
              </div>

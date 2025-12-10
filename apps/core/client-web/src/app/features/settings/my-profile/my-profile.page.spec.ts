@@ -23,7 +23,8 @@ class MockSecuritySettingsComponent {}
 @Component({
   selector: 'app-phone-verification-modal',
   standalone: true,
-  template: ''
+  template: '',
+  inputs: ['isOpen']
 })
 class MockPhoneVerificationModalComponent {}
 
