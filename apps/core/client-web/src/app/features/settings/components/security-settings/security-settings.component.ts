@@ -1,7 +1,7 @@
 
 import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, ViewChildren, QueryList, ElementRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin, Copy, Download, RefreshCw, X, ArrowRight } from 'lucide-angular';
+import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin, Copy, Download, RefreshCw, X, ArrowRight, ImageIcon, User, Mail, Phone, Building } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth';
 import { SecurityService, Session } from '../../../../core/api/security.service';
@@ -43,6 +43,11 @@ export class SecuritySettingsComponent implements OnInit {
   protected readonly RefreshIcon = RefreshCw;
   protected readonly XIcon = X;
   protected readonly ArrowRightIcon = ArrowRight;
+  protected readonly ImageIcon = ImageIcon;
+  protected readonly UserIcon = User;
+  protected readonly MailIcon = Mail;
+  protected readonly PhoneIcon = Phone;
+  protected readonly CompanyIcon = Building;
 
   currentUser = this.authService.currentUser;
 
