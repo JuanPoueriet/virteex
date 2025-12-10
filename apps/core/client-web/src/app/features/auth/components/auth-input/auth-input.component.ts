@@ -24,6 +24,7 @@ export class AuthInputComponent implements ControlValueAccessor {
   @Input() required = false;
   @Input() hasIcon = false;
   @Input() errorMessage = '';
+  @Input() autocomplete = '';
   @Input() showForgotPassword = false; // Added property to support logic if needed, though currently controlled externally
 
   control = new FormControl();
