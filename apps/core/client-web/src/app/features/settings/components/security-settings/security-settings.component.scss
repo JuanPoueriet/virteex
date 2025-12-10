@@ -1,163 +1,382 @@
-
 .security-card {
-  @apply bg-white dark:bg-card-bg border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
 }
 
 .security-header {
-  @apply flex items-start gap-4 p-6;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
 
   &__icon {
-    @apply p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    background-color: var(--primary-light);
+    color: var(--primary);
   }
 
   &__content {
-    @apply flex-1;
+    flex: 1;
 
     h3 {
-      @apply text-lg font-semibold text-gray-900 dark:text-white;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
     }
 
     p {
-      @apply text-gray-500 dark:text-gray-400 mt-1 text-sm max-w-lg;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+      max-width: 32rem;
     }
   }
 
   &__badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-3;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.75rem;
 
     &--enabled {
-      @apply bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 border border-green-100 dark:border-green-900/50;
+      background-color: rgba(var(--success-rgb, 34, 197, 94), 0.1); /* fallback if not defined */
+      color: var(--success);
+      border: 1px solid rgba(var(--success-rgb, 34, 197, 94), 0.2);
     }
 
     &--disabled {
-      @apply bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 border border-yellow-100 dark:border-yellow-900/50;
+      background-color: rgba(234, 179, 8, 0.1);
+      color: #ca8a04; /* Yellow-600 */
+      border: 1px solid rgba(234, 179, 8, 0.2);
     }
   }
 
   &__action {
-    @apply px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    border: none;
 
     &--enable {
-      @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm hover:shadow;
+      background-color: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-sm);
+
+      &:hover {
+        background-color: var(--primary-hover);
+        box-shadow: var(--shadow-md);
+      }
     }
 
     &--disable {
-      @apply bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 focus:ring-red-500;
+      background-color: var(--error-bg);
+      color: var(--error);
+
+      &:hover {
+        background-color: rgba(248, 81, 73, 0.25);
+      }
     }
   }
 }
 
 .sessions-list {
-  @apply divide-y divide-gray-100 dark:divide-gray-800;
+  /* divide-y equivalent */
+  & > * + * {
+    border-top: 1px solid var(--border-color);
+  }
 
   &__header {
-    @apply p-6 border-b border-gray-100 dark:border-gray-800;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
 
     h3 {
-      @apply text-lg font-semibold text-gray-900 dark:text-white;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
     }
 
     p {
-      @apply text-gray-500 dark:text-gray-400 mt-1 text-sm;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
     }
   }
 
   &__item {
-    @apply p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer;
+    padding: 1rem;
+    transition: background-color 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bg-hover);
+    }
   }
 
   &__content {
-    @apply flex items-center justify-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   &__info {
-    @apply flex items-center gap-4;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 
   &__device-icon {
-    @apply p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   &__details {
-    @apply text-sm;
+    font-size: 0.875rem;
 
     div:first-child {
-      @apply font-medium text-gray-900 dark:text-white flex items-center gap-2;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     div:last-child {
-      @apply text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5 text-xs;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.125rem;
+      font-size: 0.75rem;
     }
   }
 
   &__current-badge {
-    @apply px-2 py-0.5 rounded-full text-xs bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 border border-primary-100 dark:border-primary-900/30;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid rgba(56, 139, 253, 0.2);
   }
 
   &__revoke-btn {
-    @apply p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-900/20;
+    padding: 0.5rem;
+    color: var(--text-tertiary);
+    border-radius: 9999px;
+    transition: color 0.2s, background-color 0.2s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      color: var(--error);
+      background-color: var(--error-bg);
+    }
   }
 
   &__map-container {
-    @apply mt-4 pl-14 animate-in slide-in-from-top-2 duration-300;
+    margin-top: 1rem;
+    padding-left: 3.5rem; /* ~14 * 0.25rem */
+    animation: slideIn 300ms ease-out;
   }
 
   &__map {
-    @apply h-48 w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden relative shadow-inner;
+    height: 12rem;
+    width: 100%;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 // Modal Styles
 .modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.5); /* backdrop fallback */
+  backdrop-filter: blur(4px);
+  animation: fadeIn 300ms ease-in-out;
 }
 
 .modal-content {
-  @apply bg-white dark:bg-card-bg border border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 28rem; /* max-w-md */
+  overflow: hidden;
+  position: relative;
+  animation: zoomIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-header {
-  @apply p-6 pb-0;
+  padding: 1.5rem;
+  padding-bottom: 0;
 
   h2 {
-    @apply text-xl font-semibold text-gray-900 dark:text-white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
   }
 
   p {
-    @apply text-gray-500 dark:text-gray-400 text-sm mt-1;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
   }
 }
 
 .modal-body {
-  @apply p-6;
+  padding: 1.5rem;
 }
 
 .otp-input {
-  @apply w-full px-3 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl
-         focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all
-         font-mono text-center tracking-[0.5em] text-xl shadow-sm;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  outline: none;
+  transition: all 0.2s;
+  font-family: monospace;
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-size: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+
+  &:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
 }
 
 .step-badge {
-  @apply bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 text-xs font-bold px-2 py-0.5 rounded-md border border-primary-100 dark:border-primary-800;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56, 139, 253, 0.2);
 }
 
 .backup-codes {
-  @apply bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800 grid grid-cols-2 gap-3;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
 
   &__code {
-    @apply font-mono text-sm text-center bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 py-2 select-all text-gray-600 dark:text-gray-300;
+    font-family: monospace;
+    font-size: 0.875rem;
+    text-align: center;
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    user-select: all;
+    color: var(--text-secondary);
   }
 }
 
 .warning-box {
-  @apply bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-500 flex gap-2;
+  background-color: rgba(234, 179, 8, 0.1);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #ca8a04; /* Yellow-700/600 approx */
+  display: flex;
+  gap: 0.5rem;
 }
 
 .btn-secondary {
-    @apply px-4 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: transparent;
+  transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--bg-hover);
+  }
 }
 
 .btn-primary {
-    @apply px-4 py-2 text-sm font-medium rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  background-color: var(--primary);
+  color: white;
+  transition: background-color 0.2s;
+  box-shadow: var(--shadow-sm);
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--primary-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
