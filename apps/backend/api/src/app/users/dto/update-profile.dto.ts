@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsEmail } from 'class-validator';
+import { IsE164PhoneNumber } from '../../common/validators/is-e164-phone-number.validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -11,6 +12,7 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  @IsE164PhoneNumber({ message: 'Phone number must be in E.164 format (e.g. +18095551234)' })
   phone?: string;
 
   @IsOptional()

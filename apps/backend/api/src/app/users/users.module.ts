@@ -11,6 +11,7 @@ import { RolesModule } from '../roles/roles.module';
 import { WebsocketsModule } from '../websockets/websockets.module';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { UserCacheModule } from '../auth/modules/user-cache.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserCacheModule } from '../auth/modules/user-cache.module';
     MailModule,
     WebsocketsModule,
     UserCacheModule,
+    StorageModule,
   ],
 
   controllers: [UsersController],
