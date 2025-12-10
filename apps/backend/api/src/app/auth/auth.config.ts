@@ -45,6 +45,12 @@ export const AuthConfig = {
   get SIMULATED_DELAY_MS() { return parseInt(process.env.AUTH_SIMULATED_DELAY_MS || '500', 10); },
   get MFA_CODE_EXPIRATION() { return parseInt(process.env.AUTH_MFA_CODE_EXPIRATION || '300000', 10); }, // 5 mins
 
+  // Argon2 Configuration (Performance Tuning)
+  // Default values are usually fine, but exposing them allows tuning for high load to avoid Event Loop blocking
+  get ARGON2_MEMORY_COST() { return parseInt(process.env.AUTH_ARGON2_MEMORY_COST || '65536', 10); }, // 64 MB
+  get ARGON2_TIME_COST() { return parseInt(process.env.AUTH_ARGON2_TIME_COST || '3', 10); },
+  get ARGON2_PARALLELISM() { return parseInt(process.env.AUTH_ARGON2_PARALLELISM || '4', 10); },
+
   // Circuit Breaker
   get CACHE_RETRY_DELAY() { return parseInt(process.env.AUTH_CACHE_RETRY_DELAY || '30000', 10); },
 
