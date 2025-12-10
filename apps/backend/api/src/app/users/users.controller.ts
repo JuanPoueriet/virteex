@@ -6,7 +6,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { PermissionsGuard } from '../auth/guards/permissions/permissions.guard';
-import { Permissions } from '../auth/decorators/permissions.decorator';
+import { HasPermission } from '../auth/decorators/permissions.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User, UserStatus } from './entities/user.entity/user.entity';
 import { UserResponseDto } from '../auth/dto/user-response.dto';
@@ -31,7 +31,7 @@ export class UsersController {
   }
 
   @Post('invite')
-  @Permissions('users.create')
+  @HasPermission('users.create')
   @ApiOperation({ summary: 'Invite a new user to the organization' })
   async inviteUser(
     @Body() inviteUserDto: InviteUserDto,
@@ -45,7 +45,7 @@ export class UsersController {
   }
 
   @Get()
-  @Permissions('users.view')
+  @HasPermission('users.view')
   @ApiOperation({ summary: 'List users in organization' })
   async findAll(
     @CurrentUser() user: User,
@@ -97,7 +97,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Permissions('users.view')
+  @HasPermission('users.view')
   @ApiOperation({ summary: 'Get user by ID' })
   async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     // Ideally ensure user belongs to same org
@@ -106,7 +106,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Permissions('users.edit')
+  @HasPermission('users.edit')
   @ApiOperation({ summary: 'Update user (Admin)' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -122,7 +122,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Permissions('users.delete')
+  @HasPermission('users.delete')
   @CheckPermissions(IsOrganizationOwner)
   @ApiOperation({ summary: 'Remove user' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
@@ -130,7 +130,7 @@ export class UsersController {
   }
 
   @Patch(':id/status')
-  @Permissions('users.edit')
+  @HasPermission('users.edit')
   async updateStatus(
       @Param('id', ParseUUIDPipe) id: string,
       @Body('status') status: UserStatus,
@@ -141,7 +141,7 @@ export class UsersController {
   }
 
   @Post(':id/reset-password')
-  @Permissions('users.edit')
+  @HasPermission('users.edit')
   async resetPassword(
       @Param('id', ParseUUIDPipe) id: string,
       @CurrentUser() user: User
@@ -151,13 +151,13 @@ export class UsersController {
   }
 
   @Get(':id/activity')
-  @Permissions('users.view')
+  @HasPermission('users.view')
   async getActivityLog(@Param('id', ParseUUIDPipe) id: string) {
       return this.usersService.getActivityLog(id);
   }
 
   @Post(':id/force-logout')
-  @Permissions('users.edit')
+  @HasPermission('users.edit')
   async forceLogout(@Param('id', ParseUUIDPipe) id: string) {
       return this.usersService.forceLogout(id);
   }
