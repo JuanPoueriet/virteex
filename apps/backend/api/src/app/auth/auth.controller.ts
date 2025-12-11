@@ -36,6 +36,7 @@ import { EnableTwoFactorDto } from './dto/enable-2fa.dto';
 import { CsrfGuard } from './guards/csrf.guard';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 import { JwtService } from '@nestjs/jwt';
+import { TwoFactorVerifiedGuard } from './guards/two-factor-verified.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -292,7 +293,7 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard, TwoFactorVerifiedGuard)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe())
   @ApiOperation({ summary: 'Change password for authenticated user' })
@@ -355,14 +356,14 @@ export class AuthController {
   }
 
   @Post('2fa/disable')
-  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard, TwoFactorVerifiedGuard)
   @ApiOperation({ summary: 'Disable 2FA' })
   async disableTwoFactor(@CurrentUser() user: User) {
     return this.twoFactorAuthService.disableTwoFactor(user);
   }
 
   @Post('2fa/backup-codes/generate')
-  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard, TwoFactorVerifiedGuard)
   @ApiOperation({ summary: 'Generate new backup codes' })
   async generateBackupCodes(@CurrentUser() user: User) {
     return this.twoFactorAuthService.generateBackupCodes(user);
@@ -498,7 +499,7 @@ export class AuthController {
   }
 
   @Post('sessions/:id/revoke') // Using POST or DELETE is fine, usually DELETE for resource removal
-  @UseGuards(JwtAuthGuard, CsrfGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard, TwoFactorVerifiedGuard)
   @ApiOperation({ summary: 'Revoke a specific session' })
   async revokeSession(
     @CurrentUser() user: User,

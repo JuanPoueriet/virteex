@@ -20,6 +20,14 @@ export class TwoFactorAuthService {
     private readonly configService: ConfigService
   ) {}
 
+  /**
+   * Checks if 2FA is enabled for a user, fetching the security entity if necessary.
+   */
+  async isTwoFactorEnabled(user: User): Promise<boolean> {
+    const security = user.security || await this.ensureSecurityEntity(user);
+    return security.isTwoFactorEnabled;
+  }
+
   async generateTwoFactorSecret(user: User) {
     const secret = authenticator.generateSecret();
     const appName = this.configService.get<string>('APP_NAME') || 'Virteex ERP';
@@ -34,6 +42,37 @@ export class TwoFactorAuthService {
     await this.userSecurityRepository.save(security);
 
     return { secret, otpauthUrl };
+  }
+
+  /**
+   * Pure verification of TOTP code (or Backup Code) without side effects.
+   * Used for Step-up Authentication / Sudo Mode.
+   */
+  async verifyCode(user: User, code: string): Promise<boolean> {
+      // 1. Try Backup Code first (if format matches backup code, e.g. 8 chars or hyphenated)
+      // Backup codes are usually longer or formatted. TOTP is 6 digits.
+      // Simple heuristic: If length > 6, try backup code.
+      if (code.length > 6 || code.includes('-')) {
+          return this.verifyBackupCode(user, code);
+      }
+
+      // 2. Try TOTP
+      // We need the secret.
+      const security = user.security || await this.ensureSecurityEntity(user);
+
+      if (!security.isTwoFactorEnabled || !security.twoFactorSecret) {
+          // If 2FA is not enabled, we cannot verify a code.
+          // However, the Guard usually skips checking if 2FA is disabled.
+          // If we reach here, it implies we want to verify.
+          return false;
+      }
+
+      try {
+          const decryptedSecret = this.cryptoUtil.decrypt(security.twoFactorSecret);
+          return authenticator.verify({ token: code, secret: decryptedSecret });
+      } catch (e) {
+          return false;
+      }
   }
 
   async enableTwoFactor(user: User, token: string) {
