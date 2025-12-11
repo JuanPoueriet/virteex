@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { CountryRegistrationStrategy } from './country-registration.strategy';
 import { RegisterUserDto } from '../../dto/register-user.dto';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import { User } from '@virteex/api/data-access-models';
 import { EntityManager } from 'typeorm';
 import { LocalizationService } from '../../../localization/services/localization.service';

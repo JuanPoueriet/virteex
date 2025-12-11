@@ -6,7 +6,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { UsageMetric } from '@virteex/api/data-access-models';
 import { SaasService } from '../saas.service';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import { SaasCacheKeyFactory } from '../utils/saas-cache-key.factory';
 import Redis from 'ioredis';
 

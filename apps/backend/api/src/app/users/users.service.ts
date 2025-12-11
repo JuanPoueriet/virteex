@@ -15,7 +15,7 @@ import { UserCacheService } from '../auth/modules/user-cache.service';
 import { UserSecurity } from '@virteex/api/data-access-models';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SaasService } from '@virteex/api/saas';
-import { SaasResource } from '@virteex/api/saas';
+import { SaasResource } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class UsersService {

@@ -7,7 +7,7 @@ import { Plan } from '@virteex/api/data-access-models';
 import { PlanLimit, LimitType } from '@virteex/api/data-access-models';
 import { PlanFeature } from '@virteex/api/data-access-models';
 import { UsageMetric } from '@virteex/api/data-access-models';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import { ConfigService } from '@nestjs/config';
 import { SaasResource } from '@virteex/api/data-access-models';
 import { QuotaPeriod } from '@virteex/api/data-access-models';
