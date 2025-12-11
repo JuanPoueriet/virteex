@@ -36,7 +36,7 @@ import { Passkey } from '@virteex/api/data-access-models';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
-import { OrganizationsModule } from '@virteex/api/data-access-models';
+import { OrganizationsModule } from '@virteex/api/organizations';
 import { GeoModule } from '../geo/geo.module';
 import { UsersModule } from '../users/users.module';
 import { TwilioSmsProvider } from './services/sms.provider';

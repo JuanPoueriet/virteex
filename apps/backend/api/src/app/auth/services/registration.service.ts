@@ -10,7 +10,7 @@ import { RegisterUserDto } from '../dto/register-user.dto';
 import { RegistrationStrategyFactory } from '../strategies/registration/registration-strategy.factory';
 import { LocalizationService } from '../../localization/services/localization.service';
 import { User } from '@virteex/api/data-access-models';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import { Role } from '@virteex/api/data-access-models';
 import { MailService } from '../../mail/mail.service';
 import { OrganizationsService } from '@virteex/api/organizations';
