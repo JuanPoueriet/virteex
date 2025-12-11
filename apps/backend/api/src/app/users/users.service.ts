@@ -14,8 +14,8 @@ import { EventsGateway } from '../websockets/events.gateway';
 import { UserCacheService } from '../auth/modules/user-cache.service';
 import { UserSecurity } from './entities/user-security.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SaasService } from '../saas/saas.service';
-import { SaasResource } from '../saas/enums/saas-resource.enum';
+import { SaasService } from '@virteex/api/saas';
+import { SaasResource } from '@virteex/api/saas';
 
 @Injectable()
 export class UsersService {

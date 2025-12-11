@@ -29,14 +29,14 @@ import { OktaStrategy } from './strategies/okta.strategy';
 
 import { RefreshToken } from './entities/refresh-token.entity';
 import { VerificationCode } from './entities/verification-code.entity';
-import { Organization } from '../organizations/entities/organization.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { User } from '@virteex/api/data-access-models';
 import { UserSecurity } from '../users/entities/user-security.entity';
 import { Passkey } from '../users/entities/passkey.entity';
 import { MailModule } from '../mail/mail.module';
 import { LocalizationModule } from '../localization/localization.module';
 import { AuditModule } from '../audit/audit.module';
-import { OrganizationsModule } from '../organizations/organizations.module';
+import { OrganizationsModule } from '@virteex/api/data-access-models';
 import { GeoModule } from '../geo/geo.module';
 import { UsersModule } from '../users/users.module';
 import { TwilioSmsProvider } from './services/sms.provider';

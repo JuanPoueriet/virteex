@@ -14,7 +14,7 @@ import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Controller('budgets')
 @UseGuards(JwtAuthGuard)

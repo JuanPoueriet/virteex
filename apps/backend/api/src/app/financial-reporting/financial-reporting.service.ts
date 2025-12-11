@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource, LessThanOrEqual } from 'typeorm';
 import { Account, AccountType, AccountCategory } from '../chart-of-accounts/entities/account.entity';
 import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { MonthlyAccountBalance } from '../reporting/entities/monthly-account-balance.entity';
 import { subDays } from 'date-fns';
 import { Ledger } from '../accounting/entities/ledger.entity';

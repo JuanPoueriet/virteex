@@ -4,8 +4,8 @@ import { PaymentService } from './payment.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
-import { SaasService } from '../saas/saas.service';
+import { User } from '@virteex/api/data-access-models';
+import { SaasService } from '@virteex/api/saas';
 
 @Controller('payment')
 export class PaymentController {

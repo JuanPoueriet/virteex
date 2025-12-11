@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from './entities/organization.entity';
-import { OrganizationSettings } from './entities/organization-settings.entity';
-import { OrganizationSubsidiary } from './entities/organization-subsidiary.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
+import { OrganizationSubsidiary } from '@virteex/api/data-access-models';
 import { OrganizationsController } from './organizations.controller';
 import { OrganizationsService } from './organizations.service';
 

@@ -14,7 +14,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { SocialUserDecorator } from './decorators/social-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { Throttle } from '@nestjs/throttler';
 import { GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';

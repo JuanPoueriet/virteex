@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { ConsolidationMappingService } from './consolidation-mapping.service';
 import { CreateConsolidationMapDto } from './dto/create-consolidation-map.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Controller('consolidation/mapping')
 @UseGuards(JwtAuthGuard)

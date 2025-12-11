@@ -11,8 +11,8 @@ import {
   JoinTable,
   OneToOne,
 } from 'typeorm';
-import { Organization } from '../../../organizations/entities/organization.entity';
-import { Role } from '../../../roles/entities/role.entity';
+import { Organization } from '../organization.entity';
+import { Role } from '../roles/role.entity';
 import { Passkey } from '../passkey.entity';
 import { UserSecurity } from '../user-security.entity';
 

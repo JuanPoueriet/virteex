@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { Account } from '../../chart-of-accounts/entities/account.entity';
 
 @Entity({ name: 'consolidation_maps' })

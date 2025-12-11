@@ -2,9 +2,9 @@ import { Injectable, Logger, BadRequestException, NotFoundException, Inject, for
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
-import { SaasService } from '../saas/saas.service';
-import { SAAS_CONFIG } from '../saas/saas.config';
+import { Organization } from '@virteex/api/data-access-models';
+import { SaasService } from '@virteex/api/saas';
+import { SAAS_CONFIG } from '@virteex/api/saas';
 import { WebhookEvent } from './entities/webhook-event.entity';
 import { PaymentGateway } from './interfaces/payment-gateway.interface';
 

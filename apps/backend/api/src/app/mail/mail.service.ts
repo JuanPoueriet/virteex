@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class MailService {

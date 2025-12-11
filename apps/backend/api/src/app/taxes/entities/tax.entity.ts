@@ -1,5 +1,5 @@
 import { TaxGroup } from '../../localization/entities/tax-group.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import {
   Column,
   CreateDateColumn,

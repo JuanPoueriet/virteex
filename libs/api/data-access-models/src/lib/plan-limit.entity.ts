@@ -6,8 +6,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Plan } from './plan.entity';
-import { SaasResource } from '../enums/saas-resource.enum';
-import { QuotaPeriod } from '../enums/quota-period.enum';
+import { SaasResource } from './enums/saas-resource.enum';
+import { QuotaPeriod } from './enums/quota-period.enum';
 
 export enum LimitType {
   NUMERIC = 'NUMERIC',

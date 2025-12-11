@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { SaasResource } from '../enums/saas-resource.enum';
-import { UsageMetric } from '../entities/usage-metric.entity';
+import { SaasResource } from '@virteex/api/data-access-models';
+import { UsageMetric } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class UsageMetricRepository {

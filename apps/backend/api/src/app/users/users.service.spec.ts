@@ -8,7 +8,7 @@ import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import { EventsGateway } from '../websockets/events.gateway';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SaasService } from '../saas/saas.service';
+import { SaasService } from '@virteex/api/saas';
 import { DataSource } from 'typeorm';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 

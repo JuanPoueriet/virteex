@@ -4,7 +4,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { SocialUser } from './interfaces/social-user.interface';
 import { SetPasswordFromInvitationDto } from './dto/set-password-from-invitation.dto';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { AuthService } from './auth.service';
 import { RegistrationService } from './services/registration.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';

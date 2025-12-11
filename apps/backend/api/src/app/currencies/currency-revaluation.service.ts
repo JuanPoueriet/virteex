@@ -6,7 +6,7 @@ import { Account } from '../chart-of-accounts/entities/account.entity';
 import { AccountBalance } from '../chart-of-accounts/entities/account-balance.entity';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { CreateJournalEntryDto, CreateJournalEntryLineDto } from '../journal-entries/dto/create-journal-entry.dto';
 import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from '../accounting/entities/ledger.entity';

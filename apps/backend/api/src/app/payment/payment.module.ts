@@ -4,9 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { stripeProvider } from './stripe/stripe.provider';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 import { WebhookEvent } from './entities/webhook-event.entity';
-import { SaasModule } from '../saas/saas.module';
+import { SaasModule } from '@virteex/api/saas';
 import { StripePaymentAdapter } from './adapters/stripe-payment.adapter';
 
 @Module({

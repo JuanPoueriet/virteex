@@ -12,7 +12,7 @@ import { VendorDebitNote } from './entities/vendor-debit-note.entity';
 import { CreateVendorDebitNoteDto } from './dto/create-vendor-debit-note.dto';
 import { VendorBill, VendorBillStatus } from './entities/vendor-bill.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { UpdateVendorDebitNoteDto } from './dto/update-vendor-debit-note.dto';
 import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from '../accounting/entities/ledger.entity';

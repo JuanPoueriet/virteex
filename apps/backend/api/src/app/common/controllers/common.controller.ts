@@ -2,7 +2,7 @@
 import { Controller, Get, Query, Head, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UsersService } from '../../users/users.service';
-import { OrganizationsService } from '../../organizations/organizations.service';
+import { OrganizationsService } from '@virteex/api/organizations';
 
 @ApiTags('Common')
 @Controller('common')

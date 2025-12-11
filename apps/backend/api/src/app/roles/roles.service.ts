@@ -5,7 +5,7 @@ import { Role } from './entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UserCacheService } from '../auth/modules/user-cache.service';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class RolesService {

@@ -13,7 +13,7 @@ import {
 import { VendorBillLine } from './vendor-bill-line.entity';
 import { Supplier } from '../../suppliers/entities/supplier.entity';
 import { Currency } from '../../currencies/entities/currency.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 
 export enum VendorBillStatus {
   DRAFT = 'DRAFT',

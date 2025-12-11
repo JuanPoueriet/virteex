@@ -25,7 +25,7 @@ import { UsersModule } from './users/users.module';
 import { JournalEntriesModule } from './journal-entries/journal-entries.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { ConsolidationModule } from './consolidation/consolidation.module';
-import { OrganizationsModule } from './organizations/organizations.module';
+import { OrganizationsModule } from '@virteex/api/organizations';
 import { SharedModule } from './shared/shared.module';
 import { ChartOfAccountsModule } from './chart-of-accounts/chart-of-accounts.module';
 import { RolesModule } from './roles/roles.module';
@@ -59,7 +59,7 @@ import { PaymentModule } from './payment/payment.module';
 import { CountryModule } from '../../../../../libs/api/country/src/lib/country.module';
 import { GeoModule } from './geo/geo.module';
 import { CommonModule } from './common/common.module';
-import { SaasModule } from './saas/saas.module';
+import { SaasModule } from '@virteex/api/saas';
 
 const envValidation = Joi.object({
   NODE_ENV: Joi.string()

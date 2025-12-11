@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, LessThanOrEqual } from 'typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 import { Account, AccountType } from '../chart-of-accounts/entities/account.entity';
 import { FinancialReportingService } from '../financial-reporting/financial-reporting.service';
 import { ConsolidationMap } from './entities/consolidation-map.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 
 @Injectable()

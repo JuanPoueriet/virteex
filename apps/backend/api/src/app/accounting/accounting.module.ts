@@ -9,11 +9,11 @@ import { JournalEntriesModule } from '../journal-entries/journal-entries.module'
 import { Account } from '../chart-of-accounts/entities/account.entity';
 import { JournalEntry } from '../journal-entries/entities/journal-entry.entity';
 import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { InflationIndex } from './entities/inflation-index.entity';
 import { InflationAdjustmentController } from './inflation-adjustment.controller';
 import { InflationAdjustmentService } from './inflation-adjustment.service';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 import { FiscalYearArchivingService } from './fiscal-year-archiving.service';
 import { FiscalYear } from './entities/fiscal-year.entity';
 import { Ledger } from './entities/ledger.entity';

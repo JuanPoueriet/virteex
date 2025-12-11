@@ -9,7 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { FiscalRegion } from '../entities/fiscal-region.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { ChartOfAccountsService } from '../../chart-of-accounts/chart-of-accounts.service';
 import { TaxesService } from '../../taxes/taxes.service';
 import { panamaCoaTemplate } from '../templates/pa-coa.template';

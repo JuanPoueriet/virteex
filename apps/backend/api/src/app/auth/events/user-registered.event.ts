@@ -1,7 +1,7 @@
 
 import { EntityManager } from 'typeorm';
 import { User } from '../../users/entities/user.entity/user.entity';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 
 export class UserRegisteredEvent {
   constructor(

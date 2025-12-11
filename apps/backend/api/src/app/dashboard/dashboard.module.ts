@@ -9,7 +9,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 import { FinancialReportingModule } from '../financial-reporting/financial-reporting.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 
 @Module({
   imports: [

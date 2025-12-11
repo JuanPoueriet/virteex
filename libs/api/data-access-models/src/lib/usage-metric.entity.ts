@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Index, UpdateDateColumn } from 'typeorm';
-import { SaasResource } from '../enums/saas-resource.enum';
+import { SaasResource } from './enums/saas-resource.enum';
 
 @Entity('saas_usage_metrics')
 @Index(['organizationId', 'resource', 'period'], { unique: true })
