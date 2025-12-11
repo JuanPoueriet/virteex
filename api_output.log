@@ -1,0 +1,84 @@
+
+ NX   Running target serve for project api and 1 task it depends on:
+
+
+
+> nx run api:build  [local cache]
+
+> webpack-cli build --node-env=production
+
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.34 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (2fc5d77e7561fc3f)
+
+> nx run api:serve:development
+
+[2m> [22m[2mnx run[22m api:build:development  [2m[local cache][22m
+[2m> [22mwebpack-cli build --node-env=development
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.34 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (e8c3133e6ac5d3f1)
+[0m[7m[1m[32m NX [39m[22m[27m[0m  [32mSuccessfully ran target [1mbuild[22m for project api[39m
+[2mNx read the output from the cache instead of running the command for 1 out of 1 tasks.[22m
+[0m[7m[1m[33m NX [39m[22m[27m[0m  [33mNx Cloud encountered some problems[39m
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)
+[1m[31mDebugger listening on ws://localhost:9229/d08cca7f-f09f-4438-828d-1e291f8d966a[39m[22m
+[1m[31mDebugger listening on ws://localhost:9229/d08cca7f-f09f-4438-828d-1e291f8d966a[39m[22m
+[1m[31mFor help, see: https://nodejs.org/en/docs/inspector[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m[39m[22m
+[1m[31m/app/node_modules/@nestjs/typeorm/dist/common/typeorm.utils.js:25[39m[22m
+[1m[31m        throw new circular_dependency_exception_1.CircularDependencyException('@InjectRepository()');[39m[22m
+[1m[31m              ^[39m[22m
+[1m[31m[39m[22m
+[1m[31mError: A circular dependency has been detected inside @InjectRepository(). Please, make sure that each side of a bidirectional relationships are decorated with "forwardRef()". Also, try to eliminate barrel files because they can lead to an unexpected behavior too.[39m[22m
+[1m[31m    at getRepositoryToken (/app/node_modules/@nestjs/typeorm/dist/common/typeorm.utils.js:25:15)[39m[22m
+[1m[31m    at InjectRepository (/app/node_modules/@nestjs/typeorm/dist/common/typeorm.decorators.js:7:157)[39m[22m
+[1m[31m    at Array.Object.defineProperty.value (/app/apps/backend/api/src/app/payment/adapters/stripe-payment.adapter.ts:186:1)[39m[22m
+[1m[31m    at __webpack_require__ (/app/dist/apps/backend/api/webpack/bootstrap:19:1)[39m[22m
+[1m[31m    at Array.Object.defineProperty.value (/app/apps/backend/api/src/app/payment/payment.module.ts:13:34)[39m[22m
+[1m[31m    at __webpack_require__ (/app/dist/apps/backend/api/webpack/bootstrap:19:1)[39m[22m
+[1m[31m    at Array.<anonymous> (/app/apps/backend/api/src/app/app.module.ts:55:26)[39m[22m
+[1m[31m    at __webpack_require__ (/app/dist/apps/backend/api/webpack/bootstrap:19:1)[39m[22m
+[1m[31m    at /app/apps/backend/api/src/main.ts:5:22[39m[22m
+[1m[31m    at /app/dist/apps/backend/api/main.js:30158:3[39m[22m
+[1m[31m[39m[22m
+[7m[1m[36m NX [39m[22m[27m [1mProcess exited with code 1, waiting for changes to restart...[22m
+[7m[1m[36m NX [39m[22m[27m [1mFile change detected. Restarting...[22m
+[2m> [22m[2mnx run[22m api:build:development
+[2m> [22mwebpack-cli build --node-env=development
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.34 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (b8997f152f49e765)
+[0m[7m[1m[32m NX [39m[22m[27m[0m  [32mSuccessfully ran target [1mbuild[22m for project api[39m
+[0m[7m[1m[33m NX [39m[22m[27m[0m  [33mNx Cloud encountered some problems[39m
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)
+[1m[31mDebugger listening on ws://localhost:9229/44306662-e94f-4e27-9df5-6d15a3473298[39m[22m
+[1m[31mDebugger listening on ws://localhost:9229/44306662-e94f-4e27-9df5-6d15a3473298[39m[22m
+[1m[31mFor help, see: https://nodejs.org/en/docs/inspector[39m[22m
+[1m[31m[39m[22m
+[32m[Nest] 3830  - [39m12/11/2025, 6:29:41 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[1m[31m[31m[Nest] 3830  - [39m[31m12/11/2025, 6:29:41 PM [31m  ERROR[39m[31m [38;5;3m[ExceptionHandler] [39m[31mError: Config validation error: "DB_HOST" is required. "DB_USERNAME" is required. "DB_PASSWORD" is required. "DB_NAME" is required. "RECAPTCHA_V3_SECRET_KEY" is required. "AWS_S3_BUCKET_NAME" is required. "AWS_REGION" is required. "AWS_ACCESS_KEY_ID" is required. "AWS_SECRET_ACCESS_KEY" is required. "STRIPE_SECRET_KEY" is required. "STRIPE_WEBHOOK_SECRET" is required[39m[22m
+[1m[31m    at Function.forRoot [90m(/app/[39m[31mnode_modules/[4m@nestjs/config[24m/dist/config.module.js:96:23[90m)[39m[31m[39m[22m
+[1m[31m    at Array.<anonymous> [90m(/app/[39m[31mapps/backend/api/src/app/app.module.ts:86:1[90m)[39m[31m[39m[22m
+[1m[31m    at __webpack_require__ [90m(/app/[39m[31mdist/apps/backend/api/webpack/bootstrap:19:1[90m)[39m[31m[39m[22m
+[1m[31m    at [90m/app/[39m[31mapps/backend/api/src/main.ts:5:22[39m[22m
+[1m[31m    at [90m/app/[39m[31mdist/apps/backend/api/main.js:30158:3[39m[22m
+[1m[31m    at Object.<anonymous> [90m(/app/[39m[31mdist/apps/backend/api/main.js:30160:12[90m)[39m[31m[39m[22m
+[1m[31m[90m    at Module._compile (node:internal/modules/cjs/loader:1706:14)[39m[31m[39m[22m
+[1m[31m[90m    at Object..js (node:internal/modules/cjs/loader:1839:10)[39m[31m[39m[22m
+[1m[31m[90m    at Module.load (node:internal/modules/cjs/loader:1441:32)[39m[31m[39m[22m
+[1m[31m[90m    at Function.<anonymous> (node:internal/modules/cjs/loader:1263:12)[39m[31m[39m[22m
+[1m[31m[39m[22m
+[7m[1m[36m NX [39m[22m[27m [1mProcess exited with code 1, waiting for changes to restart...[22m
+[1m[31mWatch error: Daemon closed the connection[39m[22m
+Task "api:serve:development" is continuous but exited with code 1
+
+
+
+ NX   Successfully ran target serve for project api and 1 task it depends on
+
+Nx read the output from the cache instead of running the command for 1 out of 2 tasks.
+
+
+ NX   Nx Cloud encountered some problems
+
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)

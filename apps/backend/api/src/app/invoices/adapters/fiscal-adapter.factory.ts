@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { FiscalAdapter } from '../interfaces/fiscal-adapter.interface';
 import { GenericFiscalAdapter } from './generic-fiscal.adapter';
 import { DominicanRepublicFiscalAdapter } from './dominican-republic-fiscal.adapter';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class FiscalAdapterFactory {
