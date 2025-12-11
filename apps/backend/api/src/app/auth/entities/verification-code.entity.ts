@@ -1,6 +1,6 @@
 
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 export enum VerificationType {
   PHONE_VERIFY = 'PHONE_VERIFY',

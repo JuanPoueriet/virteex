@@ -1,6 +1,6 @@
 import { Request } from 'express';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { AuthenticatedUser } from '@virteex/api/auth-shared';
 
 export interface RequestWithUser extends Request {
-  user: User;
+  user: AuthenticatedUser;
 }

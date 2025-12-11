@@ -1,7 +1,7 @@
 
 import { EventSubscriber, EntitySubscriberInterface, UpdateEvent, RemoveEvent, DataSource } from 'typeorm';
 import { Injectable, Inject } from '@nestjs/common';
-import { User } from '../entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { UserCacheService } from '../../auth/modules/user-cache.service';
 import { InjectDataSource } from '@nestjs/typeorm';
 

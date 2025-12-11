@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from './entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { UserCacheService } from '../auth/modules/user-cache.service';
 import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';

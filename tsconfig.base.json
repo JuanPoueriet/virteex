@@ -24,7 +24,8 @@
       "@virteex/api/metrics": ["libs/api/metrics/src/index.ts"],
       "@virteex/api/organizations": ["libs/api/organizations/src/index.ts"],
       "@virteex/api/saas": ["libs/api/saas/src/index.ts"],
-      "@virteex/api/data-access-models": ["libs/api/data-access-models/src/index.ts"]
+      "@virteex/api/data-access-models": ["libs/api/data-access-models/src/index.ts"],
+      "@virteex/api/auth-shared": ["libs/api/auth-shared/src/index.ts"]
     }
   }
 }

@@ -9,15 +9,14 @@ import ms from 'ms';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User, UserStatus } from '@virteex/api/data-access-models';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfig } from '../auth.config';
 import { UserCacheService } from '../modules/user-cache.service';
 import { UsersService } from '../../users/users.service';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { AuthenticatedUser } from '@virteex/api/auth-shared';
 import { AuthError } from '../enums/auth-error.enum';
-import { UserStatus } from '../../users/entities/user.entity/user.entity';
 import { GeoService } from '../../geo/geo.service';
 
 @Injectable()

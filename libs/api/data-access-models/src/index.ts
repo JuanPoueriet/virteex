@@ -9,3 +9,6 @@ export * from './lib/organization-subsidiary.entity';
 export * from './lib/enums/saas-resource.enum';
 export * from './lib/enums/quota-period.enum';
 export * from './lib/user.entity/user.entity';
+export * from './lib/role.entity';
+export * from './lib/passkey.entity';
+export * from './lib/user-security.entity';

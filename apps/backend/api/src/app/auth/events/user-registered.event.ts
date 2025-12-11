@@ -1,6 +1,6 @@
 
 import { EntityManager } from 'typeorm';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { Organization } from '@virteex/api/organizations';
 
 export class UserRegisteredEvent {

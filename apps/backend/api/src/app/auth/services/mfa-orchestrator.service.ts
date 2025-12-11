@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { randomInt } from 'crypto';
 
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { VerificationCode, VerificationType } from '../entities/verification-code.entity';
 import { MailService } from '../../mail/mail.service';
 import { AbstractSmsProvider } from './abstract-sms.provider';
@@ -15,7 +15,7 @@ import { AuditTrailService } from '../../audit/audit.service';
 import { ActionType } from '../../audit/entities/audit-log.entity';
 import { TokenService } from './token.service';
 import { UsersService } from '../../users/users.service';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { UserSecurity } from '@virteex/api/data-access-models';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 
 import { AuthConfig } from '../auth.config';

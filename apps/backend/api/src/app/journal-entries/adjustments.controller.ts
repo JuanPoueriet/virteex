@@ -1,14 +1,14 @@
 
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { AdjustmentsService } from './adjustments.service';
 import { CreateReclassificationEntryDto } from './dto/reclassification-entry.dto';
 import { CreatePeriodEndAdjustmentDto } from './dto/period-end-adjustment.dto';
 import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 
 @Controller('journal-entries/adjustments')
 @UseGuards(JwtAuthGuard, PeriodLockGuard)

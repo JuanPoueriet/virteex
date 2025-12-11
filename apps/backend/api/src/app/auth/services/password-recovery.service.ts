@@ -6,15 +6,15 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as ms from 'ms';
 
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { MailService } from '../../mail/mail.service';
 import { UserCacheService } from '../modules/user-cache.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { SetPasswordFromInvitationDto } from '../dto/set-password-from-invitation.dto';
 import { AuthConfig } from '../auth.config';
-import { UserStatus } from '../../users/entities/user.entity/user.entity';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { User } from '@virteex/api/data-access-models';
+import { UserSecurity } from '@virteex/api/data-access-models';
 
 interface PasswordResetJwtPayload {
   sub: string;

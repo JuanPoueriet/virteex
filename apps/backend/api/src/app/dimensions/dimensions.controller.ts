@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { DimensionsService } from './dimensions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { CreateDimensionDto, UpdateDimensionDto } from './dto/dimension.dto';
 import { CreateDimensionRuleDto } from './dto/dimension-rule.dto';

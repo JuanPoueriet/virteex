@@ -2,10 +2,10 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { authenticator } from 'otplib';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UserCacheService } from '../modules/user-cache.service';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { UserSecurity } from '@virteex/api/data-access-models';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';

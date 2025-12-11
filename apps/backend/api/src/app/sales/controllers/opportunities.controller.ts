@@ -1,8 +1,8 @@
 
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { CurrentUser } from '@virteex/api/auth-shared';
+import { User } from '@virteex/api/data-access-models';
 import { OpportunitiesService } from '../services/opportunities.service';
 
 @Controller('sales/opportunities')

@@ -1,15 +1,10 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Type, Inject } from '@nestjs/common';
 import { Reflector, ModuleRef } from '@nestjs/core';
-import { PERMISSIONS_KEY } from '../../../auth/decorators/permissions.decorator';
-import { Permission } from '../../../shared/permissions';
+import { PERMISSIONS_KEY, IPolicy } from '../decorators/check-permissions.decorator';
+import { Permission } from '../permissions';
 import { AuthenticatedRequest } from '@virteex/shared/util-auth';
 
-// Interface for a Policy (Context-Aware Check)
-export interface IPolicy {
-  can(user: any, request: any): boolean | Promise<boolean>;
-}
-
-export type PermissionOrPolicy = Permission | Type<IPolicy>;
+export type PermissionOrPolicy = Permission | Type<IPolicy> | string;
 
 import { Logger } from '@nestjs/common';
 

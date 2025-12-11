@@ -3,10 +3,10 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { ConsolidationService } from './consolidation.service';
 import { RunConsolidationDto } from './dto/run-consolidation.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 
 @Controller('consolidation')
 @UseGuards(JwtAuthGuard)

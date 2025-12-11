@@ -13,7 +13,7 @@ import { FixedAssetsService } from './fixed-assets.service';
 import { CreateFixedAssetDto } from './dto/create-fixed-asset.dto';
 import { UpdateFixedAssetDto } from './dto/update-fixed-asset.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { DisposeAssetDto } from './dto/dispose-asset.dto';
 

@@ -16,7 +16,7 @@ import { StorageService } from '../storage/storage.service';
 import { ProposedAdjustmentEvidence } from '../entities/proposed-adjustment-evidence.entity';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { AdjustmentsService } from '../journal-entries/adjustments.service';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class AuditAdjustmentsService {

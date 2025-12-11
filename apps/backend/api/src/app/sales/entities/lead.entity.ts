@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { CustomerStatus } from '../customers/entities/customer.entity';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Entity({ name: 'leads' })
 export class Lead {

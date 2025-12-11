@@ -12,7 +12,7 @@ import { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt/jwt.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { SocialUserDecorator } from './decorators/social-user.decorator';
 import { User } from '@virteex/api/data-access-models';
 import { Throttle } from '@nestjs/throttler';

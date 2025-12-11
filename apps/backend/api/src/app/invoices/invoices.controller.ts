@@ -13,12 +13,12 @@ import {
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import type { Response } from 'express';
 import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 import { SubscriptionActiveGuard } from '@virteex/api/saas';
 import { CheckPlanLimit } from '@virteex/api/saas';
 import { PlanLimitCheckGuard } from '@virteex/api/saas';

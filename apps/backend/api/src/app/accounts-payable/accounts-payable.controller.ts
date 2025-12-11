@@ -17,7 +17,7 @@ import { AccountsPayableService } from './accounts-payable.service';
 import { CreateVendorBillDto } from './dto/create-vendor-bill.dto';
 import { UpdateVendorBillDto } from './dto/update-vendor-bill.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 
 @Controller('accounts-payable')

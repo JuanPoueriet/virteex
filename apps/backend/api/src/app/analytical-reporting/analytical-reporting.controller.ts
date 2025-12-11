@@ -3,10 +3,10 @@ import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Query } from '
 import { AnalyticalReportingService } from './analytical-reporting.service';
 import { AnalyticalQueryDto, PaginationOptionsDto } from './dto/analytical-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 
 @Controller('analytical-reporting')
 @UseGuards(JwtAuthGuard)

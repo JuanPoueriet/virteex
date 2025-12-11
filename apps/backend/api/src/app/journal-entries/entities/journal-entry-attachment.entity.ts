@@ -8,7 +8,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { JournalEntry } from './journal-entry.entity';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Entity({ name: 'journal_entry_attachments' })
 export class JournalEntryAttachment {

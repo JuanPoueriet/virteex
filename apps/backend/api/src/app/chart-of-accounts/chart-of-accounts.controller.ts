@@ -19,7 +19,7 @@ import { ChartOfAccountsService } from './chart-of-accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { BatchDeactivateAccountsDto } from './dto/batch-operations.dto';
 import { MergeAccountsDto } from './dto/merge-accounts.dto';

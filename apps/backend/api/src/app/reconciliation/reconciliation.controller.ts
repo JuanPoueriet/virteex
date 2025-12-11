@@ -3,7 +3,7 @@ import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFile
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ReconciliationService } from './reconciliation.service';
 import { UploadStatementDto } from './dto/upload-statement.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 

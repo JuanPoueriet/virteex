@@ -7,7 +7,7 @@ import * as Bowser from 'bowser';
 import { GeoService } from '../../geo/geo.service';
 import { AuditTrailService } from '../../audit/audit.service';
 import { AuthConfig } from '../auth.config';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { VerificationCode, VerificationType } from '../entities/verification-code.entity';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UsersService } from '../../users/users.service';
