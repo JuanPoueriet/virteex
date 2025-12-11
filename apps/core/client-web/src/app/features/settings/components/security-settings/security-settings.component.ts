@@ -11,7 +11,7 @@ import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
 
-type SetupStep = 'EMAIL_VERIFY' | 'QR_SETUP' | 'BACKUP_CODES';
+type SetupStep = 'INTRO' | 'EMAIL_VERIFY' | 'QR_SETUP' | 'BACKUP_CODES';
 
 @Component({
   selector: 'app-security-settings',
@@ -93,9 +93,13 @@ export class SecuritySettingsComponent implements OnInit {
   // --- 2FA Setup Flow ---
 
   start2faSetup() {
-    this.currentStep.set('EMAIL_VERIFY');
+    this.currentStep.set('INTRO');
     this.emailCode.set('');
     this.showSetupModal.set(true);
+  }
+
+  proceedToEmailVerification() {
+    this.currentStep.set('EMAIL_VERIFY');
     this.sendEmailVerification();
   }
 

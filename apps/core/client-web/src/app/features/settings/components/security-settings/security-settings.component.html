@@ -117,6 +117,7 @@
       <div class="modal-header">
         <h2>
            @switch (currentStep()) {
+               @case ('INTRO') { {{ 'SETTINGS.SECURITY.TWO_STEP_VERIF' | translate }} }
                @case ('EMAIL_VERIFY') { {{ 'SETTINGS.SECURITY.SETUP_2FA_TITLE' | translate }} }
                @case ('QR_SETUP') { {{ 'SETTINGS.SECURITY.SETUP_AUTHENTICATOR' | translate }} }
                @case ('BACKUP_CODES') { {{ 'SETTINGS.SECURITY.BACKUP_CODES_TITLE' | translate }} }
@@ -124,6 +125,7 @@
         </h2>
         <p>
            @switch (currentStep()) {
+               @case ('INTRO') { {{ 'SETTINGS.SECURITY.VERIFY_IDENTITY_DESC' | translate }} }
                @case ('EMAIL_VERIFY') { {{ 'SETTINGS.SECURITY.SETUP_2FA_DESC' | translate }} }
                @case ('QR_SETUP') { {{ 'SETTINGS.SECURITY.SETUP_AUTHENTICATOR_DESC' | translate }} }
                @case ('BACKUP_CODES') { {{ 'SETTINGS.SECURITY.BACKUP_CODES_DESC' | translate }} }
@@ -132,6 +134,32 @@
       </div>
 
       <div class="modal-body">
+
+        <!-- STEP 0: INTRO -->
+        @if (currentStep() === 'INTRO') {
+          <div class="space-y-6 text-center">
+            <div class="flex justify-center">
+              <div class="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center text-primary-500">
+                <lucide-icon [img]="ShieldIcon" class="w-8 h-8"></lucide-icon>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                {{ 'SETTINGS.SECURITY.BEFORE_CONFIG_2FA' | translate }}
+              </p>
+            </div>
+
+            <div class="flex justify-center gap-3 pt-4">
+              <button class="btn-secondary w-full" (click)="closeSetupModal()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+              <button class="btn-primary w-full" (click)="proceedToEmailVerification()">
+                {{ 'COMMON.CONTINUE' | translate }}
+              </button>
+            </div>
+          </div>
+        }
         
         <!-- STEP 1: EMAIL VERIFY -->
         @if (currentStep() === 'EMAIL_VERIFY') {
