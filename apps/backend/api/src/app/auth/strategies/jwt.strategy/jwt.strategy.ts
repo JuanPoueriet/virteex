@@ -9,10 +9,10 @@ import { Cache } from 'cache-manager';
 import CircuitBreaker = require('opossum');
 
 import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
-import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { AuthConfig } from '../../auth.config';
 import { UsersService } from '../../../users/users.service';
-import { AuthenticatedUser } from '../../interfaces/authenticated-user.interface';
+import { AuthenticatedUser } from '@virteex/api/auth-shared';
 import { AuthError } from '../../enums/auth-error.enum';
 import { CachedUser } from '../../interfaces/cached-user.interface';
 

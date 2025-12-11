@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PushSubscription } from './entities/push-subscription.entity';
 
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 

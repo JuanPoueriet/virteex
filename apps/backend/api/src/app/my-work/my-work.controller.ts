@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { User } from '@virteex/api/data-access-models';
 import { MyWorkDto } from './dto/my-work.dto';

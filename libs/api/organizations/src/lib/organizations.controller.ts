@@ -1,45 +1,47 @@
 
 import { Controller, Get, Body, Patch, UseGuards, Put } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
-import { CheckPermissions } from '../auth/decorators/check-permissions.decorator';
-import { IsOrganizationOwnerPolicy } from '../auth/policies/is-organization-owner.policy';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
+import { CheckPermissions, CurrentUser, AuthenticatedUser, IsOrganizationOwnerPolicy } from '@virteex/api/auth-shared';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateSubsidiaryDto } from './dto/create-subsidiary.dto';
 import { Organization } from '@virteex/api/data-access-models';
 import { Post } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('organizations')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard('jwt'))
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Get('profile')
-  async getProfile(@CurrentUser() user: User) {
-    return this.organizationsService.findOne(user.organizationId);
+  async getProfile(@CurrentUser() user: AuthenticatedUser) {
+    // AuthenticatedUser.organization.id is strictly typed now
+    if (!user.organization) throw new Error('User does not belong to an organization');
+    return this.organizationsService.findOne(user.organization.id);
   }
 
   @Patch('profile')
   @CheckPermissions(IsOrganizationOwnerPolicy)
   async updateProfile(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
-    return this.organizationsService.update(user.organizationId, updateOrganizationDto);
+    if (!user.organization) throw new Error('User does not belong to an organization');
+    return this.organizationsService.update(user.organization.id, updateOrganizationDto);
   }
 
   @Get('subsidiaries')
-  async getSubsidiaries(@CurrentUser() user: User) {
-    return this.organizationsService.getSubsidiaries(user.organizationId);
+  async getSubsidiaries(@CurrentUser() user: AuthenticatedUser) {
+    if (!user.organization) throw new Error('User does not belong to an organization');
+    return this.organizationsService.getSubsidiaries(user.organization.id);
   }
 
   @Post('subsidiaries')
   async createSubsidiary(
-    @CurrentUser() user: User,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() createSubsidiaryDto: CreateSubsidiaryDto,
   ) {
-    return this.organizationsService.createSubsidiary(user.organizationId, createSubsidiaryDto);
+    if (!user.organization) throw new Error('User does not belong to an organization');
+    return this.organizationsService.createSubsidiary(user.organization.id, createSubsidiaryDto);
   }
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { AuthenticatedUser } from '@virteex/api/auth-shared';
+import { User } from '@virteex/api/data-access-models';
 
 export class LoginResponseDto {
     @ApiProperty({ type: () => User })

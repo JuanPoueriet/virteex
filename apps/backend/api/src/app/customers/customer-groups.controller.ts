@@ -1,7 +1,7 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { CustomerGroupsService } from './customer-groups.service';
 import { CreateCustomerGroupDto } from './dto/create-customer-group.dto';

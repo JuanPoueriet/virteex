@@ -3,7 +3,7 @@ import { Controller, Get, UseGuards, Post, Body, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { GenerateReportDto } from './dto/generate-report.dto';
 import { GeneralLedgerReportDto } from '../journal-entries/dto/general-ledger-report.dto';

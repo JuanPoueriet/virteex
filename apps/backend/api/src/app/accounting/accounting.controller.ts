@@ -11,10 +11,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { PeriodClosingService } from './period-closing.service';
 import { ClosePeriodDto } from './dto/close-period.dto';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 import { ModulePeriodDto } from './dto/module-period.dto';
 import { LockAccountInPeriodDto } from './dto/lock-account-period.dto';
 import { ReopenPeriodDto } from './dto/reopen-period.dto';

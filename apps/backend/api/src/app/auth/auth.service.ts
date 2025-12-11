@@ -20,7 +20,7 @@ import { TokenService } from './services/token.service';
 import { MfaOrchestratorService } from './services/mfa-orchestrator.service';
 import { PasswordService } from './services/password.service';
 import { AuthEvents, AuthLoginFailedEvent, AuthLoginSuccessEvent } from './events/auth.events';
-import { SafeUser, AuthenticatedUser } from './interfaces/authenticated-user.interface';
+import { AuthenticatedUser } from '@virteex/api/auth-shared';
 import { AuthError } from './enums/auth-error.enum';
 import { AuthException } from './exceptions/auth.exception';
 import { LoginResultDto, LoginResponseDto, TwoFactorRequiredResponseDto } from './dto/login-response.dto';

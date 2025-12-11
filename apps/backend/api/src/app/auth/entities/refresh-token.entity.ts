@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Entity({ name: 'refresh_tokens' })
 export class RefreshToken {

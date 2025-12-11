@@ -14,7 +14,7 @@ import { VendorDebitNotesService } from './vendor-debit-notes.service';
 import { CreateVendorDebitNoteDto } from './dto/create-vendor-debit-note.dto';
 import { UpdateVendorDebitNoteDto } from './dto/update-vendor-debit-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 
 @Controller('vendor-debit-notes')

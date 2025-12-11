@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { SocialUser } from '../interfaces/social-user.interface';
 import { UsersService } from '../../users/users.service';
 import { SecurityAnalysisService } from './security-analysis.service';

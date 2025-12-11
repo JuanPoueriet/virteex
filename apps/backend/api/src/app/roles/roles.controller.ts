@@ -3,9 +3,9 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import * as jwtPayloadInterface from '../auth/interfaces/jwt-payload.interface';
-import { ALL_PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 
 @Controller('roles')
 @UseGuards(JwtAuthGuard)

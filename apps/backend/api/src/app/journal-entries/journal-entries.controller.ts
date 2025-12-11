@@ -23,11 +23,11 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
-import { PermissionsGuard } from '../auth/guards/permissions/permissions.guard';
+import { PermissionsGuard, IPolicy } from '@virteex/api/auth-shared';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
-import { PERMISSIONS } from '../shared/permissions';
+import { PERMISSIONS, Permission, ALL_PERMISSIONS } from '@virteex/api/auth-shared';
 import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import {
   UpdateJournalEntryDto,

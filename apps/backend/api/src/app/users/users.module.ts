@@ -1,7 +1,7 @@
 
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { Organization } from '@virteex/api/data-access-models';
 import { UsersService } from './users.service';
 

@@ -9,16 +9,16 @@ import { GoogleRecaptchaValidator } from '@nestlab/google-recaptcha';
 import { RegisterUserDto } from '../dto/register-user.dto';
 import { RegistrationStrategyFactory } from '../strategies/registration/registration-strategy.factory';
 import { LocalizationService } from '../../localization/services/localization.service';
-import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { Organization } from '@virteex/api/organizations';
-import { Role } from '../../roles/entities/role.entity';
+import { Role } from '@virteex/api/data-access-models';
 import { MailService } from '../../mail/mail.service';
 import { OrganizationsService } from '@virteex/api/organizations';
 import { UserRegisteredEvent } from '../events/user-registered.event';
 import { RoleEnum } from '../../roles/enums/role.enum';
 import { DEFAULT_ROLES } from '../../config/roles.config';
 import { AuthConfig } from '../auth.config';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { UserSecurity } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class RegistrationService {

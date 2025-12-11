@@ -12,7 +12,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { Organization } from '../organization.entity';
-import { Role } from '../roles/role.entity';
+import { Role } from '../role.entity';
 import { Passkey } from '../passkey.entity';
 import { UserSecurity } from '../user-security.entity';
 

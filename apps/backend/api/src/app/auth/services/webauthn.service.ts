@@ -11,8 +11,8 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
-import { User } from '../../users/entities/user.entity/user.entity';
-import { Passkey } from '../../users/entities/passkey.entity';
+import { User } from '@virteex/api/data-access-models';
+import { Passkey } from '@virteex/api/data-access-models';
 import * as crypto from 'crypto';
 
 @Injectable()

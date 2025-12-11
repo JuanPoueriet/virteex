@@ -1,6 +1,6 @@
 
 import { SetMetadata } from '@nestjs/common';
-import { Permission } from '../shared/permissions';
+import { PERMISSIONS_KEY, Permission } from '@virteex/api/auth-shared';
 
-export const PERMISSIONS_KEY = 'permissions';
+export { PERMISSIONS_KEY };
 export const HasPermission = (...permissions: Permission[]) => SetMetadata(PERMISSIONS_KEY, permissions);

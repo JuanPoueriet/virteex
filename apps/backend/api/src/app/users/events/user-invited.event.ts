@@ -1,5 +1,5 @@
 
-import { User } from '../entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 export class UserInvitedEvent {
   constructor(

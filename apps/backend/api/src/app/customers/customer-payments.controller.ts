@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { CustomerPaymentsService } from './customer-payments.service';
 import { CreateCustomerPaymentDto } from './dto/create-customer-payment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '@virteex/api/auth-shared';
 import { User } from '@virteex/api/data-access-models';
 
 @Controller('customer-payments')

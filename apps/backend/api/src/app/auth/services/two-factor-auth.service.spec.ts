@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TwoFactorAuthService } from './two-factor-auth.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from '../../users/entities/user.entity/user.entity';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { User } from '@virteex/api/data-access-models';
+import { UserSecurity } from '@virteex/api/data-access-models';
 import { CryptoUtil } from '../../shared/utils/crypto.util';
 import { UserCacheService } from '../modules/user-cache.service';
 import { authenticator } from 'otplib';

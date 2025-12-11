@@ -18,7 +18,7 @@ import * as ms from 'ms';
 import * as ipaddr from 'ipaddr.js';
 import * as crypto from 'crypto';
 import { RefreshToken } from '../entities/refresh-token.entity';
-import { User, UserStatus } from '../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthConfig } from '../auth.config';
 // AuditTrailService removed from here, used via event
@@ -27,7 +27,7 @@ import { UserCacheService } from '../modules/user-cache.service';
 import { UsersService } from '../../users/users.service';
 import { SecurityAnalysisService } from './security-analysis.service';
 import { TokenService } from './token.service';
-import { UserSecurity } from '../../users/entities/user-security.entity';
+import { UserSecurity } from '@virteex/api/data-access-models';
 import { AuthEvents, AuthAuditActionEvent } from '../events/auth.events';
 import { AuthError } from '../enums/auth-error.enum';
 import { GeoService } from '../../geo/geo.service';

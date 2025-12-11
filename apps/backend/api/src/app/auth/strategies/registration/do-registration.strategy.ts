@@ -3,7 +3,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { CountryRegistrationStrategy } from './country-registration.strategy';
 import { RegisterUserDto } from '../../dto/register-user.dto';
 import { Organization } from '@virteex/api/organizations';
-import { User } from '../../../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { EntityManager } from 'typeorm';
 import { LocalizationService } from '../../../localization/services/localization.service';
 
