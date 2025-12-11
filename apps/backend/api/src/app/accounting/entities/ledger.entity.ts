@@ -1,5 +1,5 @@
 
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import {
   Entity,
   PrimaryGeneratedColumn,
