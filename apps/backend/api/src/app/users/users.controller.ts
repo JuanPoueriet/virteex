@@ -19,7 +19,7 @@ import { User } from '@virteex/api/data-access-models';
 import { UserResponseDto } from '../auth/dto/user-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { CheckPermissions } from '@virteex/api/auth-shared';
-import { IsOrganizationOwner } from '../auth/policies/is-organization-owner.policy';
+import { IsOrganizationOwner } from '@virteex/api/auth-shared';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JobTitle } from './enums/job-title.enum';
