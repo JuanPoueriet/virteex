@@ -1,0 +1,21 @@
+{
+  "name": "client-feature",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/auth/client-feature/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["type:feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{projectRoot}/test-output/jest/coverage"],
+      "options": {
+        "jestConfig": "libs/auth/client-feature/jest.config.cts",
+        "tsConfig": "libs/auth/client-feature/tsconfig.spec.json"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

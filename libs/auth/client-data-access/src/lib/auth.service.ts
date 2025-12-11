@@ -26,7 +26,7 @@ import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
 import { ErrorHandlerService } from './error-handler.service';
 import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
-import { hasPermission } from '@virteex/shared/util-auth';
+import { hasPermission } from '@virteex/auth-domain';
 
 interface LoginResponse {
   user: User;

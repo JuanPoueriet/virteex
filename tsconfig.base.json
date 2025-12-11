@@ -24,8 +24,17 @@
       "@virteex/api/metrics": ["libs/api/metrics/src/index.ts"],
       "@virteex/api/organizations": ["libs/api/organizations/src/index.ts"],
       "@virteex/api/saas": ["libs/api/saas/src/index.ts"],
-      "@virteex/api/data-access-models": ["libs/api/data-access-models/src/index.ts"],
-      "@virteex/api/auth-shared": ["libs/api/auth-shared/src/index.ts"]
+      "@virteex/api/data-access-models": [
+        "libs/api/data-access-models/src/index.ts"
+      ],
+      "@virteex/api/auth-shared": ["libs/api/auth-shared/src/index.ts"],
+      "@virteex/auth/client-feature": ["libs/auth/client-feature/src/index.ts"],
+      "@virteex/auth/client-data-access": [
+        "libs/auth/client-data-access/src/index.ts"
+      ],
+      "@virteex/client-web/environments": [
+        "apps/core/client-web/src/environments/index.ts"
+      ],
     }
   }
 }

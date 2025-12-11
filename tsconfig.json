@@ -14,6 +14,18 @@
     },
     {
       "path": "./apps/backend/api"
+    },
+    {
+      "path": "./libs/auth/api-feature"
+    },
+    {
+      "path": "./libs/auth/client-feature"
+    },
+    {
+      "path": "./libs/shared/util-env"
+    },
+    {
+      "path": "./libs/auth/client-data-access"
     }
   ]
 }
