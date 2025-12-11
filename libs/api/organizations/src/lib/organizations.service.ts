@@ -2,8 +2,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
-import { Organization } from './entities/organization.entity';
-import { OrganizationSubsidiary } from './entities/organization-subsidiary.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { OrganizationSubsidiary } from '@virteex/api/data-access-models';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateSubsidiaryDto } from './dto/create-subsidiary.dto';
 

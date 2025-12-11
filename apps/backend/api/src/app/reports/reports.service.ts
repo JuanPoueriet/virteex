@@ -10,7 +10,7 @@ import { JournalReportDto } from '../journal-entries/dto/journal-report.dto';
 import { JournalEntryStatus } from '../journal-entries/entities/journal-entry.entity';
 import { Ledger } from '../accounting/entities/ledger.entity';
 import { CustomerPaymentLine } from '../customers/entities/customer-payment-line.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class ReportsService {

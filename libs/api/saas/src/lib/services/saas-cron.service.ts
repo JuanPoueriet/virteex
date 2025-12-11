@@ -4,9 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { UsageMetric } from '../entities/usage-metric.entity';
+import { UsageMetric } from '@virteex/api/data-access-models';
 import { SaasService } from '../saas.service';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { SaasCacheKeyFactory } from '../utils/saas-cache-key.factory';
 import Redis from 'ioredis';
 

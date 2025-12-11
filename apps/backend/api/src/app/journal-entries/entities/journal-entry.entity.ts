@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   OneToOne,
 } from 'typeorm';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { JournalEntryLine } from './journal-entry-line.entity';
 import { JournalEntryAttachment } from './journal-entry-attachment.entity';
 import { Journal } from './journal.entity';

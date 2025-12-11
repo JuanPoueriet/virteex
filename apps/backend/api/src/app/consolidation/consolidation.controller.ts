@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { ConsolidationService } from './consolidation.service';
 import { RunConsolidationDto } from './dto/run-consolidation.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
 import { PERMISSIONS } from '../shared/permissions';
 

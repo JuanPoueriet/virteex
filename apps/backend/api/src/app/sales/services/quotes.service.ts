@@ -7,7 +7,7 @@ import { CustomersService } from '../customers/customers.service';
 import { DocumentSequencesService } from '../shared/document-sequences/document-sequences.service';
 import { DocumentType } from '../shared/document-sequences/entities/document-sequence.entity';
 import { InvoicesService } from '../invoices/invoices.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/organizations';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 
 @Injectable()

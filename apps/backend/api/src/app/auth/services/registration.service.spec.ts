@@ -2,11 +2,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegistrationService } from './registration.service';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { OrganizationsService } from '../../organizations/organizations.service';
+import { OrganizationsService } from '@virteex/api/organizations';
 import { MailService } from '../../mail/mail.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { ConflictException } from '@nestjs/common';
 import { User } from '../../users/entities/user.entity/user.entity';
 import { Role } from '../../roles/entities/role.entity';

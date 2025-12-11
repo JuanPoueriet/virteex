@@ -61,8 +61,8 @@ import { ComplianceModule } from '../compliance/compliance.module';
 import { AccountingModule } from '../accounting/accounting.module';
 import { AccountingPeriod } from '../accounting/entities/accounting-period.entity';
 import { AccountPeriodLock } from '../accounting/entities/account-period-lock.entity';
-import { Organization } from '../organizations/entities/organization.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { SharedModule } from '../shared/shared.module';
 

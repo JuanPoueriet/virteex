@@ -2,7 +2,7 @@
 import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { AccountSegmentsService } from './account-segments.service';
 import { ConfigureAccountSegmentsDto } from './dto/account-segment-definition.dto';
 

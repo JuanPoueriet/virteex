@@ -4,8 +4,8 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { FiscalYear, FiscalYearStatus } from './entities/fiscal-year.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
-import { Organization } from '../organizations/entities/organization.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
+import { Organization } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class FiscalYearArchivingService {

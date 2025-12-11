@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Organization } from './organization.entity';
-import { Plan } from '../../saas/entities/plan.entity';
+import { Plan } from './plan.entity';
 
 @Entity('organization_subscription_history')
 export class OrganizationSubscriptionHistory {

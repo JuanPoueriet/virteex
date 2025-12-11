@@ -18,7 +18,7 @@ import {
   PaymentBatchStatus,
 } from './entities/payment-batch.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { VendorPayment } from './entities/vendor-payment.entity';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InventoryService } from '../inventory/inventory.service';

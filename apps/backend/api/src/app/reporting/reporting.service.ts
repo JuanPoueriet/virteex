@@ -5,7 +5,7 @@ import { Repository, DataSource } from 'typeorm';
 import { MonthlyAccountBalance } from './entities/monthly-account-balance.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { JournalEntryLine } from '../journal-entries/entities/journal-entry-line.entity';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 
 @Injectable()
 export class ReportingService {

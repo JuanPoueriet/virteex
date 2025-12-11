@@ -15,7 +15,7 @@ import { CreateVendorDebitNoteDto } from './dto/create-vendor-debit-note.dto';
 import { UpdateVendorDebitNoteDto } from './dto/update-vendor-debit-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 @Controller('vendor-debit-notes')
 @UseGuards(JwtAuthGuard)

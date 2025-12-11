@@ -1,12 +1,12 @@
 import { Module, Global, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Plan } from './entities/plan.entity';
-import { PlanLimit } from './entities/plan-limit.entity';
-import { UsageMetric } from './entities/usage-metric.entity';
-import { PlanFeature } from './entities/plan-feature.entity';
+import { Plan } from '@virteex/api/data-access-models';
+import { PlanLimit } from '@virteex/api/data-access-models';
+import { UsageMetric } from '@virteex/api/data-access-models';
+import { PlanFeature } from '@virteex/api/data-access-models';
 import { SaasService } from './saas.service';
 import { SaasController } from './saas.controller';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { SubscriptionActiveGuard } from './guards/subscription-active.guard';
 import { PlanLimitCheckGuard } from './guards/plan-limit-check.guard';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -14,8 +14,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
 import { RedisClientOptions } from 'redis';
 import { UsageMetricRepository } from './repositories/usage-metric.repository';
-import { OrganizationSubscriptionHistory } from '../organizations/entities/organization-subscription-history.entity';
-import { MetricsModule } from '../metrics/metrics.module';
+import { OrganizationSubscriptionHistory } from '@virteex/api/data-access-models';
+import { MetricsModule } from '@virteex/api/metrics';
 import { SaasCronService } from './services/saas-cron.service';
 
 @Global()

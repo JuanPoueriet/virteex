@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { SaasResource } from '../enums/saas-resource.enum';
+import { SaasResource } from '@virteex/api/data-access-models';
 
 export enum SaasErrorCode {
   LIMIT_REACHED = 'SAAS_LIMIT_REACHED',

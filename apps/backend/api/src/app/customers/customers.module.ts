@@ -11,7 +11,7 @@ import { CustomerPaymentsController } from './customer-payments.controller';
 import { CustomerPaymentsService } from './customer-payments.service';
 import { InvoicesModule } from '../invoices/invoices.module';
 import { JournalEntriesModule } from '../journal-entries/journal-entries.module';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { Invoice } from '../invoices/entities/invoice.entity';
 import { CustomerContact } from './entities/customer-contact.entity';
 import { CustomerAddress } from './entities/customer-address.entity';

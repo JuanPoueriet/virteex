@@ -5,7 +5,7 @@ import { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { SaasService } from '../saas.service';
 import { PLAN_LIMIT_KEY } from '../decorators/plan-limit.decorator';
-import { SaasResource } from '../enums/saas-resource.enum';
+import { SaasResource } from '@virteex/api/data-access-models';
 import { SaasLimitReachedException } from '../exceptions/saas-exception';
 import { SaasCacheKeyFactory } from '../utils/saas-cache-key.factory';
 

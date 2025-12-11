@@ -1,4 +1,4 @@
-import { SaasResource } from './enums/saas-resource.enum';
+import { SaasResource } from '@virteex/api/data-access-models';
 
 export interface PlanLimitConfig {
   resource: SaasResource;

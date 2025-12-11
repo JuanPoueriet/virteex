@@ -10,7 +10,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 
 import { LoginUserDto } from './dto/login-user.dto';
-import { User, UserStatus } from '../users/entities/user.entity/user.entity';
+import { User, UserStatus } from '@virteex/api/data-access-models';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuthConfig } from './auth.config';
 import { UsersService } from '../users/users.service';

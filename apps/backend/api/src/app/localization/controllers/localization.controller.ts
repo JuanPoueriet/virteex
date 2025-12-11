@@ -1,7 +1,7 @@
 
 import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { LocalizationService } from '../services/localization.service';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { FiscalRegion } from '../entities/fiscal-region.entity';
 
 @Controller('localization')

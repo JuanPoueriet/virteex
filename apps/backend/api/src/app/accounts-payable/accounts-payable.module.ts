@@ -8,7 +8,7 @@ import { VendorBillLine } from './entities/vendor-bill-line.entity';
 import { VendorPayment } from './entities/vendor-payment.entity';
 import { VendorDebitNote } from './entities/vendor-debit-note.entity';
 import { PaymentBatch } from './entities/payment-batch.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { JournalEntriesModule } from '../journal-entries/journal-entries.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { WorkflowsModule } from '../workflows/workflows.module';

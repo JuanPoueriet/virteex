@@ -14,7 +14,7 @@ import { CreateFixedAssetDto } from './dto/create-fixed-asset.dto';
 import { UpdateFixedAssetDto } from './dto/update-fixed-asset.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import { DisposeAssetDto } from './dto/dispose-asset.dto';
 
 @Controller('fixed-assets')

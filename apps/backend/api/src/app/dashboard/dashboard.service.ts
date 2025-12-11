@@ -17,7 +17,7 @@ import { FcfDto } from './dto/fcf.dto';
 import { Ledger } from '../accounting/entities/ledger.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from '../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 import { FinancialReportingService } from '../financial-reporting/financial-reporting.service';
 import { CashFlowWaterfallDto } from './dto/cash-flow-waterfall.dto';
 import { startOfYear, endOfDay } from 'date-fns';

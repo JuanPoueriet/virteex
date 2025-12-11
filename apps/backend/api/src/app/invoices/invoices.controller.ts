@@ -14,15 +14,15 @@ import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 import type { Response } from 'express';
 import { PeriodLockGuard } from '../accounting/guards/period-lock.guard';
 import { HasPermission } from '../auth/decorators/permissions.decorator';
 import { PERMISSIONS } from '../shared/permissions';
-import { SubscriptionActiveGuard } from '../saas/guards/subscription-active.guard';
-import { CheckPlanLimit } from '../saas/decorators/plan-limit.decorator';
-import { PlanLimitCheckGuard } from '../saas/guards/plan-limit-check.guard';
-import { SaasResource } from '../saas/enums/saas-resource.enum';
+import { SubscriptionActiveGuard } from '@virteex/api/saas';
+import { CheckPlanLimit } from '@virteex/api/saas';
+import { PlanLimitCheckGuard } from '@virteex/api/saas';
+import { SaasResource } from '@virteex/api/saas';
 
 @Controller('invoices')
 @UseGuards(JwtAuthGuard, SubscriptionActiveGuard)

@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import { SaasResource } from '../enums/saas-resource.enum';
+import { SaasResource } from '@virteex/api/data-access-models';
 
 export const PLAN_LIMIT_KEY = 'plan_limit';
 export const CheckPlanLimit = (resource: SaasResource, increment: number = 1) =>

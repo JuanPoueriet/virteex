@@ -22,8 +22,8 @@ import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
-import { Organization } from '../organizations/entities/organization.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
 import { NcfType } from '../compliance/entities/ncf-sequence.entity';
 import { ComplianceService } from '../compliance/compliance.service';
@@ -32,8 +32,8 @@ import { DocumentSequencesService } from '../shared/document-sequences/document-
 import { DocumentType } from '../shared/document-sequences/entities/document-sequence.entity';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { Buffer } from 'buffer';
-import { SaasService } from '../saas/saas.service';
-import { SaasResource } from '../saas/enums/saas-resource.enum';
+import { SaasService } from '@virteex/api/saas';
+import { SaasResource } from '@virteex/api/saas';
 
 @Injectable()
 export class InvoicesService {

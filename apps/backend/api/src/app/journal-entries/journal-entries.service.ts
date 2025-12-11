@@ -46,7 +46,7 @@ import { DocumentTypeForApproval } from '../workflows/entities/approval-policy.e
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { Readable } from 'stream';
 import { DimensionRule } from '../dimensions/entities/dimension-rule.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { JournalEntryLineValuation } from './entities/journal-entry-line-valuation.entity';
 import { LedgerMappingRule } from '../accounting/entities/ledger-mapping-rule.entity';
 

@@ -24,7 +24,7 @@ import {
   JournalEntryType,
 } from '../journal-entries/entities/journal-entry.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from './entities/ledger.entity';
 import { LockAccountInPeriodDto } from './dto/lock-account-period.dto';

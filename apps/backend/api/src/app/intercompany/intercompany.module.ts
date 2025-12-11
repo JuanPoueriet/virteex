@@ -6,8 +6,8 @@ import { IntercompanyService } from './intercompany.service';
 import { IntercompanyController } from './intercompany.controller';
 import { JournalEntriesModule } from '../journal-entries/journal-entries.module';
 import { AuthModule } from '../auth/auth.module';
-import { Organization } from '../organizations/entities/organization.entity';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { Organization } from '@virteex/api/data-access-models';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 
 @Module({

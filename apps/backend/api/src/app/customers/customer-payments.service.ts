@@ -7,7 +7,7 @@ import { CreateCustomerPaymentDto } from './dto/create-customer-payment.dto';
 import { Customer } from './entities/customer.entity';
 import { Invoice, InvoiceStatus } from '../invoices/entities/invoice.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
+import { OrganizationSettings } from '@virteex/api/data-access-models';
 import { Journal } from '../journal-entries/entities/journal.entity';
 import { Ledger } from '../accounting/entities/ledger.entity';
 import { CreateJournalEntryDto } from '../journal-entries/dto/create-journal-entry.dto';

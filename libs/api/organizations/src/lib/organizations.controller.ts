@@ -8,7 +8,7 @@ import { User } from '../users/entities/user.entity/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateSubsidiaryDto } from './dto/create-subsidiary.dto';
-import { Organization } from './entities/organization.entity';
+import { Organization } from '@virteex/api/data-access-models';
 import { Post } from '@nestjs/common';
 
 @Controller('organizations')

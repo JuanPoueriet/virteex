@@ -3,7 +3,7 @@ import { NotificationsService } from './notifications.service';
 
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
-import { User } from '../users/entities/user.entity/user.entity';
+import { User } from '@virteex/api/data-access-models';
 
 
 @Controller('notifications')

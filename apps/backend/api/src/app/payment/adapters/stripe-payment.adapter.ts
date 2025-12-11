@@ -5,11 +5,11 @@ import Stripe from 'stripe';
 import { PaymentGateway, CreateCheckoutSessionDto, CheckoutSessionResult, WebhookResult } from '../interfaces/payment-gateway.interface';
 import { STRIPE_CLIENT } from '../stripe/stripe.provider';
 import { Repository, DataSource } from 'typeorm';
-import { Organization } from '../../organizations/entities/organization.entity';
+import { Organization } from '@virteex/api/organizations';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SaasService } from '../../saas/saas.service';
+import { SaasService } from '@virteex/api/saas';
 import { WebhookEvent } from '../entities/webhook-event.entity';
-import { SAAS_CONFIG } from '../../saas/saas.config';
+import { SAAS_CONFIG } from '@virteex/api/saas';
 
 @Injectable()
 export class StripePaymentAdapter implements PaymentGateway {
