@@ -6,7 +6,7 @@ import { UsageMetric } from '@virteex/api/data-access-models';
 import { PlanFeature } from '@virteex/api/data-access-models';
 import { SaasService } from './saas.service';
 import { SaasController } from './saas.controller';
-import { Organization } from '@virteex/api/organizations';
+import { Organization } from '@virteex/api/data-access-models';
 import { SubscriptionActiveGuard } from './guards/subscription-active.guard';
 import { PlanLimitCheckGuard } from './guards/plan-limit-check.guard';
 import { CacheModule } from '@nestjs/cache-manager';
