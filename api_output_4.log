@@ -1,0 +1,78 @@
+
+ NX   Running target serve for project api and 1 task it depends on:
+
+
+
+> nx run api:build  [local cache]
+
+> webpack-cli build --node-env=production
+
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.34 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (d6a2385c54a03bb9)
+
+> nx run api:serve:development
+
+[2m> [22m[2mnx run[22m api:build:development  [2m[local cache][22m
+[2m> [22mwebpack-cli build --node-env=development
+chunk (runtime: main) [1m[32mmain.js[39m[22m (main) 1.34 MiB [1m[33m[entry][39m[22m [1m[32m[rendered][39m[22m
+webpack compiled [1m[32msuccessfully[39m[22m (b8997f152f49e765)
+[0m[7m[1m[32m NX [39m[22m[27m[0m  [32mSuccessfully ran target [1mbuild[22m for project api[39m
+[2mNx read the output from the cache instead of running the command for 1 out of 1 tasks.[22m
+[0m[7m[1m[33m NX [39m[22m[27m[0m  [33mNx Cloud encountered some problems[39m
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)
+[1m[31mDebugger listening on ws://localhost:9229/9846b098-f990-4bc5-a6a0-cb29213ed184[39m[22m
+[1m[31mDebugger listening on ws://localhost:9229/9846b098-f990-4bc5-a6a0-cb29213ed184[39m[22m
+[1m[31mFor help, see: https://nodejs.org/en/docs/inspector[39m[22m
+[1m[31m[39m[22m
+[32m[Nest] 5728  - [39m12/11/2025, 6:31:42 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[1m[31m[31m[Nest] 5728  - [39m[31m12/11/2025, 6:31:42 PM [31m  ERROR[39m[31m [38;5;3m[ExceptionHandler] [39m[31mUndefinedModuleException [Error]: Nest cannot create the CommonModule instance.[39m[22m
+[1m[31mThe module at index [1] of the CommonModule "imports" array is undefined.[39m[22m
+[1m[31m[39m[22m
+[1m[31mPotential causes:[39m[22m
+[1m[31m- A circular dependency between modules. Use forwardRef() to avoid it. Read more: https://docs.nestjs.com/fundamentals/circular-dependency[39m[22m
+[1m[31m- The module at index [1] is of type "undefined". Check your import statements and the type of the module.[39m[22m
+[1m[31m[39m[22m
+[1m[31mScope [AppModule][39m[22m
+[1m[31m    at DependenciesScanner.scanForModules [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/scanner.js:64:23[90m)[39m[31m[39m[22m
+[1m[31m[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m[31m[39m[22m
+[1m[31m    at DependenciesScanner.scanForModules [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/scanner.js:72:32[90m)[39m[31m[39m[22m
+[1m[31m    at DependenciesScanner.scan [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/scanner.js:28:9[90m)[39m[31m[39m[22m
+[1m[31m    at [90m/app/[39m[31mnode_modules/[4m@nestjs/core[24m/nest-factory.js:111:17[39m[22m
+[1m[31m    at Function.asyncRun [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/errors/exceptions-zone.js:22:13[90m)[39m[31m[39m[22m
+[1m[31m    at NestFactoryStatic.initialize [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/nest-factory.js:110:13[90m)[39m[31m[39m[22m
+[1m[31m    at NestFactoryStatic.create [90m(/app/[39m[31mnode_modules/[4m@nestjs/core[24m/nest-factory.js:43:9[90m)[39m[31m[39m[22m
+[1m[31m    at bootstrap [90m(/app/[39m[31mapps/backend/api/src/main.ts:14:1[90m)[39m[31m[39m[22m
+[1m[31m[39m[22m
+[7m[1m[36m NX [39m[22m[27m [1mProcess exited with code 1, waiting for changes to restart...[22m
+[7m[1m[36m NX [39m[22m[27m [1mFile change detected. Restarting...[22m
+[2m> [22m[2mnx run[22m api:build:development
+[2m> [22mwebpack-cli build --node-env=development
+Warning: command "webpack-cli build --node-env=development" exited with non-zero status code
+/app/node_modules/@nx/js/src/executors/node/lib/coalescing-debounce.js:47
+                reject(new Error('Cancelled'));
+                       ^
+Error: Cancelled
+    at Object.cancel [90m(/app/[39mnode_modules/[4m@nx/js[24m/src/executors/node/lib/coalescing-debounce.js:47:24[90m)[39m
+    at stopAllTasks [90m(/app/[39mnode_modules/[4m@nx/js[24m/src/executors/node/node.impl.js:178:35[90m)[39m
+    at process.<anonymous> [90m(/app/[39mnode_modules/[4m@nx/js[24m/src/executors/node/node.impl.js:191:19[90m)[39m
+[90m    at process.emit (node:events:519:28)[39m
+    at process.emit [90m(/app/[39mnode_modules/[4mnx[24m/src/native/index.js:20:23[90m)[39m
+Node.js v22.21.1
+[0m[7m[1m[31m NX [39m[22m[27m[0m  [31mRunning target [1mbuild[22m for project api failed[39m
+[2mFailed tasks:[22m
+[2m-[22m api:build:development
+[2mHint: run the command with[22m --verbose [2mfor more details.[22m
+Task "api:serve:development" is continuous but exited with code 1
+
+
+
+ NX   Successfully ran target serve for project api and 1 task it depends on
+
+Nx read the output from the cache instead of running the command for 1 out of 2 tasks.
+
+[0m[7m[1m[33m NX [39m[22m[27m[0m  [33mNx Cloud encountered some problems[39m
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)
+
+ NX   Nx Cloud encountered some problems
+
+This workspace is more than three days old and is not connected. Workspaces must be connected within 3 days of creation. Claim your workspace at https://cloud.nx.app. (code: 401)
