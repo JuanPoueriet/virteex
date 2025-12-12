@@ -3,23 +3,35 @@ import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { useContainer } from 'class-validator';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
+import fastifyCookie from '@fastify/cookie';
+import fastifyHelmet from '@fastify/helmet';
+import fastifyMultipart from '@fastify/multipart';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 
-import type { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({
+      logger: false, // controlled by pino
+      bodyLimit: 10 * 1024 * 1024, // 10MB
+    }),
+    {
+      rawBody: true,
+      bufferLogs: true,
+    }
+  );
+
   app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
 
-  // Security Headers using Helmet
-  app.use(helmet({
+  // Security Headers using Fastify Helmet
+  await app.register(fastifyHelmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -30,15 +42,23 @@ async function bootstrap() {
     },
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
-  }));
+  });
 
-  app.use(cookieParser());
+  await app.register(fastifyCookie);
+
+  // Register Multipart with attachFieldsToBody: true to populate req.body
+  await app.register(fastifyMultipart, {
+     limits: {
+         fileSize: 10 * 1024 * 1024, // 10MB
+     },
+     attachFieldsToBody: true,
+  });
 
   const corsOrigins = configService.get<string>('CORS_ORIGIN', 'http://localhost:4200').split(',');
 
   app.enableCors({
     origin: corsOrigins,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
 
@@ -69,7 +89,7 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT', 3000);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Application is running on: ${await app.getUrl()}/${apiPrefix}`);
 }
 bootstrap();
