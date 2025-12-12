@@ -10,13 +10,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { OtpComponent } from '../../../../shared/components/otp/otp.component';
 
 type SetupStep = 'INTRO' | 'EMAIL_VERIFY' | 'QR_SETUP' | 'BACKUP_CODES';
 
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeComponent, FormsModule, ConfirmationModalComponent],
+  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeComponent, FormsModule, ConfirmationModalComponent, OtpComponent],
   templateUrl: './security-settings.component.html',
   styleUrls: ['./security-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,10 +129,11 @@ export class SecuritySettingsComponent implements OnInit {
       });
   }
 
-  verifyEmailCode() {
-    if (!this.emailCode() || this.emailCode().length < 6) return;
+  verifyEmailCode(code?: string) {
+    const finalCode = code || this.emailCode();
+    if (!finalCode || finalCode.length < 6) return;
 
-    this.securityService.verifyEmailVerification(this.emailCode())
+    this.securityService.verifyEmailVerification(finalCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -159,10 +161,11 @@ export class SecuritySettingsComponent implements OnInit {
       });
   }
 
-  verifyAndEnable2fa() {
-    if (!this.verificationCode() || this.verificationCode().length < 6) return;
+  verifyAndEnable2fa(code?: string) {
+    const finalCode = code || this.verificationCode();
+    if (!finalCode || finalCode.length < 6) return;
 
-    this.securityService.enable2fa(this.verificationCode())
+    this.securityService.enable2fa(finalCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
