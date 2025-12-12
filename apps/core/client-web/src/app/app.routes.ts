@@ -115,6 +115,46 @@ export const APP_ROUTES: Routes = [
           ),
       },
       {
+        path: 'manufacturing',
+        title: 'Manufacturing (MRP)',
+        loadChildren: () =>
+          import('./features/manufacturing/manufacturing.routes').then(
+            (m) => m.MANUFACTURING_ROUTES
+          ),
+      },
+      {
+        path: 'wms',
+        title: 'Warehouse Management (WMS)',
+        loadChildren: () =>
+          import('./features/wms/wms.routes').then(
+            (m) => m.WMS_ROUTES
+          ),
+      },
+      {
+        path: 'projects',
+        title: 'Projects (PSA)',
+        loadChildren: () =>
+          import('./features/projects/projects.routes').then(
+            (m) => m.PROJECTS_ROUTES
+          ),
+      },
+      {
+        path: 'hcm',
+        title: 'Human Resources (HCM)',
+        loadChildren: () =>
+          import('./features/hcm/hcm.routes').then(
+            (m) => m.HCM_ROUTES
+          ),
+      },
+      {
+        path: 'procurement',
+        title: 'Procurement & Suppliers',
+        loadChildren: () =>
+          import('./features/procurement/procurement.routes').then(
+            (m) => m.PROCUREMENT_ROUTES
+          ),
+      },
+      {
         path: 'documents',
         loadChildren: () =>
           import('./features/documents/documents.routes').then(

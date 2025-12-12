@@ -60,6 +60,11 @@ import { CountryModule } from '../../../../../libs/api/country/src/lib/country.m
 import { GeoModule } from './geo/geo.module';
 import { CommonModule } from './common/common.module';
 import { SaasModule } from './saas/saas.module';
+import { ManufacturingModule } from './manufacturing/manufacturing.module';
+import { SupplyChainModule } from './supply-chain/supply-chain.module';
+import { ProjectsModule } from './projects/projects.module';
+import { HcmModule } from './hcm/hcm.module';
+import { ProcurementModule } from './procurement/procurement.module';
 
 const envValidation = Joi.object({
   NODE_ENV: Joi.string()
@@ -207,7 +212,12 @@ const envValidation = Joi.object({
     CountryModule,
     GeoModule,
     CommonModule,
-    SaasModule
+    SaasModule,
+    ManufacturingModule,
+    SupplyChainModule,
+    ProjectsModule,
+    HcmModule,
+    ProcurementModule
   ],
   providers: [
     {
