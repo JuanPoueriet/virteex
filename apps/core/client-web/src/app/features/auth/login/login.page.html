@@ -1,31 +1,15 @@
 <app-auth-layout>
   <!-- 2FA Verification View -->
   <div *ngIf="show2faInput(); else loginFormTemplate" class="auth-header animate-fade-in-up">
-    <div class="header-content">
-      <h2 class="auth-title">{{ 'LOGIN.2FA.TITLE' | translate }}</h2>
-      <p class="auth-subtitle">{{ 'LOGIN.2FA.SUBTITLE' | translate }}</p>
-    </div>
+    <!-- Using new OTP Component -->
+    <app-otp
+       [title]="'LOGIN.2FA.TITLE' | translate"
+       [description]="'LOGIN.2FA.SUBTITLE' | translate"
+       [otpLength]="6"
+       (verify)="onOtpVerify($event)">
+    </app-otp>
 
-    <div class="auth-form two-fa-form">
-       <app-auth-input
-         [formControl]="otpCodeControl"
-         [label]="'LOGIN.2FA.CODE_LABEL' | translate"
-         [placeholder]="'LOGIN.2FA.CODE_PLACEHOLDER' | translate"
-         [required]="true"
-         [hasIcon]="true"
-         [errorMessage]="errorMessage() ? (errorMessage() | translate) : ''"
-         (keyup.enter)="verify2fa()">
-         <lucide-icon icon [img]="icons.ShieldCheck" size="20"></lucide-icon>
-       </app-auth-input>
-
-       <app-auth-button
-         variant="primary"
-         [loading]="isLoggingIn()"
-         [disabled]="otpCodeControl.invalid"
-         (onClick)="verify2fa()">
-         {{ (isLoggingIn() ? 'LOGIN.2FA.VERIFYING' : 'LOGIN.2FA.VERIFY_BUTTON') | translate }}
-       </app-auth-button>
-
+    <div class="mt-4 text-center">
        <button (click)="show2faInput.set(false)" class="back-to-login-btn">
           {{ 'LOGIN.2FA.BACK_TO_LOGIN' | translate }}
        </button>
