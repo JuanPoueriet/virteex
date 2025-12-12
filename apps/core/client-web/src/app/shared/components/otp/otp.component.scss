@@ -1,25 +1,26 @@
 :host {
-    --primary-color: var(--primary, #0078d4);
-    --primary-dark: var(--primary-hover, #005a9e);
-    --success-color: var(--success, #107c10);
-    --error-color: var(--destructive, #d13438);
-    --warning-color: var(--warning, #ffaa44);
-    --bg-color: var(--bg-background, #0f0f0f);
-    --surface-color: var(--bg-card, #1f1f1f);
-    --surface-elevated: var(--bg-secondary, #2a2a2a);
-    --border-color: var(--border-color, #3a3a3a);
-    --text-primary: var(--text-primary, #f0f0f0);
-    --text-secondary: var(--text-secondary, #a0a0a0);
-    --text-disabled: var(--text-tertiary, #606060);
-    --border-radius: var(--radius-md, 8px);
+    --primary-color: #0078d4;
+    --primary-dark: #005a9e;
+    --success-color: #107c10;
+    --error-color: #d13438;
+    --warning-color: #ffaa44;
+    --bg-color: #0f0f0f;
+    --surface-color: #1f1f1f;
+    --surface-elevated: #2a2a2a;
+    --border-color: #3a3a3a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --text-disabled: #606060;
+    --border-radius: 8px;
     --transition-speed: 200ms;
-    --shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.3));
-    --focus-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 120, 212), 0.3);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --focus-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
 
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 .otp-container {
@@ -27,9 +28,10 @@
     border-radius: 12px;
     box-shadow: var(--shadow);
     width: 100%;
-    // max-width: 480px;
+    // max-width: 480px; // Handled by parent container or keep it responsive
     padding: 32px;
     border: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 .otp-header {

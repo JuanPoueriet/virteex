@@ -19,15 +19,19 @@ export class OtpComponent implements OnInit, OnDestroy {
   @Input() title = 'Verificación de Seguridad';
   @Input() description = 'Para proteger su cuenta, hemos enviado un código de verificación a su correo electrónico registrado.';
   @Input() showLengthSelector = false;
+  @Input() mode: 'email' | 'app' = 'email';
 
   // Outputs
   @Output() verify = new EventEmitter<string>();
   @Output() resend = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
 
   // State
   otpValues = signal<string[]>([]);
   timer = signal(120);
   cooldown = signal(0);
+  inputError = signal(false);
+  inputsDisabled = signal(false);
 
   status = signal<{ message: string, type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
@@ -73,6 +77,8 @@ export class OtpComponent implements OnInit, OnDestroy {
             if (t <= 1) {
                 this.stopTimer();
                 this.showStatus('El código OTP ha expirado. Solicite un nuevo código.', 'warning');
+                this.markAsError();
+                this.disableAllInputs();
                 return 0;
             }
             return t - 1;
@@ -205,6 +211,7 @@ export class OtpComponent implements OnInit, OnDestroy {
       this.startCooldown();
       this.startTimer();
       this.clearInputs();
+      this.enableAllInputs();
       this.showStatus('Nuevo código OTP enviado', 'info');
       this.resend.emit();
   }
@@ -217,8 +224,10 @@ export class OtpComponent implements OnInit, OnDestroy {
 
   clear() {
       this.clearInputs();
+      this.enableAllInputs();
       this.showStatus('Todos los campos han sido limpiados', 'info');
       this.inputs.get(0)?.nativeElement.focus();
+      this.cancelled.emit();
   }
 
   clearInputs() {
@@ -242,5 +251,31 @@ export class OtpComponent implements OnInit, OnDestroy {
       this.otpValues.set(new Array(length).fill(''));
       this.startTimer();
       this.showStatus(`Longitud de OTP cambiada a ${length} dígitos`, 'info');
+  }
+
+  // API for Parents
+  handleError(message: string) {
+      this.showStatus(message, 'error');
+      this.markAsError();
+  }
+
+  handleSuccess(message: string) {
+      this.showStatus(message, 'success');
+      this.disableAllInputs();
+  }
+
+  markAsError() {
+      this.inputError.set(true);
+      setTimeout(() => {
+          this.inputError.set(false);
+      }, 3000);
+  }
+
+  disableAllInputs() {
+      this.inputsDisabled.set(true);
+  }
+
+  enableAllInputs() {
+      this.inputsDisabled.set(false);
   }
 }

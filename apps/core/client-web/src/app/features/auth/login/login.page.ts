@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -61,6 +61,8 @@ export class LoginPage implements OnInit {
   isLoggingIn = signal(false);
   show2faInput = signal(false);
   tempToken = signal<string | null>(null);
+
+  @ViewChild(OtpComponent) otpComponent!: OtpComponent;
 
   ngOnInit() {
     this.countryService.detectAndSetCountry();
@@ -169,6 +171,13 @@ export class LoginPage implements OnInit {
       error: (err) => {
         this.errorMessage.set('LOGIN.ERRORS.INVALID_CODE');
         this.isLoggingIn.set(false);
+        if (this.otpComponent) {
+             // We can use the translation service here if needed, or pass the key.
+             // But handleError expects string.
+             this.translate.get('LOGIN.ERRORS.INVALID_CODE').subscribe(res => {
+                  this.otpComponent.handleError(res);
+             });
+        }
       }
     });
   }
