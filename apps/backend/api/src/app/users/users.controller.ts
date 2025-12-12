@@ -1,8 +1,8 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
+import { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { memoryStorage, diskStorage } from 'multer';
 import { extname } from 'path';
 import * as os from 'os';
 import * as fs from 'fs/promises';
@@ -109,15 +109,7 @@ export class UsersController {
   @Post('profile/avatar')
   @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Upload avatar for current user' })
-  @UseInterceptors(FileInterceptor('file', {
-    // 10/10 Scalability: Use diskStorage (temp) instead of memoryStorage to prevent RAM spikes
-    storage: diskStorage({
-        destination: os.tmpdir(),
-        filename: (req, file, cb) => {
-            const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
-            cb(null, `${randomName}${extname(file.originalname)}`);
-        }
-    }),
+  @UseInterceptors(FastifyFileInterceptor('file', {
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
             return cb(new BadRequestException('Only image files are allowed!'), false);
@@ -125,12 +117,12 @@ export class UsersController {
         cb(null, true);
     },
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB (Increased limit now that we stream)
+        fileSize: 5 * 1024 * 1024 // 5MB
     }
   }))
   async uploadAvatar(
     @CurrentUser() user: User,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file: FastifyFile
   ) {
       if (!file) throw new BadRequestException('File is required');
 

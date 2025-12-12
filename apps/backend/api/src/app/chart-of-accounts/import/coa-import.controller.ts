@@ -1,6 +1,7 @@
 
 import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Body, UseGuards, Get } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FastifyFileInterceptor } from '../../common/interceptors/fastify-file.interceptor';
+import { FastifyFile } from '../../common/interfaces/fastify-file.interface';
 import { CoaImportService } from './coa-import.service';
 
 import { ConfirmCoaImportDto, PreviewCoaImportDto } from './dto/coa-import.dto';
@@ -19,7 +20,7 @@ export class CoaImportController {
   }
   
   @Post('preview')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FastifyFileInterceptor('file'))
   previewImport(
     @UploadedFile(
       new ParseFilePipe({
@@ -28,7 +29,7 @@ export class CoaImportController {
           new FileTypeValidator({ fileType: /(text\/csv|spreadsheetml\.sheet)/ }),
         ],
       }),
-    ) file: Express.Multer.File,
+    ) file: FastifyFile,
     @Body() dto: PreviewCoaImportDto,
     @CurrentUser() user: User,
   ) {

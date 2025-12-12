@@ -19,7 +19,9 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
+import { FastifyFilesInterceptor } from '../common/interceptors/fastify-files.interceptor';
+import { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
@@ -105,7 +107,7 @@ export class JournalEntriesController {
 
 
   @Post('import/preview')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FastifyFileInterceptor('file'))
   @HasPermission(PERMISSIONS.JOURNAL_ENTRIES_CREATE)
   previewImportFromCsv(
     @UploadedFile(
@@ -116,7 +118,7 @@ export class JournalEntriesController {
         ],
       }),
     )
-    file: Express.Multer.File,
+    file: FastifyFile,
     @Body() mapping: PreviewImportRequestDto,
     @CurrentUser() user: User,
   ) {
@@ -133,12 +135,12 @@ export class JournalEntriesController {
   }
 
   @Post(':id/attachments')
-  @UseInterceptors(FilesInterceptor('files', 10, { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FastifyFilesInterceptor('files', 10, { limits: { fileSize: 10 * 1024 * 1024 } }))
   @HasPermission(PERMISSIONS.JOURNAL_ENTRIES_EDIT)
   uploadAttachments(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,
-    @UploadedFiles() files: Array<Express.Multer.File>,
+    @UploadedFiles() files: Array<FastifyFile>,
   ) {
     const uploadPromises = files.map((file) =>
 
