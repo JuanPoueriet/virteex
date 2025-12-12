@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -15,6 +15,7 @@ import { AuthInputComponent } from '../components/auth-input/auth-input.componen
 import { AuthButtonComponent } from '../components/auth-button/auth-button.component';
 import { SocialAuthButtonsComponent } from '../components/social-auth-buttons/social-auth-buttons.component';
 import { PasskeyButtonComponent } from '../components/passkey-button/passkey-button.component';
+import { OtpComponent } from '../../../shared/components/otp/otp.component';
 
 @Component({
   selector: 'app-login',
@@ -30,7 +31,8 @@ import { PasskeyButtonComponent } from '../components/passkey-button/passkey-but
     AuthInputComponent,
     AuthButtonComponent,
     SocialAuthButtonsComponent,
-    PasskeyButtonComponent
+    PasskeyButtonComponent,
+    OtpComponent
   ],
   providers: [ReCaptchaV3Service],
   templateUrl: './login.page.html',
@@ -59,6 +61,8 @@ export class LoginPage implements OnInit {
   isLoggingIn = signal(false);
   show2faInput = signal(false);
   tempToken = signal<string | null>(null);
+
+  @ViewChild(OtpComponent) otpComponent!: OtpComponent;
 
   ngOnInit() {
     this.countryService.detectAndSetCountry();
@@ -151,17 +155,29 @@ export class LoginPage implements OnInit {
 
   verify2fa(): void {
     if (this.otpCodeControl.invalid || !this.tempToken()) return;
+    this.onOtpVerify(this.otpCodeControl.value!);
+  }
+
+  onOtpVerify(code: string): void {
+    if (!this.tempToken()) return;
 
     this.isLoggingIn.set(true);
     this.errorMessage.set(null);
 
-    this.authService.verify2fa(this.otpCodeControl.value!, this.tempToken()!).subscribe({
+    this.authService.verify2fa(code, this.tempToken()!).subscribe({
       next: (user) => {
         this.handleSuccess(user);
       },
       error: (err) => {
         this.errorMessage.set('LOGIN.ERRORS.INVALID_CODE');
         this.isLoggingIn.set(false);
+        if (this.otpComponent) {
+             // We can use the translation service here if needed, or pass the key.
+             // But handleError expects string.
+             this.translate.get('LOGIN.ERRORS.INVALID_CODE').subscribe(res => {
+                  this.otpComponent.handleError(res);
+             });
+        }
       }
     });
   }

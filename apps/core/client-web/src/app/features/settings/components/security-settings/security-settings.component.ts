@@ -1,8 +1,8 @@
 
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, ViewChildren, QueryList, ElementRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, DestroyRef, ViewChildren, ViewChild, QueryList, ElementRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule, Shield, Smartphone, QrCode, Monitor, Laptop, Globe, AlertTriangle, CheckCircle, MapPin, Copy, Download, RefreshCw, X, ArrowRight, ImageIcon, User, Mail, Phone, Building } from 'lucide-angular';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../../core/services/auth';
 import { SecurityService, Session } from '../../../../core/api/security.service';
 import { NotificationService } from '../../../../core/services/notification';
@@ -10,13 +10,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationModalComponent } from '../../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { OtpComponent } from '../../../../shared/components/otp/otp.component';
 
 type SetupStep = 'INTRO' | 'EMAIL_VERIFY' | 'QR_SETUP' | 'BACKUP_CODES';
 
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeComponent, FormsModule, ConfirmationModalComponent],
+  imports: [CommonModule, LucideAngularModule, TranslateModule, QRCodeComponent, FormsModule, ConfirmationModalComponent, OtpComponent],
   templateUrl: './security-settings.component.html',
   styleUrls: ['./security-settings.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +28,9 @@ export class SecuritySettingsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
   private platformId = inject(PLATFORM_ID);
+  private translate = inject(TranslateService);
+
+  @ViewChild(OtpComponent) otpComponent?: OtpComponent;
 
   // Icons
   protected readonly ShieldIcon = Shield;
@@ -128,17 +132,23 @@ export class SecuritySettingsComponent implements OnInit {
       });
   }
 
-  verifyEmailCode() {
-    if (!this.emailCode() || this.emailCode().length < 6) return;
+  verifyEmailCode(code?: string) {
+    const finalCode = code || this.emailCode();
+    if (!finalCode || finalCode.length < 6) return;
 
-    this.securityService.verifyEmailVerification(this.emailCode())
+    this.securityService.verifyEmailVerification(finalCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          // Proceed to QR Step
-          this.generateQrCode();
+          if (this.otpComponent) this.otpComponent.handleSuccess(this.translate.instant('COMMON.SUCCESS'));
+          setTimeout(() => this.generateQrCode(), 1000);
         },
-        error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE')
+        error: () => {
+          this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE');
+          if (this.otpComponent) {
+            this.otpComponent.handleError(this.translate.instant('SETTINGS.SECURITY.ERRORS.INVALID_CODE'));
+          }
+        }
       });
   }
 
@@ -159,19 +169,28 @@ export class SecuritySettingsComponent implements OnInit {
       });
   }
 
-  verifyAndEnable2fa() {
-    if (!this.verificationCode() || this.verificationCode().length < 6) return;
+  verifyAndEnable2fa(code?: string) {
+    const finalCode = code || this.verificationCode();
+    if (!finalCode || finalCode.length < 6) return;
 
-    this.securityService.enable2fa(this.verificationCode())
+    this.securityService.enable2fa(finalCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.is2faEnabled.set(true);
-          this.backupCodes.set(res.backupCodes);
-          this.currentStep.set('BACKUP_CODES');
-          this.notificationService.showSuccess('SETTINGS.SECURITY.2FA_ENABLED');
+          if (this.otpComponent) this.otpComponent.handleSuccess(this.translate.instant('SETTINGS.SECURITY.2FA_ENABLED'));
+          setTimeout(() => {
+              this.is2faEnabled.set(true);
+              this.backupCodes.set(res.backupCodes);
+              this.currentStep.set('BACKUP_CODES');
+              this.notificationService.showSuccess('SETTINGS.SECURITY.2FA_ENABLED');
+          }, 1000);
         },
-        error: () => this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE')
+        error: () => {
+          this.notificationService.showError('SETTINGS.SECURITY.ERRORS.INVALID_CODE');
+          if (this.otpComponent) {
+            this.otpComponent.handleError(this.translate.instant('SETTINGS.SECURITY.ERRORS.INVALID_CODE'));
+          }
+        }
       });
   }
 
