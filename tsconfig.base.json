@@ -20,7 +20,8 @@
     "customConditions": ["@virteex/source"],
     "paths": {
       "@virteex/shared/util-auth": ["libs/shared/util-auth/src/index.ts"],
-      "@virteex/shared/types": ["libs/shared/types/src/index.ts"]
+      "@virteex/shared/types": ["libs/shared/types/src/index.ts"],
+      "@virteex/api/country": ["libs/api/country/src/index.ts"]
     }
   }
 }

@@ -56,7 +56,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PushNotificationsModule } from './push-notifications/push-notifications.module';
 import { BiModule } from './bi/bi.module';
 import { PaymentModule } from './payment/payment.module';
-import { CountryModule } from '../../../../../libs/api/country/src/lib/country.module';
+import { CountryModule } from '@virteex/api/country';
 import { GeoModule } from './geo/geo.module';
 import { CommonModule } from './common/common.module';
 import { SaasModule } from './saas/saas.module';
