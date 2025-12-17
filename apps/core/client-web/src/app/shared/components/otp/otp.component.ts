@@ -1,33 +1,37 @@
-import { Component, ChangeDetectionStrategy, signal, computed, Input, Output, EventEmitter, ViewChildren, QueryList, ElementRef, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, computed, input, output, viewChildren, ElementRef, OnInit, OnDestroy, effect, untracked } from '@angular/core';
 import { LucideAngularModule, Shield, Clock, RefreshCw, Eraser, CheckCircle, Info, AlertCircle, AlertTriangle, Lightbulb } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-otp',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslateModule],
+  imports: [LucideAngularModule, TranslateModule],
   templateUrl: './otp.component.html',
   styleUrls: ['./otp.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    'class': 'otp-host'
+  }
 })
 export class OtpComponent implements OnInit, OnDestroy {
   // Inputs
-  @Input() otpLength = 6;
-  @Input() timerDuration = 120; // seconds
-  @Input() resendCooldown = 30; // seconds
-  @Input() title = 'Verificación de Seguridad';
-  @Input() description = 'Para proteger su cuenta, hemos enviado un código de verificación a su correo electrónico registrado.';
-  @Input() showLengthSelector = false;
-  @Input() mode: 'email' | 'app' = 'email';
+  otpLength = input(6);
+  timerDuration = input(120); // seconds
+  resendCooldown = input(30); // seconds
+  title = input('Verificación de Seguridad');
+  description = input('Para proteger su cuenta, hemos enviado un código de verificación a su correo electrónico registrado.');
+  showLengthSelector = input(false);
+  mode = input<'email' | 'app'>('email');
 
   // Outputs
-  @Output() verify = new EventEmitter<string>();
-  @Output() resend = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  verify = output<string>();
+  resend = output<void>();
+  cancelled = output<void>();
 
   // State
-  otpValues = signal<string[]>([]);
+  // Initialize synchronously with a default to prevent CLS. Effect will update if input differs.
+  currentOtpLength = signal(6);
+  otpValues = signal<string[]>(new Array(6).fill(''));
+
   timer = signal(120);
   cooldown = signal(0);
   inputError = signal(false);
@@ -35,7 +39,8 @@ export class OtpComponent implements OnInit, OnDestroy {
 
   status = signal<{ message: string, type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
 
-  @ViewChildren('otpInput') inputs!: QueryList<ElementRef<HTMLInputElement>>;
+  // ViewChildren using signal
+  inputs = viewChildren<ElementRef<HTMLInputElement>>('otpInput');
 
   isExpired = computed(() => this.timer() <= 0);
   isExpiring = computed(() => this.timer() > 0 && this.timer() <= 30);
@@ -57,10 +62,36 @@ export class OtpComponent implements OnInit, OnDestroy {
   protected readonly AlertTriangleIcon = AlertTriangle;
   protected readonly LightbulbIcon = Lightbulb;
 
+  constructor() {
+    // Sync input to internal state initially and when input changes
+    effect(() => {
+        const length = this.otpLength();
+        untracked(() => {
+            // Only update if different to avoid redundant resets
+            if (length !== this.currentOtpLength()) {
+                this.currentOtpLength.set(length);
+                this.otpValues.set(new Array(length).fill(''));
+                this.startTimer(true); // Force reset timer when length changes
+            }
+        });
+    });
+
+    // Sync timer duration changes
+    effect(() => {
+        const duration = this.timerDuration();
+        untracked(() => {
+            if (this.timer() === 120 && duration !== 120) {
+                 this.timer.set(duration);
+            }
+        });
+    });
+  }
+
   ngOnInit() {
-    this.timer.set(this.timerDuration);
-    this.otpValues.set(new Array(this.otpLength).fill(''));
-    this.startTimer();
+      // Ensure timer starts. If constructor effect hasn't run yet or input is same as default.
+      if (!this.timerInterval) {
+          this.startTimer(true);
+      }
   }
 
   ngOnDestroy() {
@@ -68,9 +99,12 @@ export class OtpComponent implements OnInit, OnDestroy {
     this.stopCooldown();
   }
 
-  startTimer() {
+  startTimer(forceReset = false) {
     this.stopTimer();
-    this.timer.set(this.timerDuration);
+
+    if (forceReset || this.timer() <= 0) {
+         this.timer.set(this.timerDuration());
+    }
 
     this.timerInterval = setInterval(() => {
         this.timer.update(t => {
@@ -88,11 +122,12 @@ export class OtpComponent implements OnInit, OnDestroy {
 
   stopTimer() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = undefined;
   }
 
   startCooldown() {
       this.stopCooldown();
-      this.cooldown.set(this.resendCooldown);
+      this.cooldown.set(this.resendCooldown());
       this.cooldownInterval = setInterval(() => {
           this.cooldown.update(c => {
               if (c <= 1) {
@@ -106,6 +141,7 @@ export class OtpComponent implements OnInit, OnDestroy {
 
   stopCooldown() {
       if (this.cooldownInterval) clearInterval(this.cooldownInterval);
+      this.cooldownInterval = undefined;
   }
 
   formatTimer(seconds: number): string {
@@ -131,8 +167,10 @@ export class OtpComponent implements OnInit, OnDestroy {
           currentValues[index] = char;
           input.value = char;
 
-          if (index < this.otpLength - 1) {
-              this.inputs.get(index + 1)?.nativeElement.focus();
+          // inputs() returns a ReadonlyArray of ElementRefs
+          const inputsList = this.inputs();
+          if (index < this.currentOtpLength() - 1) {
+              inputsList[index + 1]?.nativeElement.focus();
           }
       } else {
           currentValues[index] = '';
@@ -144,22 +182,23 @@ export class OtpComponent implements OnInit, OnDestroy {
 
   handleKeyDown(event: KeyboardEvent, index: number) {
       const key = event.key;
+      const inputsList = this.inputs();
 
       if (key === 'ArrowRight' || key === 'ArrowDown') {
           event.preventDefault();
-          if (index < this.otpLength - 1) {
-              this.inputs.get(index + 1)?.nativeElement.focus();
+          if (index < this.currentOtpLength() - 1) {
+              inputsList[index + 1]?.nativeElement.focus();
           }
       } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
           event.preventDefault();
           if (index > 0) {
-              this.inputs.get(index - 1)?.nativeElement.focus();
+              inputsList[index - 1]?.nativeElement.focus();
           }
       } else if (key === 'Backspace') {
            const currentValues = [...this.otpValues()];
            if (currentValues[index] === '' && index > 0) {
                event.preventDefault();
-               const prevInput = this.inputs.get(index - 1)?.nativeElement;
+               const prevInput = inputsList[index - 1]?.nativeElement;
                if (prevInput) {
                  prevInput.focus();
                  currentValues[index - 1] = '';
@@ -168,7 +207,7 @@ export class OtpComponent implements OnInit, OnDestroy {
            }
       } else if (key === 'Delete') {
            const currentValues = [...this.otpValues()];
-           if (currentValues[index] === '' && index < this.otpLength - 1) {
+           if (currentValues[index] === '' && index < this.currentOtpLength() - 1) {
                event.preventDefault();
                currentValues[index + 1] = '';
                this.otpValues.set(currentValues);
@@ -188,16 +227,18 @@ export class OtpComponent implements OnInit, OnDestroy {
 
       this.clearInputs();
 
-      const currentValues = new Array(this.otpLength).fill('');
-      const pasteLength = Math.min(pasteData.length, this.otpLength);
+      const length = this.currentOtpLength();
+      const currentValues = new Array(length).fill('');
+      const pasteLength = Math.min(pasteData.length, length);
 
       for (let i = 0; i < pasteLength; i++) {
           currentValues[i] = pasteData[i];
       }
       this.otpValues.set(currentValues);
 
-      const focusIndex = Math.min(pasteLength, this.otpLength - 1);
-      setTimeout(() => this.inputs.get(focusIndex)?.nativeElement.focus());
+      const focusIndex = Math.min(pasteLength, length - 1);
+      const inputsList = this.inputs();
+      setTimeout(() => inputsList[focusIndex]?.nativeElement.focus());
 
       this.showStatus('Código pegado correctamente', 'success');
   }
@@ -209,7 +250,7 @@ export class OtpComponent implements OnInit, OnDestroy {
   onResend() {
       if (this.cooldown() > 0) return;
       this.startCooldown();
-      this.startTimer();
+      this.startTimer(true); // Force reset on resend
       this.clearInputs();
       this.enableAllInputs();
       this.showStatus('Nuevo código OTP enviado', 'info');
@@ -226,12 +267,13 @@ export class OtpComponent implements OnInit, OnDestroy {
       this.clearInputs();
       this.enableAllInputs();
       this.showStatus('Todos los campos han sido limpiados', 'info');
-      this.inputs.get(0)?.nativeElement.focus();
+      const inputsList = this.inputs();
+      inputsList[0]?.nativeElement.focus();
       this.cancelled.emit();
   }
 
   clearInputs() {
-      this.otpValues.set(new Array(this.otpLength).fill(''));
+      this.otpValues.set(new Array(this.currentOtpLength()).fill(''));
       this.status.set(null);
   }
 
@@ -247,9 +289,9 @@ export class OtpComponent implements OnInit, OnDestroy {
   }
 
   changeLength(length: number) {
-      this.otpLength = length;
+      this.currentOtpLength.set(length);
       this.otpValues.set(new Array(length).fill(''));
-      this.startTimer();
+      this.startTimer(true); // Always reset timer when changing length
       this.showStatus(`Longitud de OTP cambiada a ${length} dígitos`, 'info');
   }
 
