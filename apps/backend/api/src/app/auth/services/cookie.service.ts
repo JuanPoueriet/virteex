@@ -25,6 +25,7 @@ export class CookieService {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax' as 'strict' | 'lax' | 'none',
+      path: '/', // Explicitly set path to root to ensure availability across API and Sockets
     };
 
     // Access Token
@@ -57,6 +58,7 @@ export class CookieService {
       sameSite: 'lax', // Must be readable on same site
       httpOnly: false, // Essential for JS to read and send back in header
       maxAge: AuthConfig.COOKIE_ACCESS_MAX_AGE,
+      path: '/', // Explicitly set path to root so frontend can read it via document.cookie
     });
   }
 
@@ -67,12 +69,13 @@ export class CookieService {
       secure: isProduction,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 15, // 15 minutes
+      path: '/',
     });
   }
 
   clearAuthCookies(res: Response): void {
-    res.clearCookie('access_token');
+    res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/api/v1/auth/refresh' });
-    res.clearCookie('XSRF-TOKEN');
+    res.clearCookie('XSRF-TOKEN', { path: '/' });
   }
 }
