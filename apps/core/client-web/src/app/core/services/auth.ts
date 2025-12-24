@@ -290,25 +290,27 @@ export class AuthService {
 
   /**
    * Cierra la sesión del usuario tanto en el frontend como en el backend.
+   * @param notifyBackend Si es true, envía una petición de logout al backend. Si es false, solo limpia el estado local.
    */
-  logout(): void {
-    const url = `${this.apiUrl}/logout`;
-    // Pass IS_PUBLIC_API to prevent interceptor from trying to refresh token if logout fails (e.g. 401)
-    this.http.post(url, {}, {
-      withCredentials: true,
-      context: new HttpContext().set(IS_PUBLIC_API, true)
-    }).subscribe({
-      // Se ejecuta siempre, sin importar si el backend responde con éxito o error,
-      // para asegurar que el usuario es deslogueado del lado del cliente.
-      complete: () => {
-        this._currentUser.set(null);
-        this._authStatus.set(AuthStatus.unauthenticated);
-        this.webSocketService.emit('user-status', { isOnline: false });
-        this.webSocketService.disconnect();
+  logout(notifyBackend = true): void {
+    // 1. Limpiar estado local inmediatamente para asegurar respuesta rápida de UI
+    this._currentUser.set(null);
+    this._authStatus.set(AuthStatus.unauthenticated);
+    this.webSocketService.emit('user-status', { isOnline: false });
+    this.webSocketService.disconnect();
+    this.router.navigate(['/auth/login']);
 
-        this.router.navigate(['/auth/login']);
-      },
-    });
+    // 2. Notificar al backend si es necesario (best effort)
+    if (notifyBackend) {
+      const url = `${this.apiUrl}/logout`;
+      // Pass IS_PUBLIC_API to prevent interceptor from trying to refresh token if logout fails (e.g. 401)
+      this.http.post(url, {}, {
+        withCredentials: true,
+        context: new HttpContext().set(IS_PUBLIC_API, true)
+      }).pipe(
+        catchError(() => of(null)) // Ignorar errores del backend durante el logout
+      ).subscribe();
+    }
   }
 
   // ------------------------------------------------------------------

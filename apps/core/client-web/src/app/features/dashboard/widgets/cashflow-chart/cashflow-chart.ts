@@ -41,7 +41,7 @@ type ExportingChart = Highcharts.Chart & {
     styleUrls: ['../widget-styles.scss', './cashflow-chart.scss'],
     providers: [
         providePartialHighcharts({
-            modules: () => [import('highcharts/esm/modules/gantt')],
+            modules: () => [import('highcharts/esm/highcharts-more')],
         }),
     ],
     imports: [HighchartsChartComponent, CommonModule, HighchartsChartComponent, LucideAngularModule, TranslateModule],
