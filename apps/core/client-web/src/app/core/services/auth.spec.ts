@@ -8,6 +8,7 @@ import { NotificationService } from './notification';
 import { WebSocketService } from './websocket.service';
 import { ModalService } from '../../shared/service/modal.service';
 import { ErrorHandlerService } from './error-handler.service';
+import { IS_PUBLIC_API } from '../tokens/http-context.tokens';
 import { Subject } from 'rxjs';
 
 describe('AuthService', () => {
@@ -71,5 +72,14 @@ describe('AuthService', () => {
     service.login({ email: 'test@test.com', password: '123', recaptchaToken: 'token' }).subscribe();
     const req = httpMock.expectOne('http://test-api/v1/auth/login');
     expect(req.request.method).toBe('POST');
+  });
+
+  it('should call status endpoint without IS_PUBLIC_API context to allow refresh', () => {
+    service.checkAuthStatus().subscribe();
+    const req = httpMock.expectOne('http://test-api/v1/auth/status');
+    expect(req.request.method).toBe('GET');
+    // Ensure IS_PUBLIC_API is false (default) or undefined, effectively NOT true,
+    // allowing the AuthInterceptor to trigger a refresh on 401
+    expect(req.request.context.get(IS_PUBLIC_API)).toBeFalsy();
   });
 });

@@ -216,7 +216,8 @@ export class AuthService {
     this._authStatus.set(AuthStatus.pending);
     return this.http.get<{ isAuthenticated: boolean; user: User | null }>(url, {
       withCredentials: true,
-      context: new HttpContext().set(IS_PUBLIC_API, true)
+      // Removed IS_PUBLIC_API context to allow AuthInterceptor to handle 401s
+      // and trigger token refresh mechanism on page reload/init
     }).pipe(
       map((res) => {
         if (res.isAuthenticated && res.user) {
