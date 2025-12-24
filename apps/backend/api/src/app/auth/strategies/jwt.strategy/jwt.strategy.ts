@@ -68,6 +68,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         user = null;
     }
 
+    // Check if cached user is stale (token version mismatch)
+    if (user) {
+      const cachedTokenVersion = user.security?.tokenVersion || 0;
+      if (cachedTokenVersion !== tokenVersion) {
+        this.logger.debug(`Cached user stale (Version ${cachedTokenVersion} vs Token ${tokenVersion}). Invalidating cache locally.`);
+        user = null; // Force DB lookup
+      }
+    }
+
     if (!user) {
         // 2. Fallback to DB
         const dbUser = await this.usersService.findUserByIdForAuth(id);
