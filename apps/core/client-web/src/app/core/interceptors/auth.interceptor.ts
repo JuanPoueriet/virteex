@@ -97,7 +97,7 @@ export const authInterceptor: HttpInterceptorFn = (
 
               // Lazy injection for logout
               const authService = injector.get(AuthService);
-              authService.logout();
+              authService.logout(false);
               return throwError(() => refreshError);
             }),
           );
