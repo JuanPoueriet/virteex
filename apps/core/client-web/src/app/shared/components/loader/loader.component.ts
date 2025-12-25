@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,12 +6,13 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="loader-overlay" [ngClass]="{'fixed-overlay': overlay, 'absolute-overlay': !overlay}">
+    <div class="loader-overlay" [class.fixed-overlay]="overlay()" [class.absolute-overlay]="!overlay()">
       <div class="spinner"></div>
     </div>
   `,
-  styleUrls: ['./loader.component.scss']
+  styleUrls: ['./loader.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoaderComponent {
-  @Input() overlay = true;
+  readonly overlay = input(true);
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterOutlet, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { ThemeService } from './core/services/theme';
 import { LanguageService } from './core/services/language';
@@ -15,7 +15,8 @@ import { IdleService } from './core/services/idle.service';
   selector: 'app-root',
   imports: [RouterOutlet, ModalComponent, CommonModule, LoaderComponent, GeoMismatchModalComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App implements OnInit {
   public themeService = inject(ThemeService);
