@@ -2,12 +2,13 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "module": "nodenext",
+    "module": "esnext",
     "types": ["node"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021",
-    "moduleResolution": "nodenext"
+    "target": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "../../../libs/shared/util-auth/src/index.ts"],
   "exclude": [
