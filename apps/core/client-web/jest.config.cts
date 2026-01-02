@@ -1,6 +1,6 @@
 module.exports = {
   displayName: 'client-web',
-  preset: '../../../jest.preset.js',
+  preset: '../../../jest.preset.cjs',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../coverage/apps/core/client-web',
   transform: {
