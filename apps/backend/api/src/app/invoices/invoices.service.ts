@@ -18,10 +18,7 @@ import { CustomersService } from '../customers/customers.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { Product } from '../inventory/entities/product.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
-import * as puppeteer from 'puppeteer';
-import * as fs from 'fs';
 import * as path from 'path';
-import * as handlebars from 'handlebars';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
 import { JournalEntriesService } from '../journal-entries/journal-entries.service';
@@ -34,10 +31,11 @@ import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { Buffer } from 'buffer';
 import { SaasService } from '../saas/saas.service';
 import { SaasResource } from '../saas/enums/saas-resource.enum';
+import { PdfService } from '../shared/services/pdf.service';
+import { TemplateService } from '../shared/services/template.service';
 
 @Injectable()
 export class InvoicesService {
-  private invoiceTemplate: HandlebarsTemplateDelegate;
   private readonly logger = new Logger(InvoicesService.name);
 
   constructor(
@@ -56,10 +54,10 @@ export class InvoicesService {
     private readonly complianceService: ComplianceService,
     private readonly documentSequencesService: DocumentSequencesService,
     private readonly fiscalAdapterFactory: FiscalAdapterFactory,
-    private readonly saasService: SaasService
-  ) {
-    this.compileTemplate();
-  }
+    private readonly saasService: SaasService,
+    private readonly pdfService: PdfService,
+    private readonly templateService: TemplateService
+  ) {}
 
 
   findOverdueInvoices(): Promise<Invoice[]> {
@@ -73,23 +71,6 @@ export class InvoicesService {
     });
   }
 
-
-  private async compileTemplate() {
-    try {
-        const templatePath = path.join(__dirname, 'templates', 'invoice.hbs');
-        const templateHtml = fs.readFileSync(templatePath, 'utf8');
-        
-        handlebars.registerHelper('formatNumber', (value) => {
-            if (typeof value !== 'number') return value;
-            return new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-        });
-        handlebars.registerHelper('multiply', (a, b) => (a * b));
-
-        this.invoiceTemplate = handlebars.compile(templateHtml);
-    } catch (error) {
-        this.logger.error('Error al compilar la plantilla de factura Handlebars', error);
-    }
-  }
 
   async create(
     createInvoiceDto: CreateInvoiceDto,
@@ -236,39 +217,36 @@ export class InvoicesService {
     organizationId: string,
   ): Promise<Buffer> {
     const invoice = await this.findOne(invoiceId, organizationId);
-    const organization = await this.organizationRepository.findOneBy({ id: organizationId });
+    const organization = await this.organizationRepository.findOneBy({
+      id: organizationId,
+    });
 
     if (!organization) {
-        throw new NotFoundException('No se encontró la información de la organización.');
-    }
-    if (!this.invoiceTemplate) {
-        throw new InternalServerErrorException('La plantilla para generar PDF no está disponible.');
+      throw new NotFoundException(
+        'No se encontró la información de la organización.'
+      );
     }
 
     const data = {
-        ...invoice,
-        organization,
-        issueDate: new Date(invoice.issueDate).toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' }),
-        dueDate: new Date(invoice.dueDate).toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' }),
+      ...invoice,
+      organization,
+      issueDate: new Date(invoice.issueDate).toLocaleDateString('es-DO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      dueDate: new Date(invoice.dueDate).toLocaleDateString('es-DO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
     };
 
-    const htmlContent = this.invoiceTemplate(data);
+    // Use path relative to the current file or a known location
+    const templatePath = path.join(__dirname, 'templates', 'invoice.hbs');
+    const htmlContent = this.templateService.renderHtml(templatePath, data);
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-
-    const pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
-    const pdfBuffer = Buffer.from(pdfUint8Array);
-
-
-    await browser.close();
-    return pdfBuffer;
+    return this.pdfService.generatePdf(htmlContent);
   }
 
   async createCreditNote(
