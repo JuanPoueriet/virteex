@@ -14,4 +14,9 @@ export class OpportunitiesService {
   findAll(organizationId: string): Promise<Opportunity[]> {
     return this.opportunityRepository.find({ where: { organizationId }, relations: ['customer'] });
   }
+
+  create(data: Partial<Opportunity>): Promise<Opportunity> {
+    const opportunity = this.opportunityRepository.create(data);
+    return this.opportunityRepository.save(opportunity);
+  }
 }
