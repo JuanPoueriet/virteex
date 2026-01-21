@@ -1,20 +1,31 @@
-import { Component, EventEmitter, Output, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { ModalOptions } from '../../service/modal.service';
-import { UiModalComponent } from '../ui/modal';
+import { UiModalComponent, ModalFooterDirective } from '../ui/modal/ui-modal.component';
+import { trigger, transition, query, animateChild } from '@angular/animations';
 
 @Component({
   selector: 'app-modal',
   standalone: true,
-  imports: [CommonModule, UiModalComponent],
+  imports: [UiModalComponent, ModalFooterDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './modal.component.html',
-  styleUrls: ['./modal.component.scss']
+  styleUrls: ['./modal.component.scss'],
+  animations: [
+    trigger('hostAnimation', [
+      transition(':leave', [
+        query('@*', animateChild(), { optional: true })
+      ])
+    ])
+  ],
+  host: {
+    '[@hostAnimation]': 'true'
+  }
 })
 export class ModalComponent {
-  @Input() options!: ModalOptions;
-  @Output() onConfirm = new EventEmitter<void>();
-  @Output() onCancel = new EventEmitter<void>();
-  @Output() onCloseModal = new EventEmitter<void>();
+  public readonly options = input.required<ModalOptions>();
+  public readonly onConfirm = output<void>();
+  public readonly onCancel = output<void>();
+  public readonly onCloseModal = output<void>();
 
   confirm() {
     this.onConfirm.emit();

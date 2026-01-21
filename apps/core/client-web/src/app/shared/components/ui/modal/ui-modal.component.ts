@@ -1,26 +1,35 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output, contentChild, Directive, ElementRef } from '@angular/core';
 import { trigger, style, animate, transition, query, animateChild, group } from '@angular/animations';
 import { LucideAngularModule, X } from 'lucide-angular';
+
+@Directive({
+  selector: '[appModalFooter]',
+  standalone: true
+})
+export class ModalFooterDirective {}
 
 @Component({
   selector: 'app-ui-modal',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [LucideAngularModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ui-modal.component.html',
   styleUrls: ['./ui-modal.component.scss'],
+  host: {
+    '(document:keydown.escape)': 'onEscape()'
+  },
   animations: [
     trigger('modalContainer', [
       transition(':enter', [
         group([
-          query('@modalBackdrop', animateChild()),
-          query('@modalPanel', animateChild()),
+          query('@modalBackdrop', animateChild(), { optional: true }),
+          query('@modalPanel', animateChild(), { optional: true }),
         ])
       ]),
       transition(':leave', [
         group([
-          query('@modalBackdrop', animateChild()),
-          query('@modalPanel', animateChild()),
+          query('@modalBackdrop', animateChild(), { optional: true }),
+          query('@modalPanel', animateChild(), { optional: true }),
         ])
       ])
     ]),
@@ -45,40 +54,30 @@ import { LucideAngularModule, X } from 'lucide-angular';
   ]
 })
 export class UiModalComponent {
-  /**
-   * Controls the visibility of the modal.
-   * Note: The parent component should conditionally render this component or bind to this input.
-   * If using @if(isOpen) in parent, this input is less relevant for animation entry,
-   * but useful for internal logic or if not using @if.
-   * However, for the animations to trigger on :enter/:leave, the *ngIf or @if in the parent is key.
-   * This component structure assumes it is always present in DOM when 'isOpen' is true,
-   * or the parent handles the DOM insertion/removal.
-   */
-  @Input() isOpen = false;
-
   /** Title of the modal displayed in the header */
-  @Input() title: string = '';
+  public readonly title = input<string>('');
 
   /** Size of the modal: 'sm' | 'md' | 'lg' | 'xl' | 'full' */
-  @Input() size: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
+  public readonly size = input<'sm' | 'md' | 'lg' | 'xl' | 'full'>('md');
 
   /** Whether to show the close button in the header */
-  @Input() hideCloseButton = false;
+  public readonly hideCloseButton = input(false);
 
   /** Whether clicking the backdrop closes the modal */
-  @Input() closeOnBackdropClick = true;
+  public readonly closeOnBackdropClick = input(true);
 
-  @Output() close = new EventEmitter<void>();
+  public readonly close = output<void>();
 
-  readonly XIcon = X;
+  public readonly footer = contentChild(ModalFooterDirective);
 
-  @HostListener('document:keydown.escape')
+  public readonly XIcon = X;
+
   onEscape() {
     this.closeModal();
   }
 
   onBackdropClick() {
-    if (this.closeOnBackdropClick) {
+    if (this.closeOnBackdropClick()) {
       this.closeModal();
     }
   }
