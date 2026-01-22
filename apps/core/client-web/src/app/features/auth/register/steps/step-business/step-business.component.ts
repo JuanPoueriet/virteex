@@ -1,5 +1,5 @@
 
-import { Component, Input, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule, Building, Users, Globe, Briefcase } from 'lucide-angular';
@@ -11,7 +11,7 @@ import { ConfigService, RegistrationOptions } from '../../../../../shared/servic
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
   template: `
-    <div [formGroup]="form" class="space-y-6">
+    <div [formGroup]="form()" class="space-y-6">
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
           <lucide-icon [img]="BriefcaseIcon" class="w-8 h-8"></lucide-icon>
@@ -38,12 +38,14 @@ import { ConfigService, RegistrationOptions } from '../../../../../shared/servic
               placeholder="Ej. Mi Empresa S.R.L."
               [readonly]="isReadOnly()"
               class="pl-10 w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-colors disabled:bg-gray-100 disabled:text-gray-500"
-              [class.border-red-500]="form.get('companyName')?.invalid && form.get('companyName')?.touched"
+              [class.border-red-500]="form().get('companyName')?.invalid && form().get('companyName')?.touched"
             />
           </div>
-          <p *ngIf="isReadOnly()" class="text-xs text-gray-500 mt-1">
+          @if (isReadOnly()) {
+          <p class="text-xs text-gray-500 mt-1">
              Obtenido automáticamente de registros oficiales.
           </p>
+          }
         </div>
 
         <!-- Industry -->
@@ -60,9 +62,11 @@ import { ConfigService, RegistrationOptions } from '../../../../../shared/servic
               class="pl-10 w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="" disabled selected>Selecciona una industria</option>
-              <option *ngFor="let industry of industries()" [value]="industry">
+              @for (industry of industries(); track industry) {
+              <option [value]="industry">
                 {{ industry }}
               </option>
+              }
             </select>
           </div>
         </div>
@@ -81,9 +85,11 @@ import { ConfigService, RegistrationOptions } from '../../../../../shared/servic
               class="pl-10 w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-colors"
             >
               <option value="" disabled selected>Selecciona el tamaño</option>
-              <option *ngFor="let size of companySizes()" [value]="size">
+              @for (size of companySizes(); track size) {
+              <option [value]="size">
                 {{ size }}
               </option>
+              }
             </select>
           </div>
         </div>
@@ -95,7 +101,7 @@ import { ConfigService, RegistrationOptions } from '../../../../../shared/servic
   `]
 })
 export class StepBusiness implements OnInit {
-  @Input() form!: FormGroup;
+  form = input.required<FormGroup>();
 
   protected readonly BuildingIcon = Building;
   protected readonly UsersIcon = Users;
@@ -125,13 +131,13 @@ export class StepBusiness implements OnInit {
       });
 
       // Check if company name was already set (by previous step auto-fill)
-      const currentName = this.form.get('companyName')?.value;
+      const currentName = this.form().get('companyName')?.value;
       if (currentName && currentName.length > 0) {
           this.isReadOnly.set(true);
       }
 
-      this.form.get('companyName')?.valueChanges.subscribe(val => {
-           if (val && val.length > 0 && this.form.pristine) {
+      this.form().get('companyName')?.valueChanges.subscribe(val => {
+           if (val && val.length > 0 && this.form().pristine) {
                this.isReadOnly.set(true);
            }
       });
