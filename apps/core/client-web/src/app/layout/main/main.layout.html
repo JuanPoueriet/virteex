@@ -1,6 +1,6 @@
+@if (authService.currentUser()?.isImpersonating) {
 <div
   class="impersonation-banner banner"
-  *ngIf="authService.currentUser()?.isImpersonating"
 >
   Estás viendo el sistema como:
   <strong>
@@ -9,17 +9,18 @@
   </strong>
   <button (click)="stopImpersonation()">Volver a mi cuenta</button>
 </div>
+}
 
+@if (authService.currentUser()?.organization?.subscriptionStatus === 'past_due' && isGracePeriodActive()) {
 <div
   class="payment-pending-banner banner"
-  *ngIf="authService.currentUser()?.organization?.subscriptionStatus === 'past_due' && isGracePeriodActive()"
 >
   <div class="banner-content">
     <strong>¡Atención!</strong> Tu pago está pendiente. Tienes acceso temporal hasta el {{ authService.currentUser()?.organization?.gracePeriodEnd | date:'mediumDate' }}.
   </div>
   <a routerLink="/settings/billing" class="btn-resolve">Resolver Ahora</a>
 </div>
-
+}
 
 
 

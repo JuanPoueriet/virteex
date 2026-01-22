@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, isDevMode, APP_INITIALIZER, inject } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHighcharts } from 'highcharts-angular';
@@ -34,6 +34,7 @@ const CORE_PROVIDERS = [
   provideRouter(
     APP_ROUTES,
     withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'top' }),
+    withComponentInputBinding()
   ),
   provideHttpClient(),
   provideAnimations(),

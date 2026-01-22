@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, User, Phone, CaseSensitive, Image } from 'lucide-angular';
@@ -8,7 +8,7 @@ import { LucideAngularModule, User, Phone, CaseSensitive, Image } from 'lucide-a
   templateUrl: './step-account.html', styleUrls: ['./step-account.scss']
 })
 export class StepAccount {
-  @Input() parentForm!: FormGroup;
+  parentForm = input.required<FormGroup>();
   protected readonly UserIcon = User;
   protected readonly PhoneIcon = Phone;
   protected readonly JobIcon = CaseSensitive;
@@ -18,7 +18,7 @@ export class StepAccount {
   onFileSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      this.parentForm.patchValue({ avatarUrl: file });
+      this.parentForm().patchValue({ avatarUrl: file });
       const reader = new FileReader();
       reader.onload = () => this.avatarPreview.set(reader.result);
       reader.readAsDataURL(file);

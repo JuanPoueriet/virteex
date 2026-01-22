@@ -12,11 +12,13 @@
       No tienes los permisos necesarios para acceder a este recurso.
     </p>
 
-    <div class="details" *ngIf="attemptedUrl$ | async as url">
+    @if (attemptedUrl$ | async; as url) {
+    <div class="details">
       <p><strong>Ruta solicitada:</strong></p>
       <code>{{ url }}</code>
       <p><strong>Error:</strong> 403 Forbidden</p>
     </div>
+    }
 
     <p class="contact-admin">
       Si crees que esto es un error, contacta al administrador del sistema o solicita los permisos necesarios.
