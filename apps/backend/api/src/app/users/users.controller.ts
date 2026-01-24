@@ -1,7 +1,7 @@
 
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
-import { FastifyFile } from '../common/interfaces/fastify-file.interface';
+import type { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { extname } from 'path';
 import * as os from 'os';
@@ -19,7 +19,7 @@ import { User, UserStatus } from './entities/user.entity/user.entity';
 import { UserResponseDto } from '../auth/dto/user-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { CheckPermissions } from '../auth/decorators/check-permissions.decorator';
-import { IsOrganizationOwner } from '../auth/policies/is-organization-owner.policy';
+import { IsOrganizationOwnerPolicy } from '../auth/policies/is-organization-owner.policy';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JobTitle } from './enums/job-title.enum';
@@ -164,7 +164,7 @@ export class UsersController {
 
   @Delete(':id')
   @HasPermission('users.delete')
-  @CheckPermissions(IsOrganizationOwner)
+  @CheckPermissions(IsOrganizationOwnerPolicy)
   @ApiOperation({ summary: 'Remove user' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: User) {
     return this.usersService.remove(id, user.organizationId);

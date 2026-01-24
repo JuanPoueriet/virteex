@@ -4,7 +4,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import * as jwtPayloadInterface from '../auth/interfaces/jwt-payload.interface';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { ALL_PERMISSIONS } from '../shared/permissions';
 
 @Controller('roles')
@@ -18,27 +18,27 @@ export class RolesController {
   }
 
   @Post()
-  create(@Body() createRoleDto: CreateRoleDto, @CurrentUser() user: jwtPayloadInterface.JwtPayload) {
+  create(@Body() createRoleDto: CreateRoleDto, @CurrentUser() user: JwtPayload) {
     return this.rolesService.create(createRoleDto, user.organizationId);
   }
 
   @Post('clone/:id')
-  clone(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: jwtPayloadInterface.JwtPayload) {
+  clone(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.rolesService.cloneRole(id, user.organizationId);
   }
 
   @Get()
-  findAll(@CurrentUser() user: jwtPayloadInterface.JwtPayload) {
+  findAll(@CurrentUser() user: JwtPayload) {
     return this.rolesService.findAllByOrg(user.organizationId);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateRoleDto: UpdateRoleDto, @CurrentUser() user: jwtPayloadInterface.JwtPayload) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateRoleDto: UpdateRoleDto, @CurrentUser() user: JwtPayload) {
     return this.rolesService.update(id, updateRoleDto, user.organizationId);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: jwtPayloadInterface.JwtPayload) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.rolesService.remove(id, user.organizationId);
   }
 }
