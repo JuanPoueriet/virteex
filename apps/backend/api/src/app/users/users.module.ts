@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { UsersService } from './users.service';
+import { UserLifecycleListener } from './listeners/user-lifecycle.listener';
 
 import { UsersController } from './users.controller';
 import { MailModule } from '../mail/mail.module';
@@ -24,7 +25,7 @@ import { StorageModule } from '../storage/storage.module';
   ],
 
   controllers: [UsersController],
-  providers: [UsersService, UserSubscriber],
+  providers: [UsersService, UserSubscriber, UserLifecycleListener],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}
