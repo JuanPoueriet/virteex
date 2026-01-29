@@ -1,6 +1,7 @@
 
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { User } from './entities/user.entity/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { UsersService } from './users.service';
@@ -17,6 +18,7 @@ import { StorageModule } from '../storage/storage.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Organization]),
+    EventEmitterModule,
     RolesModule,
     MailModule,
     WebsocketsModule,
