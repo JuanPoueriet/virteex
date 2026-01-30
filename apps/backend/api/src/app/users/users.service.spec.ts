@@ -4,7 +4,9 @@ import { UsersService } from './users.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './entities/user.entity/user.entity';
 import { UserCacheService } from '../auth/modules/user-cache.service';
+import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
+import { EventsGateway } from '../websockets/events.gateway';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SaasService } from '../saas/saas.service';
 import { DataSource } from 'typeorm';
@@ -37,10 +39,12 @@ describe('UsersService', () => {
         UsersService,
         { provide: getRepositoryToken(User), useValue: userRepositoryMock },
         { provide: UserCacheService, useValue: userCacheServiceMock },
+        { provide: MailService, useValue: {} },
         { provide: RolesService, useValue: {} },
+        { provide: EventsGateway, useValue: {} },
         { provide: EventEmitter2, useValue: {} },
         { provide: SaasService, useValue: {} },
-        { provide: DataSource, useValue: {} },
+        { provide: DataSource, useValue: {} }
       ],
     }).compile();
 
