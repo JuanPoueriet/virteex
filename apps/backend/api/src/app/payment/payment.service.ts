@@ -6,7 +6,7 @@ import { Organization } from '../organizations/entities/organization.entity';
 import { SaasService } from '../saas/saas.service';
 import { SAAS_CONFIG } from '../saas/saas.config';
 import { WebhookEvent } from './entities/webhook-event.entity';
-import type { PaymentGateway } from './interfaces/payment-gateway.interface';
+import { PaymentGateway } from './interfaces/payment-gateway.interface';
 
 @Injectable()
 export class PaymentService {

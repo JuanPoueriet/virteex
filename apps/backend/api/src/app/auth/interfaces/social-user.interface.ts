@@ -1,4 +1,4 @@
-export interface SocialUser {
+export class SocialUser {
   provider: string;
   providerId: string;
   email: string;

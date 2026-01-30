@@ -21,7 +21,7 @@ import {
 } from '@nestjs/common';
 import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
 import { FastifyFilesInterceptor } from '../common/interceptors/fastify-files.interceptor';
-import type { FastifyFile } from '../common/interfaces/fastify-file.interface';
+import { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { JournalEntriesService } from './journal-entries.service';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt/jwt.guard';

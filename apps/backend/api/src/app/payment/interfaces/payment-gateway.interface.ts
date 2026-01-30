@@ -1,5 +1,5 @@
 
-export interface CreateCheckoutSessionDto {
+export class CreateCheckoutSessionDto {
   organizationId: string;
   userEmail: string;
   priceId: string;
@@ -8,18 +8,18 @@ export interface CreateCheckoutSessionDto {
   metadata?: Record<string, any>;
 }
 
-export interface CheckoutSessionResult {
+export class CheckoutSessionResult {
   sessionId: string;
   url: string;
 }
 
-export interface WebhookResult {
+export class WebhookResult {
     processed: boolean;
     eventId: string;
     type: string;
 }
 
-export interface PaymentGateway {
-  createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResult>;
-  handleWebhook(payload: Buffer, signature: string): Promise<WebhookResult>;
+export abstract class PaymentGateway {
+  abstract createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResult>;
+  abstract handleWebhook(payload: Buffer, signature: string): Promise<WebhookResult>;
 }
