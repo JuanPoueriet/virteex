@@ -1,10 +1,9 @@
-import { Injectable, Logger, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
 import { SaasService } from '../saas/saas.service';
-import { SAAS_CONFIG } from '../saas/saas.config';
 import { WebhookEvent } from './entities/webhook-event.entity';
 import type { PaymentGateway } from './interfaces/payment-gateway.interface';
 

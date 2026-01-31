@@ -7,7 +7,6 @@ import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { WebAuthnService } from './services/webauthn.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import type { RequestWithUser } from './interfaces/request-with-user.interface';
 import type { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -56,7 +55,7 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() _req: Request) {
+  async googleAuth() {
     // Initiates Google OAuth2 flow
   }
 
@@ -68,7 +67,7 @@ export class AuthController {
 
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuth(@Req() _req: Request) {
+  async microsoftAuth() {
     // Initiates Microsoft OAuth2 flow
   }
 
@@ -80,7 +79,7 @@ export class AuthController {
 
   @Get('okta')
   @UseGuards(AuthGuard('okta'))
-  async oktaAuth(@Req() _req: Request) {
+  async oktaAuth() {
     // Initiates Okta OAuth2 flow
   }
 
@@ -500,7 +499,7 @@ export class AuthController {
              if (payload && payload.jti) {
                  currentRefreshTokenId = payload.jti;
              }
-          } catch(e) {
+          } catch {
             // Ignore invalid token decoding
           }
       }
