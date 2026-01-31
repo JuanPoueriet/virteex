@@ -1,10 +1,8 @@
 
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseFilters, ParseUUIDPipe, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
 import type { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { extname } from 'path';
-import * as os from 'os';
 import * as fs from 'fs/promises';
 import { StorageService } from '../storage/storage.service';
 import { UsersService } from './users.service';
@@ -21,7 +19,7 @@ import { plainToInstance } from 'class-transformer';
 import { CheckPermissions } from '../auth/decorators/check-permissions.decorator';
 import { IsOrganizationOwnerPolicy } from '../auth/policies/is-organization-owner.policy';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JobTitle } from './enums/job-title.enum';
 
 @ApiTags('Users')
