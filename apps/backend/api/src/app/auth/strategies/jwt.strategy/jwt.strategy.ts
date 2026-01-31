@@ -6,9 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import CircuitBreaker = require('opossum');
+import CircuitBreaker from 'opossum';
 
-import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
+import type { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
 import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
 import { AuthConfig } from '../../auth.config';
 import { UsersService } from '../../../users/users.service';
