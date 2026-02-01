@@ -1,11 +1,9 @@
-import { Component, Input, forwardRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, linkedSignal, ChangeDetectionStrategy, forwardRef, computed } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-auth-input',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -14,36 +12,35 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule, FormContr
     }
   ],
   templateUrl: './auth-input.component.html',
-  styleUrls: ['./auth-input.component.scss']
+  styleUrls: ['./auth-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthInputComponent implements ControlValueAccessor {
-  @Input() id = `input-${Math.random().toString(36).substr(2, 9)}`;
-  @Input() label = '';
-  @Input() type = 'text';
-  @Input() placeholder = '';
-  @Input() required = false;
-  @Input() hasIcon = false;
-  @Input() errorMessage = '';
-  @Input() autocomplete = '';
-  @Input() showForgotPassword = false; // Added property to support logic if needed, though currently controlled externally
+  id = input<string>(`input-${Math.random().toString(36).substr(2, 9)}`);
+  label = input<string>('');
+  type = input<string>('text');
+  placeholder = input<string>('');
+  required = input<boolean>(false);
+  hasIcon = input<boolean>(false);
+  errorMessage = input<string>('');
+  autocomplete = input<string>('');
+  showForgotPassword = input<boolean>(false);
 
   control = new FormControl();
-  inputType = 'text';
+
+  // Reset inputType when type input changes
+  inputType = linkedSignal(() => this.type());
 
   // Value Accessor methods
   onChange = (value: any) => {};
   onTouched = () => {};
 
-  ngOnInit() {
-    this.inputType = this.type;
-  }
-
   togglePasswordVisibility() {
-    this.inputType = this.inputType === 'password' ? 'text' : 'password';
+    this.inputType.update(current => current === 'password' ? 'text' : 'password');
   }
 
   get hasError(): boolean {
-    return !!(this.control.invalid && (this.control.dirty || this.control.touched)) || !!this.errorMessage;
+    return !!(this.control.invalid && (this.control.dirty || this.control.touched)) || !!this.errorMessage();
   }
 
   // ControlValueAccessor Interface Implementation

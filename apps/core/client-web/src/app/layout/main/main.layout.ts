@@ -1,7 +1,7 @@
 // ../app/layout/main/main.layout.ts
 
-import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, ElementRef, OnInit, WritableSignal, ViewChild, ChangeDetectionStrategy, computed } from '@angular/core';
+import { DatePipe } from '@angular/common'; // Added DatePipe
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { BrandingService } from '../../core/services/branding';
@@ -30,24 +30,27 @@ import {
   User as UserIcon2,
   Box,
   FileSearch,
-  UserPlus, // ✅ Icono añadido
-  Package as PackageIcon // ✅ Icono añadido
+  UserPlus,
+  Package as PackageIcon
 } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { Sidebar } from '../sidebar/sidebar';
-import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive'; // ✅ Directiva añadida
+import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive';
 
 @Component({
   selector: 'app-main-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective], // ✅ Directiva añadida a los imports
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective, DatePipe], // Added DatePipe
   templateUrl: './main.layout.html',
   styleUrls: ['./main.layout.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '[class]': 'layoutClass()',
+    '(document:click)': 'onDocumentClick($event)'
+  }
 })
 export class MainLayout implements OnInit {
   notificationCenter = inject(NotificationCenterService);
   
-  // ✅ Lógica para la Modal "Crear Nuevo"
   isQuickCreateModalOpen: WritableSignal<boolean> = signal(false);
 
   toggleQuickCreateModal(): void {
@@ -59,7 +62,22 @@ export class MainLayout implements OnInit {
   closeQuickCreateModal(): void {
     this.isQuickCreateModalOpen.set(false);
   }
-  // --- Fin de la lógica para la modal ---
+
+  private elementRef = inject(ElementRef);
+  authService = inject(AuthService);
+  brandingService = inject(BrandingService);
+  private searchService = inject(SearchService);
+  private router = inject(Router);
+
+  settings = this.brandingService.settings;
+  isUserMenuOpen = signal(false);
+  isNotificationMenuOpen = signal(false);
+  isSearchOpen = signal(false);
+  searchResults = signal<SearchResultGroup[]>([]);
+  isSearchLoading = signal(false);
+  private searchQuery$ = new Subject<string>();
+
+  layoutClass = computed(() => `layout-${this.settings().layoutStyle}`);
 
   isGracePeriodActive(): boolean {
     const org = this.authService.currentUser()?.organization;
@@ -96,30 +114,12 @@ export class MainLayout implements OnInit {
       this.isSearchLoading.set(false);
     });
   }
-  private elementRef = inject(ElementRef);
-  authService = inject(AuthService);
-  brandingService = inject(BrandingService);
-  private searchService = inject(SearchService);
-  private router = inject(Router);
-
-  settings = this.brandingService.settings;
-  isUserMenuOpen = signal(false);
-  isNotificationMenuOpen = signal(false);
-  isSearchOpen = signal(false);
-  searchResults = signal<SearchResultGroup[]>([]);
-  isSearchLoading = signal(false);
-  private searchQuery$ = new Subject<string>();
-
-  @HostBinding('class')
-  get layoutClass() {
-    return `layout-${this.settings().layoutStyle}`;
-  }
 
   stopImpersonation(): void {
     this.authService.stopImpersonation().subscribe();
   }
 
-  // Íconos expuestos a la plantilla
+  // Icons
   protected readonly SearchIcon = Search;
   protected readonly PlusCircleIcon = PlusCircle;
   protected readonly BellIcon = Bell;
@@ -152,8 +152,8 @@ export class MainLayout implements OnInit {
   protected readonly UserIcon2 = UserIcon2;
   protected readonly BoxIcon = Box;
   protected readonly FileSearchIcon = FileSearch;
-  protected readonly ReceiptIcon = Receipt; // ✅ Icono añadido
-  protected readonly UserPlusIcon = UserPlus; // ✅ Icono añadido
+  protected readonly ReceiptIcon = Receipt;
+  protected readonly UserPlusIcon = UserPlus;
 
   toggleUserMenu(): void {
     this.isUserMenuOpen.update(isOpen => !isOpen);
@@ -171,7 +171,6 @@ export class MainLayout implements OnInit {
     this.isUserMenuOpen.set(false);
   }
   
-  // ✅ Nuevo método para cerrar notificaciones (usado por clickOutside)
   closeNotificationMenu(): void {
     this.isNotificationMenuOpen.set(false);
   }
@@ -224,7 +223,6 @@ export class MainLayout implements OnInit {
     return iconMap[lowerCaseType] || this.FileSearchIcon;
   }
 
-  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const searchElement = this.elementRef.nativeElement.querySelector('.global-search');
     if (searchElement && !searchElement.contains(event.target as Node)) {

@@ -105,7 +105,7 @@ describe('UserManagementPage', () => {
     expect(component.isEditMode()).toBe(true);
     expect(component.userModalOpen()).toBe(true);
     expect(component.selectedUser).toBe(userToEdit);
-    expect(component.userForm.value.firstName).toBe(userTo-edit.firstName);
+    expect(component.userForm.value.firstName).toBe(userToEdit.firstName);
   });
 
   it('should invite a new user', fakeAsync(() => {
