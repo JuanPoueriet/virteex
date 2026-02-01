@@ -39,9 +39,9 @@ export class AuthInputComponent implements ControlValueAccessor {
     this.inputType.update(current => current === 'password' ? 'text' : 'password');
   }
 
-  hasError = computed(() => {
+  get hasError(): boolean {
     return !!(this.control.invalid && (this.control.dirty || this.control.touched)) || !!this.errorMessage();
-  });
+  }
 
   // ControlValueAccessor Interface Implementation
   writeValue(value: any): void {
