@@ -1,7 +1,18 @@
-import { Password } from './password.validator';
+import { AbstractControl, FormControl } from '@angular/forms';
+import { strongPasswordValidator } from './password.validator';
 
-describe('Password', () => {
-  it('should create an instance', () => {
-    expect(new Password()).toBeTruthy();
+describe('strongPasswordValidator', () => {
+  it('should return null for a valid strong password', () => {
+    const control = new FormControl('StrongP@ssw0rd');
+    const validator = strongPasswordValidator();
+    expect(validator(control)).toBeNull();
+  });
+
+  it('should return errors for a weak password', () => {
+    const control = new FormControl('weak');
+    const validator = strongPasswordValidator();
+    const result = validator(control);
+    expect(result).toBeTruthy();
+    expect(result!['strongPassword']).toBeTruthy();
   });
 });
