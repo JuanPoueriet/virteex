@@ -1,6 +1,6 @@
 // ../app/layout/main/main.layout.ts
 
-import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild } from '@angular/core';
+import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
@@ -103,6 +103,21 @@ export class MainLayout implements OnInit {
   private router = inject(Router);
 
   settings = this.brandingService.settings;
+
+  public companyLogo = computed(() => {
+    return (
+      this.settings().logoUrl ||
+      this.authService.currentUser()?.organization?.logoUrl ||
+      null
+    );
+  });
+
+  public companyName = computed(() => {
+    return (
+      this.authService.currentUser()?.organization?.name || 'FacturaPRO'
+    );
+  });
+
   isUserMenuOpen = signal(false);
   isNotificationMenuOpen = signal(false);
   isSearchOpen = signal(false);

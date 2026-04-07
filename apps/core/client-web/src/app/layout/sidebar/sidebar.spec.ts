@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { Sidebar } from './sidebar';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
 
 describe('Sidebar', () => {
   let component: Sidebar;
@@ -8,7 +9,8 @@ describe('Sidebar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Sidebar]
+      imports: [Sidebar, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 
