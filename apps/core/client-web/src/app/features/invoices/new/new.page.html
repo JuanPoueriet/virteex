@@ -3,8 +3,8 @@
     <h1>Crear Nueva Factura</h1>
     <div class="page-header-actions">
       <button class="btn" [routerLink]="['/app/invoices']">Cancelar</button>
-      <button class="btn btn-primary" (click)="onSubmit()">
-        Guardar Factura
+      <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isSaving()">
+        @if(isSaving()){ Guardando... } @else { Guardar Factura }
       </button>
     </div>
   </div>
@@ -17,9 +17,11 @@
             <label class="form-label">Cliente</label>
             <select formControlName="customerId" class="form-control">
               <option value="" disabled>Seleccionar cliente</option>
-              <option *ngFor="let client of customers" [value]="client.id">
-                {{ client.companyName }}
-              </option>
+              @for (client of customers(); track client.id) {
+                <option [value]="client.id">
+                  {{ client.companyName }}
+                </option>
+              }
             </select>
           </div>
           <div class="form-col">
@@ -41,69 +43,74 @@
         </div>
 
         <div formArrayName="lineItems">
-          <div
-            *ngFor="let item of lineItems.controls; let i = index"
-            [formGroupName]="i"
-            class="line-item"
-          >
-            <select
-              formControlName="productId"
-              (change)="onProductSelect(i)"
-              class="form-control"
+          @for (item of lineItems.controls; track $index; let i = $index) {
+            <div
+              [formGroupName]="i"
+              class="line-item"
             >
-              <option value="" disabled>Seleccionar producto</option>
-              <option *ngFor="let product of products" [value]="product.id">
-                {{ product.name }}
-              </option>
-            </select>
-            <input
-              type="number"
-              formControlName="quantity"
-              class="form-control"
-              placeholder="Cantidad"
-            />
-            <input
-              type="number"
-              formControlName="price"
-              class="form-control"
-              placeholder="Precio"
-            />
-             <input
-              type="number"
-              formControlName="taxRate"
-              class="form-control"
-              placeholder="Tasa Imp."
-              step="0.01"
-            />
-            <div *ngIf="!validateStock(i)" class="text-danger">
-                Stock insuficiente
+              <select
+                formControlName="productId"
+                (change)="onProductSelect(i)"
+                class="form-control"
+              >
+                <option value="" disabled>Seleccionar producto</option>
+                @for (product of products(); track product.id) {
+                  <option [value]="product.id">
+                    {{ product.name }}
+                  </option>
+                }
+              </select>
+              <input
+                type="number"
+                formControlName="quantity"
+                class="form-control"
+                placeholder="Cantidad"
+              />
+              <input
+                type="number"
+                formControlName="price"
+                class="form-control"
+                placeholder="Precio"
+              />
+              <input
+                type="number"
+                formControlName="taxRate"
+                class="form-control"
+                placeholder="Tasa Imp."
+                step="0.01"
+              />
+              @if (!validateStock(i)) {
+                <div class="text-danger">
+                  Stock insuficiente
+                </div>
+              }
+              <button
+                type="button"
+                class="btn-icon"
+                (click)="removeLineItem(i)"
+              >
+                X
+              </button>
             </div>
-            <button
-              type="button"
-              class="btn-icon"
-              (click)="removeLineItem(i)"
-            >
-              X
-            </button>
-          </div>
+          }
         </div>
         <button type="button" class="btn" (click)="addLineItem()">
           + Agregar Línea
         </button>
 
         <div class="totals-section">
-            <div class="total-row">
-                <span>Subtotal:</span>
-                <span>{{ totals.subtotal | number:'1.2-2' }}</span>
-            </div>
-            <div class="total-row">
-                <span>Impuestos:</span>
-                <span>{{ totals.tax | number:'1.2-2' }}</span>
-            </div>
-            <div class="total-row total-final">
-                <span>Total:</span>
-                <span>{{ totals.total | number:'1.2-2' }}</span>
-            </div>
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>{{ totals.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="total-row">
+            <span>Impuestos:</span>
+            <span>{{ totals.tax | number:'1.2-2' }}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total:</span>
+            <span>{{ totals.total | number:'1.2-2' }}</span>
+          </div>
         </div>
 
         <div class="form-group">
