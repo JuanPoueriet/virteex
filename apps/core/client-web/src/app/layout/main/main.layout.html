@@ -26,16 +26,14 @@
 
 <aside class="main-sidebar">
   <div class="logo-container">
-    @if (authService.currentUser()?.organization?.logoUrl; as logo) {
-    <img
-      [src]="logo"
-      [alt]="'ALT.COMPANY_LOGO' | translate"
-      class="company-logo"
-    />
+    @if (companyLogo(); as logo) {
+      <img
+        [src]="logo"
+        [alt]="'ALT.COMPANY_LOGO' | translate"
+        class="company-logo"
+      />
     } @else {
-    <span class="logo-text">{{
-      authService.currentUser()?.organization?.name || "FacturaPRO"
-    }}</span>
+      <span class="logo-text">{{ companyName() }}</span>
     }
   </div>
 
@@ -45,16 +43,14 @@
 <header class="main-topbar">
   <div class="topbar-left">
     <div class="logo">
-      @if (authService.currentUser()?.organization?.logoUrl; as logo) {
-      <img
-        [src]="logo"
-        [alt]="'ALT.COMPANY_LOGO' | translate"
-        class="company-logo"
-      />
+      @if (companyLogo(); as logo) {
+        <img
+          [src]="logo"
+          [alt]="'ALT.COMPANY_LOGO' | translate"
+          class="company-logo"
+        />
       } @else {
-      <span class="logo-text">{{
-        authService.currentUser()?.organization?.name || "FacturaPRO"
-      }}</span>
+        <span class="logo-text">{{ companyName() }}</span>
       }
     </div>
 
