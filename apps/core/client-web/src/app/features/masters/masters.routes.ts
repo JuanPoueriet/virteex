@@ -15,6 +15,7 @@ export const MASTERS_ROUTES: Routes = [
             { path: 'price-lists/new', title: 'New Price List', loadComponent: () => import('./price-lists/price-lists-form/price-list-form.page').then(m => m.PriceListFormPage) },
             { path: 'taxes', title: 'Taxes', loadComponent: () => import('./taxes/taxes.page').then(m => m.TaxesPage) },
             { path: 'taxes/new', title: 'New Tax', loadComponent: () => import('./taxes/tax-form/tax-form.page').then(m => m.TaxFormPage) },
+            { path: 'taxes/:id/edit', title: 'Edit Tax', loadComponent: () => import('./taxes/tax-form/tax-form.page').then(m => m.TaxFormPage) },
             { path: 'warehouses', title: 'Warehouses', loadComponent: () => import('./warehouses/warehouses.page').then(m => m.WarehousesPage) },
             { path: 'units-of-measure', title: 'Units of Measure', loadComponent: () => import('./units-of-measure/units-of-measure.page').then(m => m.UnitsOfMeasurePage) },
             { path: 'currencies', title: 'Currencies', loadComponent: () => import('./currencies/currencies.page').then(m => m.CurrenciesPage) },

@@ -1,16 +1,15 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { LucideAngularModule, PlusCircle, Filter, MoreHorizontal, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, PlusCircle, Filter, MoreHorizontal, Trash2, Edit } from 'lucide-angular';
 import { Tax } from '../../../core/models/tax.model';
 import { TaxesService } from '../../../core/api/taxes.service';
 import { NotificationService } from '../../../core/services/notification';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-taxes-page',
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, RouterLink, HasPermissionDirective],
+  imports: [LucideAngularModule, RouterLink, HasPermissionDirective, DecimalPipe],
   templateUrl: './taxes.page.html',
   styleUrls: ['./taxes.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,6 +19,7 @@ export class TaxesPage implements OnInit {
   protected readonly FilterIcon = Filter;
   protected readonly MoreHorizontalIcon = MoreHorizontal;
   protected readonly TrashIcon = Trash2;
+  protected readonly EditIcon = Edit;
 
   private taxesService = inject(TaxesService);
   private notificationService = inject(NotificationService);

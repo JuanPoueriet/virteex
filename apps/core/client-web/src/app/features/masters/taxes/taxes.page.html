@@ -1,41 +1,60 @@
 <div class="subview-container">
     <div class="subview-header">
-        <h3>Tax Rates</h3>
+        <h3>Tasas de Impuestos</h3>
         <div class="header-actions">
-            <button class="secondary-button"><lucide-icon [img]="FilterIcon"
-                    size="16"></lucide-icon><span>Filters</span></button>
-            <!-- <button class="primary-button"><lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon><span>New
-                    Tax</span></button> -->
-
-            <a routerLink="/app/masters/taxes/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon><span>New
-                    Tax</span></a>
+            <button class="secondary-button" [disabled]="isLoading()">
+                <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
+                <span>Filtros</span>
+            </button>
+            <a routerLink="/app/masters/taxes/new" class="primary-button">
+                <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
+                <span>Nuevo Impuesto</span>
+            </a>
         </div>
     </div>
     <div class="table-container card">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th class="text-right">Rate (%)</th>
-                    <th class="text-center">Country</th>
-                    <th class="actions-column"></th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th class="text-right">Tasa (%)</th>
+                    <th class="text-center">País</th>
+                    <th class="actions-column">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                @for(tax of taxes(); track tax.id) {
-                <tr>
-                    <td><a href="#" class="table-link">{{ tax.name }}</a></td>
-                    <td>{{ tax.type }}</td>
-                    <td class="text-right">{{ tax.rate | number:'1.2-2' }}%</td>
-                    <td class="text-center">{{ tax.countryCode }}</td>
-                    <td class="actions-column"><button class="icon-button"><lucide-icon [img]="MoreHorizontalIcon"
-                                size="18"></lucide-icon></button></td>
-                </tr>
-                } @empty {
-                <tr>
-                    <td colspan="5" class="empty-state">No taxes configured.</td>
-                </tr>
+                @if (isLoading()) {
+                    <tr>
+                        <td colspan="5" class="loading-state">Cargando impuestos...</td>
+                    </tr>
+                } @else {
+                    @for (tax of taxes(); track tax.id) {
+                        <tr>
+                            <td>
+                                <a [routerLink]="['/app/masters/taxes', tax.id, 'edit']" class="table-link">
+                                    {{ tax.name }}
+                                </a>
+                            </td>
+                            <td>{{ tax.type }}</td>
+                            <td class="text-right">{{ tax.rate | number:'1.2-2' }}%</td>
+                            <td class="text-center">{{ tax.countryCode }}</td>
+                            <td class="actions-column">
+                                <div class="action-buttons">
+                                    <a [routerLink]="['/app/masters/taxes', tax.id, 'edit']" class="icon-button" title="Editar">
+                                        <lucide-icon [img]="EditIcon" size="18"></lucide-icon>
+                                    </a>
+                                    <button class="icon-button delete" (click)="deleteTax(tax)" title="Eliminar">
+                                        <lucide-icon [img]="TrashIcon" size="18"></lucide-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="5" class="empty-state">No se han configurado impuestos.</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

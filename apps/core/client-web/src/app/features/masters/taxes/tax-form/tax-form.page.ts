@@ -1,5 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, input, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save } from 'lucide-angular';
@@ -9,14 +8,13 @@ import { TaxType } from '../../../../core/models/tax.model';
 
 @Component({
   selector: 'app-tax-form-page',
-  standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
+  imports: [RouterLink, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './tax-form.page.html',
   styleUrls: ['./tax-form.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaxFormPage implements OnInit {
-  @Input() id?: string;
+  id = input<string>();
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -29,6 +27,19 @@ export class TaxFormPage implements OnInit {
   isLoading = signal(true);
   taxTypes = Object.values(TaxType);
 
+  constructor() {
+    effect(() => {
+      const idValue = this.id();
+      if (idValue) {
+        this.isEditMode.set(true);
+        this.loadTaxData(idValue);
+      } else {
+        this.isEditMode.set(false);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.taxForm = this.fb.group({
       name: ['', Validators.required],
@@ -36,16 +47,10 @@ export class TaxFormPage implements OnInit {
       type: [TaxType.PERCENTAGE, Validators.required],
       countryCode: ['DO'],
     });
-
-    if (this.id) {
-      this.isEditMode.set(true);
-      this.loadTaxData(this.id);
-    } else {
-      this.isLoading.set(false);
-    }
   }
 
   loadTaxData(id: string): void {
+    this.isLoading.set(true);
     this.taxesService.getTaxById(id).subscribe({
       next: (tax) => {
         this.taxForm.patchValue(tax);
@@ -61,15 +66,16 @@ export class TaxFormPage implements OnInit {
   saveTax(): void {
     if (this.taxForm.invalid) {
       this.taxForm.markAllAsTouched();
-      this.notificationService.showError('Por favor, complete los campos requeridos.');
+      this.notificationService.showError('Por favor, completa los campos requeridos.');
       return;
     }
 
     this.isLoading.set(true);
     const formValue = this.taxForm.getRawValue();
 
-    const operation = this.isEditMode()
-      ? this.taxesService.updateTax(this.id!, formValue as UpdateTaxDto)
+    const taxId = this.id();
+    const operation = taxId
+      ? this.taxesService.updateTax(taxId, formValue as UpdateTaxDto)
       : this.taxesService.createTax(formValue as CreateTaxDto);
 
     operation.subscribe({
