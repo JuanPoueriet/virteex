@@ -4,7 +4,7 @@
         <div class="header-actions">
             <button class="secondary-button"><lucide-icon [img]="FilterIcon"
                     size="16"></lucide-icon><span>Filters</span></button>
-            <a routerLink="/app/masters/price-lists/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon><span>New Price
+            <a routerLink="/masters/price-lists/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon><span>New Price
                     List</span></a>
         </div>
     </div>
@@ -24,7 +24,7 @@
             <tbody>
                 @for(list of priceLists(); track list.id) {
                 <tr>
-                    <td><a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="table-link">{{ list.name }}</a></td>
+                    <td><a [routerLink]="['/masters/price-lists', list.id, 'edit']" class="table-link">{{ list.name }}</a></td>
                     <td>{{ list.currency }}</td>
                     <td>{{ list.validFrom | date:'longDate' }}</td>
                     <td>{{ list.validTo | date:'longDate' }}</td>

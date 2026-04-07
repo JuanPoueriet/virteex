@@ -5,7 +5,7 @@
       <p>Gestiona todos los productos y servicios de tu empresa.</p>
     </div>
     <div class="header-actions">
-      <a routerLink="/app/inventory/products/new" class="primary-button" *hasPermission="'products:create'">
+      <a routerLink="/inventory/products/new" class="primary-button" *hasPermission="'products:create'">
         <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
         <span>Nuevo Producto</span>
       </a>
@@ -41,7 +41,7 @@
           @for (product of filteredProducts(); track product.id) {
             <tr>
               <td>
-                <a [routerLink]="['/app/inventory/products', product.id, 'edit']" class="table-link">
+                <a [routerLink]="['/inventory/products', product.id, 'edit']" class="table-link">
                   {{ product.name }}
                 </a>
                 <span class="product-sku">{{ product.sku }}</span>

@@ -4,7 +4,7 @@
         <div class="header-actions">
             <button class="secondary-button"><lucide-icon [img]="FilterIcon"
                     size="16"></lucide-icon><span>Filters</span></button>
-            <a routerLink="/app/masters/suppliers/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon"
+            <a routerLink="/masters/suppliers/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon"
                     size="16"></lucide-icon><span>New Supplier</span></a>
         </div>
     </div>
@@ -22,7 +22,7 @@
             <tbody>
                 @for(supplier of suppliers(); track supplier.id) {
                 <tr>
-                    <td><a routerLink="/app/masters/suppliers/{{supplier.id}}/edit" class="table-link">{{ supplier.name
+                    <td><a [routerLink]="['/masters/suppliers', supplier.id, 'edit']" class="table-link">{{ supplier.name
                             }}</a></td>
                     <td>{{ supplier.taxId }}</td>
                     <td>{{ supplier.email }}</td>
