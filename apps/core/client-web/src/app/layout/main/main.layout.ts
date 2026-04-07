@@ -1,7 +1,7 @@
 // ../app/layout/main/main.layout.ts
 
-import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild, computed } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { BrandingService } from '../../core/services/branding';
@@ -39,8 +39,7 @@ import { ClickOutsideDirective } from '../../shared/directives/click-outside.dir
 
 @Component({
   selector: 'app-main-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective], // ✅ Directiva añadida a los imports
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective, DatePipe], // ✅ Directiva añadida a los imports
   templateUrl: './main.layout.html',
   styleUrls: ['./main.layout.scss'],
 })
@@ -103,6 +102,21 @@ export class MainLayout implements OnInit {
   private router = inject(Router);
 
   settings = this.brandingService.settings;
+
+  public companyLogo = computed(() => {
+    return (
+      this.settings().logoUrl ||
+      this.authService.currentUser()?.organization?.logoUrl ||
+      null
+    );
+  });
+
+  public companyName = computed(() => {
+    return (
+      this.authService.currentUser()?.organization?.name || 'FacturaPRO'
+    );
+  });
+
   isUserMenuOpen = signal(false);
   isNotificationMenuOpen = signal(false);
   isSearchOpen = signal(false);

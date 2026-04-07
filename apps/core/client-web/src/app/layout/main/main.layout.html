@@ -1,24 +1,22 @@
-<div
-  class="impersonation-banner banner"
-  *ngIf="authService.currentUser()?.isImpersonating"
->
-  Estás viendo el sistema como:
-  <strong>
-    {{ authService.currentUser()?.firstName }}
-    {{ authService.currentUser()?.lastName }}
-  </strong>
-  <button (click)="stopImpersonation()">Volver a mi cuenta</button>
-</div>
-
-<div
-  class="payment-pending-banner banner"
-  *ngIf="authService.currentUser()?.organization?.subscriptionStatus === 'past_due' && isGracePeriodActive()"
->
-  <div class="banner-content">
-    <strong>¡Atención!</strong> Tu pago está pendiente. Tienes acceso temporal hasta el {{ authService.currentUser()?.organization?.gracePeriodEnd | date:'mediumDate' }}.
+@if (authService.currentUser()?.isImpersonating) {
+  <div class="impersonation-banner banner">
+    Estás viendo el sistema como:
+    <strong>
+      {{ authService.currentUser()?.firstName }}
+      {{ authService.currentUser()?.lastName }}
+    </strong>
+    <button (click)="stopImpersonation()">Volver a mi cuenta</button>
   </div>
-  <a routerLink="/settings/billing" class="btn-resolve">Resolver Ahora</a>
-</div>
+}
+
+@if (authService.currentUser()?.organization?.subscriptionStatus === 'past_due' && isGracePeriodActive()) {
+  <div class="payment-pending-banner banner">
+    <div class="banner-content">
+      <strong>¡Atención!</strong> Tu pago está pendiente. Tienes acceso temporal hasta el {{ authService.currentUser()?.organization?.gracePeriodEnd | date:'mediumDate' }}.
+    </div>
+    <a routerLink="/settings/billing" class="btn-resolve">Resolver Ahora</a>
+  </div>
+}
 
 
 
@@ -26,16 +24,14 @@
 
 <aside class="main-sidebar">
   <div class="logo-container">
-    @if (authService.currentUser()?.organization?.logoUrl; as logo) {
-    <img
-      [src]="logo"
-      [alt]="'ALT.COMPANY_LOGO' | translate"
-      class="company-logo"
-    />
+    @if (companyLogo(); as logo) {
+      <img
+        [src]="logo"
+        [alt]="'ALT.COMPANY_LOGO' | translate"
+        class="company-logo"
+      />
     } @else {
-    <span class="logo-text">{{
-      authService.currentUser()?.organization?.name || "FacturaPRO"
-    }}</span>
+      <span class="logo-text">{{ companyName() }}</span>
     }
   </div>
 
@@ -45,16 +41,14 @@
 <header class="main-topbar">
   <div class="topbar-left">
     <div class="logo">
-      @if (authService.currentUser()?.organization?.logoUrl; as logo) {
-      <img
-        [src]="logo"
-        [alt]="'ALT.COMPANY_LOGO' | translate"
-        class="company-logo"
-      />
+      @if (companyLogo(); as logo) {
+        <img
+          [src]="logo"
+          [alt]="'ALT.COMPANY_LOGO' | translate"
+          class="company-logo"
+        />
       } @else {
-      <span class="logo-text">{{
-        authService.currentUser()?.organization?.name || "FacturaPRO"
-      }}</span>
+        <span class="logo-text">{{ companyName() }}</span>
       }
     </div>
 
