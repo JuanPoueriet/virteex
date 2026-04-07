@@ -114,8 +114,8 @@ export const SETTINGS_ROUTES: Routes = [
             // Legacy / Mapped
             {
                 path: 'billing',
-                redirectTo: 'smtp', // Corrección temporal para enlaces antiguos
-                pathMatch: 'full'
+                title: 'Facturación y Plan',
+                loadComponent: () => import('./billing/billing.page').then(m => m.BillingPage)
             },
             { path: '', redirectTo: 'profile', pathMatch: 'full' }
         ]

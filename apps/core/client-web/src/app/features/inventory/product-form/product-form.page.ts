@@ -1,11 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save, Image } from 'lucide-angular';
 import { InventoryService, CreateProductDto, UpdateProductDto } from '../../../core/api/inventory.service';
 import { NotificationService } from '../../../core/services/notification';
-import { Product } from '../../../core/models/product.model';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 
 @Component({
@@ -17,10 +16,9 @@ import { HasPermissionDirective } from '../../../shared/directives/has-permissio
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormPage implements OnInit {
-  @Input() id?: string;
-
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
 
@@ -31,6 +29,7 @@ export class ProductFormPage implements OnInit {
   isEditMode = signal(false);
   isLoading = signal(true);
   imagePreview = signal<string | ArrayBuffer | null>(null);
+  private productId: string | null = null;
 
   ngOnInit(): void {
     this.productForm = this.fb.group({
@@ -45,9 +44,10 @@ export class ProductFormPage implements OnInit {
       status: ['Active', Validators.required],
     });
 
-    if (this.id) {
+    this.productId = this.route.snapshot.paramMap.get('id');
+    if (this.productId) {
       this.isEditMode.set(true);
-      this.loadProductData(this.id);
+      this.loadProductData(this.productId);
     } else {
       this.isLoading.set(false);
     }
@@ -64,7 +64,7 @@ export class ProductFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el producto.');
-        this.router.navigate(['/app/inventory/products']);
+        this.router.navigate(['/inventory/products']);
       }
     });
   }
@@ -93,13 +93,13 @@ export class ProductFormPage implements OnInit {
     // Aquí podrías añadir la lógica de subida de imagen y asignar la URL a formValue.imageUrl
 
     const operation = this.isEditMode()
-      ? this.inventoryService.updateProduct(this.id!, formValue as UpdateProductDto)
+      ? this.inventoryService.updateProduct(this.productId!, formValue as UpdateProductDto)
       : this.inventoryService.createProduct(formValue as CreateProductDto);
 
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Producto ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/inventory/products']);
+        this.router.navigate(['/inventory/products']);
       },
       error: (err) => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el producto.`);

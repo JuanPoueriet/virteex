@@ -91,6 +91,6 @@ export class ProductsPage implements OnInit {
   }
 
   navigateToEdit(productId: string): void {
-    this.router.navigate(['/app/inventory/products', productId, 'edit']);
+    this.router.navigate(['/inventory/products', productId, 'edit']);
   }
 }

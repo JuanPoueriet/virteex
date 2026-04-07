@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save } from 'lucide-angular';
 import { SuppliersService, CreateSupplierDto, UpdateSupplierDto } from '../../../../core/api/suppliers.service';
@@ -15,10 +15,9 @@ import { NotificationService } from '../../../../core/services/notification';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SupplierForm implements OnInit {
-  @Input() id?: string;
-
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private suppliersService = inject(SuppliersService);
   private notificationService = inject(NotificationService);
 
@@ -27,6 +26,7 @@ export class SupplierForm implements OnInit {
   supplierForm!: FormGroup;
   isEditMode = signal(false);
   isLoading = signal(true);
+  private supplierId: string | null = null;
 
   ngOnInit(): void {
     this.supplierForm = this.fb.group({
@@ -38,9 +38,10 @@ export class SupplierForm implements OnInit {
       address: [''],
     });
 
-    if (this.id) {
+    this.supplierId = this.route.snapshot.paramMap.get('id');
+    if (this.supplierId) {
       this.isEditMode.set(true);
-      this.loadSupplierData(this.id);
+      this.loadSupplierData(this.supplierId);
     } else {
       this.isLoading.set(false);
     }
@@ -54,7 +55,7 @@ export class SupplierForm implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el proveedor.');
-        this.router.navigate(['/app/contacts/suppliers']);
+        this.router.navigate(['/masters/suppliers']);
       },
     });
   }
@@ -70,13 +71,13 @@ export class SupplierForm implements OnInit {
     const formValue = this.supplierForm.getRawValue();
 
     const operation = this.isEditMode()
-      ? this.suppliersService.updateSupplier(this.id!, formValue as UpdateSupplierDto)
+      ? this.suppliersService.updateSupplier(this.supplierId!, formValue as UpdateSupplierDto)
       : this.suppliersService.createSupplier(formValue as CreateSupplierDto);
 
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Proveedor ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/contacts/suppliers']);
+        this.router.navigate(['/masters/suppliers']);
       },
       error: () => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el proveedor.`);

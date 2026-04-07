@@ -1,7 +1,7 @@
 // app/features/masters/price-lists/price-lists-form/price-list-form.page.ts
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save, Plus, Trash2 } from 'lucide-angular';
 import { PriceListsService, CreatePriceListDto, UpdatePriceListDto } from '../../../../core/api/price-lists.service';
@@ -19,10 +19,9 @@ import { PriceListItem, PriceListStatus } from '../../../../core/models/price-li
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceListFormPage implements OnInit {
-  @Input() id?: string;
-
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private priceListsService = inject(PriceListsService);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
@@ -36,6 +35,7 @@ export class PriceListFormPage implements OnInit {
   isLoading = signal(true);
   isSaving = signal(false); // <-- Añadido para controlar el estado de guardado
   products = signal<Product[]>([]);
+  private priceListId: string | null = null;
 
   statusOptions: PriceListStatus[] = [PriceListStatus.DRAFT, PriceListStatus.ACTIVE, PriceListStatus.INACTIVE];
 
@@ -52,9 +52,10 @@ export class PriceListFormPage implements OnInit {
 
     this.loadProducts();
 
-    if (this.id) {
+    this.priceListId = this.route.snapshot.paramMap.get('id');
+    if (this.priceListId) {
       this.isEditMode.set(true);
-      this.loadPriceListData(this.id);
+      this.loadPriceListData(this.priceListId);
     } else {
       this.isLoading.set(false);
       this.addLine();
@@ -87,7 +88,7 @@ export class PriceListFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('Could not load price list data.');
-        this.router.navigate(['/app/masters/price-lists']);
+        this.router.navigate(['/masters/price-lists']);
       },
     });
   }
@@ -126,13 +127,13 @@ export class PriceListFormPage implements OnInit {
     const formValue = this.priceListForm.getRawValue();
 
     const operation = this.isEditMode()
-      ? this.priceListsService.updatePriceList(this.id!, formValue as UpdatePriceListDto)
+      ? this.priceListsService.updatePriceList(this.priceListId!, formValue as UpdatePriceListDto)
       : this.priceListsService.createPriceList(formValue as CreatePriceListDto);
 
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Price list ${this.isEditMode() ? 'updated' : 'created'} successfully.`);
-        this.router.navigate(['/app/masters/price-lists']);
+        this.router.navigate(['/masters/price-lists']);
       },
       error: (err) => {
         console.error(err);
