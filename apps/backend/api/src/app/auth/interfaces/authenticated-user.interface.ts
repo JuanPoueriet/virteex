@@ -5,6 +5,7 @@ export interface SafeUser extends Partial<Omit<User, 'password' | 'twoFactorSecr
   email: string;
   firstName: string;
   lastName: string;
+  organizationId: string;
   roles: any[]; // Or strict Role type
   permissions: string[];
   organization?: any;
