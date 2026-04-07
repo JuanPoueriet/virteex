@@ -18,6 +18,7 @@ export class ProductFormPage implements OnInit {
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
 
@@ -28,6 +29,7 @@ export class ProductFormPage implements OnInit {
   isEditMode = signal(false);
   isLoading = signal(true);
   imagePreview = signal<string | ArrayBuffer | null>(null);
+  private productId: string | null = null;
 
   constructor() {
     effect(() => {
@@ -68,7 +70,7 @@ export class ProductFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el producto.');
-        this.router.navigate(['/app/inventory/products']);
+        this.router.navigate(['/inventory/products']);
       }
     });
   }
@@ -100,7 +102,7 @@ export class ProductFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Producto ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/inventory/products']);
+        this.router.navigate(['/inventory/products']);
       },
       error: (err) => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el producto.`);

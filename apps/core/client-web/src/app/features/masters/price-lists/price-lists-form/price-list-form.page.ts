@@ -20,6 +20,7 @@ export class PriceListFormPage implements OnInit {
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private priceListsService = inject(PriceListsService);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
@@ -33,6 +34,7 @@ export class PriceListFormPage implements OnInit {
   isLoading = signal(true);
   isSaving = signal(false);
   products = signal<Product[]>([]);
+  private priceListId: string | null = null;
 
   statusOptions: PriceListStatus[] = [PriceListStatus.DRAFT, PriceListStatus.ACTIVE, PriceListStatus.INACTIVE];
 
