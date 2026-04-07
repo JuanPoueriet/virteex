@@ -480,6 +480,18 @@
       }
     }
   }
+
+  .quick-action-shortcut {
+    margin-left: auto;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--text-tertiary);
+    background: var(--bg-layer-2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.15rem 0.4rem;
+    white-space: nowrap;
+  }
 }
 
 // --- SECCIÓN DE NOTIFICACIONES MEJORADA ---

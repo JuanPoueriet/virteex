@@ -46,6 +46,12 @@ import { ClickOutsideDirective } from '../../shared/directives/click-outside.dir
 })
 export class MainLayout implements OnInit {
   notificationCenter = inject(NotificationCenterService);
+  private readonly quickCreateShortcuts = [
+    { key: 'i', route: '/invoices/new' },
+    { key: 'q', route: '/quotes/new' },
+    { key: 'c', route: '/customers/new' },
+    { key: 'p', route: '/products/new' },
+  ] as const;
   
   // ✅ Lógica para la Modal "Crear Nuevo"
   isQuickCreateModalOpen: WritableSignal<boolean> = signal(false);
@@ -230,5 +236,29 @@ export class MainLayout implements OnInit {
     if (searchElement && !searchElement.contains(event.target as Node)) {
       this.closeSearch();
     }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (!event.altKey || !event.shiftKey || this.isTypingContext(event.target)) {
+      return;
+    }
+
+    const shortcut = this.quickCreateShortcuts.find(({ key }) => key === event.key.toLowerCase());
+    if (!shortcut) {
+      return;
+    }
+
+    event.preventDefault();
+    this.closeQuickCreateModal();
+    this.router.navigateByUrl(shortcut.route);
+  }
+
+  private isTypingContext(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+      return false;
+    }
+
+    return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
   }
 }
