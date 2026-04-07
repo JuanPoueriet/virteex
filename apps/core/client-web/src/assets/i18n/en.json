@@ -152,7 +152,16 @@
       "COPIED": "Copied"
   },
   "ACTIONS": {
-    "CREATE_NEW": "Create New"
+    "CREATE_NEW": "Create New",
+    "NEW_INVOICE": "New invoice",
+    "NEW_QUOTE": "New quote",
+    "NEW_CUSTOMER": "New customer",
+    "NEW_PRODUCT": "New product"
+  },
+  "NOTIFICATIONS": {
+    "MARK_ALL_AS_READ": "Mark all as read",
+    "NO_NOTIFICATIONS": "No notifications",
+    "VIEW_ALL": "View all"
   },
   "ALT": {
     "COMPANY_LOGO": "Company Logo"
