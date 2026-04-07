@@ -5,7 +5,8 @@
       <div class="profile-header__avatar-container">
         <div class="profile-header__avatar">
           <img [src]="avatarPreview() || 'assets/images/default-avatar.svg'"
-               alt="Profile Avatar">
+               alt="Profile Avatar"
+               class="profile-header__avatar-image">
         </div>
         <label class="profile-header__upload-btn" title="{{ 'SETTINGS.PROFILE.CHANGE_AVATAR' | translate }}">
           <lucide-icon [img]="ImageIcon" class="w-5 h-5"></lucide-icon>
