@@ -1,24 +1,23 @@
 import { Component, ChangeDetectionStrategy, signal, inject, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Search, X, Plus, Minus, Trash2, CreditCard } from 'lucide-angular';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { Product } from '../../../core/models/product.model';
-
-// Reutilizamos el modelo de producto
-// import { Product } from '../../inventory/products/products.page';
+import { InventoryService } from '../../../core/api/inventory.service';
+import { NotificationService } from '../../../core/services/notification';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-pos-page',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [ReactiveFormsModule, LucideAngularModule, CurrencyPipe, DecimalPipe],
   templateUrl: './pos.page.html',
   styleUrls: ['./pos.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PosPage implements OnInit {
   private fb = inject(FormBuilder);
+  private inventoryService = inject(InventoryService);
+  private notificationService = inject(NotificationService);
 
   protected readonly SearchIcon = Search;
   protected readonly XIcon = X;
@@ -27,26 +26,21 @@ export class PosPage implements OnInit {
   protected readonly TrashIcon = Trash2;
   protected readonly CreditCardIcon = CreditCard;
 
-  // Catálogo de productos simulado
-  allProducts = signal<Product[]>([
-    // { id: 'P001', name: 'Laptop Pro 15"', sku: 'LP-15-PRO', category: 'Electrónica', price: 1599.99, stock: 25, status: 'En Stock', imageUrl: 'https://i.imgur.com/4q0d7w9.png' },
-    // { id: 'P002', name: 'Mouse Inalámbrico Ergonómico', sku: 'MS-ERG-WL', category: 'Accesorios', price: 49.50, stock: 8, status: 'Bajo Stock', imageUrl: 'https://i.imgur.com/h3G6Qv4.png' },
-    // { id: 'P003', name: 'Teclado Mecánico RGB', sku: 'KB-MEC-RGB', category: 'Accesorios', price: 120.00, stock: 0, status: 'Agotado', imageUrl: 'https://i.imgur.com/a9a626d.png' },
-    // { id: 'P004', name: 'Monitor UltraWide 34"', sku: 'MN-UW-34', category: 'Monitores', price: 799.00, stock: 15, status: 'En Stock', imageUrl: 'https://i.imgur.com/L30ER72.png' },
-  ]);
+  allProducts = signal<Product[]>([]);
+  isLoading = signal(true);
+  searchTerm = signal('');
+
+  filteredProducts = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    return this.allProducts().filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      (p.sku && p.sku.toLowerCase().includes(term))
+    );
+  });
 
   saleForm!: FormGroup;
 
-  private formChanges = toSignal(this.saleForm.valueChanges, { initialValue: {} });
-
-  subtotal = computed(() => {
-    return this.cartItems.controls.reduce((acc, control) => {
-      const quantity = control.get('quantity')?.value || 0;
-      const price = control.get('price')?.value || 0;
-      return acc + (quantity * price);
-    }, 0);
-  });
-
+  subtotal = signal(0);
   taxAmount = computed(() => this.subtotal() * 0.18);
   total = computed(() => this.subtotal() + this.taxAmount());
 
@@ -55,6 +49,26 @@ export class PosPage implements OnInit {
       cartItems: this.fb.array([]),
       customer: ['Cliente General'],
     });
+
+    this.loadProducts();
+
+    this.saleForm.get('cartItems')?.valueChanges.subscribe(() => {
+        this.calculateTotals();
+    });
+  }
+
+  loadProducts(): void {
+    this.isLoading.set(true);
+    this.inventoryService.getProducts().subscribe({
+      next: (products) => {
+        this.allProducts.set(products);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.notificationService.showError('No se pudieron cargar los productos.');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   get cartItems(): FormArray {
@@ -62,11 +76,13 @@ export class PosPage implements OnInit {
   }
 
   addToCart(product: Product): void {
-    const existingItem = this.cartItems.controls.find(
+    const existingItemIndex = this.cartItems.controls.findIndex(
       (control) => control.get('productId')?.value === product.id
     );
-    if (existingItem) {
-      existingItem.get('quantity')?.setValue(existingItem.get('quantity')?.value + 1);
+
+    if (existingItemIndex > -1) {
+      const item = this.cartItems.at(existingItemIndex);
+      item.get('quantity')?.setValue(item.get('quantity')?.value + 1);
     } else {
       const newItem = this.fb.group({
         productId: [product.id],
@@ -92,15 +108,33 @@ export class PosPage implements OnInit {
     this.cartItems.removeAt(index);
   }
 
-  getItemTotal(item: any): number {
+  calculateTotals(): void {
+    const sub = this.cartItems.controls.reduce((acc, control) => {
+      const quantity = control.get('quantity')?.value || 0;
+      const price = control.get('price')?.value || 0;
+      return acc + (quantity * price);
+    }, 0);
+    this.subtotal.set(sub);
+  }
+
+  getItemTotal(index: number): number {
+    const item = this.cartItems.at(index);
     return (item.get('quantity')?.value || 0) * (item.get('price')?.value || 0);
+  }
+
+  onSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
   }
 
   completeSale(): void {
     if (this.saleForm.valid && this.cartItems.length > 0) {
-      console.log('Venta completada:', this.saleForm.value);
-      // Lógica para enviar al backend y luego limpiar
+      // Aquí se llamaría al servicio de ventas
+      this.notificationService.showSuccess('Venta completada con éxito.');
       this.cartItems.clear();
+      this.searchTerm.set('');
+    } else {
+      this.notificationService.showError('El carrito está vacío.');
     }
   }
 }
