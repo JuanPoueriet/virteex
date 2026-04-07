@@ -689,6 +689,8 @@
 }
 
 .user-menu-trigger {
+
+  gap: 0.75rem;
   @include text-button;
   padding: 6px 12px;
 
