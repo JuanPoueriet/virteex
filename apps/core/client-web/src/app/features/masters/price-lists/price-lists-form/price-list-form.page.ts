@@ -1,6 +1,4 @@
-// app/features/masters/price-lists/price-lists-form/price-list-form.page.ts
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, input, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save, Plus, Trash2 } from 'lucide-angular';
@@ -8,18 +6,17 @@ import { PriceListsService, CreatePriceListDto, UpdatePriceListDto } from '../..
 import { InventoryService } from '../../../../core/api/inventory.service';
 import { NotificationService } from '../../../../core/services/notification';
 import { Product } from '../../../../core/models/product.model';
-import { PriceListItem, PriceListStatus } from '../../../../core/models/price-list.model'; // <-- Corregido el import
+import { PriceListItem, PriceListStatus } from '../../../../core/models/price-list.model';
 
 @Component({
   selector: 'app-price-list-form-page',
-  standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
+  imports: [RouterLink, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './price-list-form.page.html',
   styleUrls: ['./price-list-form.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PriceListFormPage implements OnInit {
-  @Input() id?: string;
+  id = input<string>();
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -34,10 +31,26 @@ export class PriceListFormPage implements OnInit {
   priceListForm!: FormGroup;
   isEditMode = signal(false);
   isLoading = signal(true);
-  isSaving = signal(false); // <-- Añadido para controlar el estado de guardado
+  isSaving = signal(false);
   products = signal<Product[]>([]);
 
   statusOptions: PriceListStatus[] = [PriceListStatus.DRAFT, PriceListStatus.ACTIVE, PriceListStatus.INACTIVE];
+
+  constructor() {
+    effect(() => {
+      const idValue = this.id();
+      if (idValue) {
+        this.isEditMode.set(true);
+        this.loadPriceListData(idValue);
+      } else {
+        this.isEditMode.set(false);
+        this.isLoading.set(false);
+        if (this.lines.length === 0) {
+            this.addLine();
+        }
+      }
+    });
+  }
 
   ngOnInit(): void {
     const today = new Date().toISOString().split('T')[0];
@@ -51,24 +64,17 @@ export class PriceListFormPage implements OnInit {
     });
 
     this.loadProducts();
-
-    if (this.id) {
-      this.isEditMode.set(true);
-      this.loadPriceListData(this.id);
-    } else {
-      this.isLoading.set(false);
-      this.addLine();
-    }
   }
 
   loadProducts(): void {
     this.inventoryService.getProducts().subscribe({
       next: (products) => this.products.set(products),
-      error: () => this.notificationService.showError('Could not load products.'),
+      error: () => this.notificationService.showError('No se pudieron cargar los productos.'),
     });
   }
 
   loadPriceListData(id: string): void {
+    this.isLoading.set(true);
     this.priceListsService.getPriceListById(id).subscribe({
       next: (priceList) => {
         this.priceListForm.patchValue({
@@ -77,16 +83,15 @@ export class PriceListFormPage implements OnInit {
           validTo: new Date(priceList.validTo).toISOString().split('T')[0],
         });
         
-        // Limpiamos las líneas existentes antes de añadir las nuevas
         this.lines.clear();
-        priceList.items.forEach((item: PriceListItem) => { // <-- Tipo explícito añadido
+        priceList.items.forEach((item: PriceListItem) => {
             this.lines.push(this.createLine(item.productId, item.price));
         });
 
         this.isLoading.set(false);
       },
       error: () => {
-        this.notificationService.showError('Could not load price list data.');
+        this.notificationService.showError('No se pudo cargar la lista de precios.');
         this.router.navigate(['/app/masters/price-lists']);
       },
     });
@@ -116,7 +121,7 @@ export class PriceListFormPage implements OnInit {
   savePriceList(): void {
     if (this.priceListForm.invalid) {
       this.priceListForm.markAllAsTouched();
-      this.notificationService.showError('Please complete all required fields.');
+      this.notificationService.showError('Por favor, completa los campos requeridos.');
       return;
     }
 
@@ -125,18 +130,18 @@ export class PriceListFormPage implements OnInit {
     
     const formValue = this.priceListForm.getRawValue();
 
-    const operation = this.isEditMode()
-      ? this.priceListsService.updatePriceList(this.id!, formValue as UpdatePriceListDto)
+    const priceListId = this.id();
+    const operation = priceListId
+      ? this.priceListsService.updatePriceList(priceListId, formValue as UpdatePriceListDto)
       : this.priceListsService.createPriceList(formValue as CreatePriceListDto);
 
     operation.subscribe({
       next: () => {
-        this.notificationService.showSuccess(`Price list ${this.isEditMode() ? 'updated' : 'created'} successfully.`);
+        this.notificationService.showSuccess(`Lista de precios ${this.isEditMode() ? 'actualizada' : 'creada'} exitosamente.`);
         this.router.navigate(['/app/masters/price-lists']);
       },
       error: (err) => {
-        console.error(err);
-        this.notificationService.showError(`Error ${this.isEditMode() ? 'updating' : 'creating'} price list.`);
+        this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} la lista de precios.`);
         this.isSaving.set(false);
       },
       complete: () => {

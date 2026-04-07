@@ -1,6 +1,4 @@
-// app/features/contacts/customer-form/customer-form.page.ts
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, input, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideAngularModule, Save } from 'lucide-angular';
@@ -9,14 +7,13 @@ import { NotificationService } from '../../../core/services/notification';
 
 @Component({
   selector: 'app-customer-form-page',
-  standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, LucideAngularModule],
+  imports: [RouterLink, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './customer-form.page.html',
   styleUrls: ['./customer-form.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerFormPage implements OnInit {
-  @Input() id?: string;
+  id = input<string>();
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -28,6 +25,19 @@ export class CustomerFormPage implements OnInit {
   customerForm!: FormGroup;
   isEditMode = signal(false);
   isLoading = signal(true);
+
+  constructor() {
+    effect(() => {
+      const idValue = this.id();
+      if (idValue) {
+        this.isEditMode.set(true);
+        this.loadCustomerData(idValue);
+      } else {
+        this.isEditMode.set(false);
+        this.isLoading.set(false);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.customerForm = this.fb.group({
@@ -42,16 +52,10 @@ export class CustomerFormPage implements OnInit {
       postalCode: [''],
       country: ['DO', Validators.required],
     });
-
-    if (this.id) {
-      this.isEditMode.set(true);
-      this.loadCustomerData(this.id);
-    } else {
-      this.isLoading.set(false);
-    }
   }
 
   loadCustomerData(id: string): void {
+    this.isLoading.set(true);
     this.customersService.getCustomerById(id).subscribe({
       next: (customer) => {
         this.customerForm.patchValue(customer);
@@ -74,8 +78,9 @@ export class CustomerFormPage implements OnInit {
     this.isLoading.set(true);
     const formValue = this.customerForm.getRawValue();
 
-    const operation = this.isEditMode()
-      ? this.customersService.updateCustomer(this.id!, formValue as UpdateCustomerDto)
+    const customerId = this.id();
+    const operation = customerId
+      ? this.customersService.updateCustomer(customerId, formValue as UpdateCustomerDto)
       : this.customersService.createCustomer(formValue as CreateCustomerDto);
 
     operation.subscribe({

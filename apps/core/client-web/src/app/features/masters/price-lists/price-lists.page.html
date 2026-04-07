@@ -1,42 +1,68 @@
 <div class="subview-container">
     <div class="subview-header">
-        <h3>Price Lists</h3>
+        <h3>Listas de Precios</h3>
         <div class="header-actions">
-            <button class="secondary-button"><lucide-icon [img]="FilterIcon"
-                    size="16"></lucide-icon><span>Filters</span></button>
-            <a routerLink="/app/masters/price-lists/new" class="primary-button"><lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon><span>New Price
-                    List</span></a>
+            <button class="secondary-button" [disabled]="isLoading()">
+                <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
+                <span>Filtros</span>
+            </button>
+            <a routerLink="/app/masters/price-lists/new" class="primary-button">
+                <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
+                <span>Nueva Lista</span>
+            </a>
         </div>
     </div>
     <div class="table-container card">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Currency</th>
-                    <th>Valid From</th>
-                    <th>Valid To</th>
-                    <th class="text-center">Items</th>
-                    <th>Status</th>
-                    <th class="actions-column"></th>
+                    <th>Nombre</th>
+                    <th>Moneda</th>
+                    <th>Válido Desde</th>
+                    <th>Válido Hasta</th>
+                    <th class="text-center">Ítems</th>
+                    <th>Estado</th>
+                    <th class="actions-column">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                @for(list of priceLists(); track list.id) {
-                <tr>
-                    <td><a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="table-link">{{ list.name }}</a></td>
-                    <td>{{ list.currency }}</td>
-                    <td>{{ list.validFrom | date:'longDate' }}</td>
-                    <td>{{ list.validTo | date:'longDate' }}</td>
-                    <td class="text-center">{{ list.items.length }}</td>
-                    <td><span class="status-badge" [ngClass]="getStatusClass(list.status)">{{ list.status }}</span></td>
-                    <td class="actions-column"><button class="icon-button"><lucide-icon [img]="MoreHorizontalIcon"
-                                size="18"></lucide-icon></button></td>
-                </tr>
-                } @empty {
-                <tr>
-                    <td colspan="7" class="empty-state">No price lists found.</td>
-                </tr>
+                @if (isLoading()) {
+                    <tr>
+                        <td colspan="7" class="loading-state">Cargando listas de precios...</td>
+                    </tr>
+                } @else {
+                    @for (list of priceLists(); track list.id) {
+                        <tr>
+                            <td>
+                                <a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="table-link">
+                                    {{ list.name }}
+                                </a>
+                            </td>
+                            <td>{{ list.currency }}</td>
+                            <td>{{ list.validFrom | date:'mediumDate' }}</td>
+                            <td>{{ list.validTo | date:'mediumDate' }}</td>
+                            <td class="text-center">{{ list.items.length }}</td>
+                            <td>
+                                <span class="status-badge" [class]="getStatusClass(list.status)">
+                                    {{ list.status }}
+                                </span>
+                            </td>
+                            <td class="actions-column">
+                                <div class="action-buttons">
+                                    <a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="icon-button" title="Editar">
+                                        <lucide-icon [img]="EditIcon" size="18"></lucide-icon>
+                                    </a>
+                                    <button class="icon-button delete" (click)="deletePriceList(list.id)" title="Eliminar">
+                                        <lucide-icon [img]="TrashIcon" size="18"></lucide-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="7" class="empty-state">No se encontraron listas de precios.</td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
