@@ -18,6 +18,7 @@ import { AccountSegmentDefinition } from './entities/account-segment-definition.
 import { AccountSegmentsService } from './account-segments.service';
 import { AccountSegmentsController } from './account-segments.controller';
 import { AccountJobsProcessor } from './account-jobs.processor';
+import { ChartOfAccountsLifecycleListener } from './listeners/chart-of-accounts-lifecycle.listener';
 import { WebsocketsModule } from '../websockets/websockets.module';
 
 import { AccountHierarchyVersion } from './entities/account-hierarchy-version.entity';
@@ -53,6 +54,7 @@ import { AccountHierarchyVersion } from './entities/account-hierarchy-version.en
     BalanceUpdateProcessor,
     AccountSegmentsService,
     AccountJobsProcessor,
+    ChartOfAccountsLifecycleListener,
   ],
   exports: [ChartOfAccountsService, BalanceUpdateService],
 })

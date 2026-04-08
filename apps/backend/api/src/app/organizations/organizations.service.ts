@@ -2,6 +2,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Organization } from './entities/organization.entity';
 import { OrganizationSubsidiary } from './entities/organization-subsidiary.entity';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -14,6 +15,7 @@ export class OrganizationsService {
     private readonly organizationRepository: Repository<Organization>,
     @InjectRepository(OrganizationSubsidiary)
     private readonly subsidiaryRepository: Repository<OrganizationSubsidiary>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findOne(id: string): Promise<Organization> {
@@ -47,6 +49,8 @@ export class OrganizationsService {
     });
     const savedOrg = await this.organizationRepository.save(newOrg);
 
+    this.eventEmitter.emit('organization.created', { organizationId: savedOrg.id });
+
     // 2. Create the relationship
     const subsidiary = this.subsidiaryRepository.create({
       parentOrganizationId: parentOrganizationId,
@@ -60,7 +64,9 @@ export class OrganizationsService {
   async create(createOrganizationDto: Partial<Organization>, manager?: EntityManager): Promise<Organization> {
     const repo = manager ? manager.getRepository(Organization) : this.organizationRepository;
     const org = repo.create(createOrganizationDto);
-    return repo.save(org);
+    const savedOrg = await repo.save(org);
+    this.eventEmitter.emit('organization.created', { organizationId: savedOrg.id });
+    return savedOrg;
   }
 
   async findByTaxId(taxId: string): Promise<Organization | null> {
