@@ -54,6 +54,6 @@ import { AccountHierarchyVersion } from './entities/account-hierarchy-version.en
     AccountSegmentsService,
     AccountJobsProcessor,
   ],
-  exports: [ChartOfAccountsService, BalanceUpdateService],
+  exports: [ChartOfAccountsService, BalanceUpdateService, AccountSegmentsService],
 })
 export class ChartOfAccountsModule {}

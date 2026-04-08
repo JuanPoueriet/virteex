@@ -6,7 +6,7 @@ import { Organization } from './entities/organization.entity';
 import { OrganizationSubsidiary } from './entities/organization-subsidiary.entity';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateSubsidiaryDto } from './dto/create-subsidiary.dto';
-import { AccountSegmentDefinition } from '../chart-of-accounts/entities/account-segment-definition.entity';
+import { AccountSegmentsService } from '../chart-of-accounts/account-segments.service';
 
 @Injectable()
 export class OrganizationsService {
@@ -15,6 +15,7 @@ export class OrganizationsService {
     private readonly organizationRepository: Repository<Organization>,
     @InjectRepository(OrganizationSubsidiary)
     private readonly subsidiaryRepository: Repository<OrganizationSubsidiary>,
+    private readonly accountSegmentsService: AccountSegmentsService,
   ) {}
 
   async findOne(id: string): Promise<Organization> {
@@ -50,7 +51,7 @@ export class OrganizationsService {
       const savedOrg = await manager.save(newOrg);
 
       // 2. Initialize segment definitions
-      await this.createDefaultSegmentDefinitions(savedOrg.id, manager);
+      await this.accountSegmentsService.initializeDefault(savedOrg.id, manager);
 
       // 3. Create the relationship
       const subsidiary = manager.create(OrganizationSubsidiary, {
@@ -63,40 +64,23 @@ export class OrganizationsService {
     });
   }
 
-  async create(createOrganizationDto: Partial<Organization>, manager?: EntityManager): Promise<Organization> {
+  async create(
+    createOrganizationDto: Partial<Organization>,
+    manager?: EntityManager,
+  ): Promise<Organization> {
     if (manager) {
       const org = manager.create(Organization, createOrganizationDto);
       const savedOrg = await manager.save(org);
-      await this.createDefaultSegmentDefinitions(savedOrg.id, manager);
+      await this.accountSegmentsService.initializeDefault(savedOrg.id, manager);
       return savedOrg;
     }
 
     return this.organizationRepository.manager.transaction(async (m) => {
       const org = m.create(Organization, createOrganizationDto);
       const savedOrg = await m.save(org);
-      await this.createDefaultSegmentDefinitions(savedOrg.id, m);
+      await this.accountSegmentsService.initializeDefault(savedOrg.id, m);
       return savedOrg;
     });
-  }
-
-  private async createDefaultSegmentDefinitions(organizationId: string, manager: EntityManager): Promise<void> {
-    const segmentRepo = manager.getRepository(AccountSegmentDefinition);
-
-    const defaults = [
-      { name: 'Nivel 1', length: 1, isRequired: true, order: 0 },
-      { name: 'Nivel 2', length: 2, isRequired: true, order: 1 },
-      { name: 'Nivel 3', length: 2, isRequired: true, order: 2 },
-      { name: 'Nivel 4', length: 3, isRequired: true, order: 3 },
-    ];
-
-    const definitions = defaults.map((d) =>
-      segmentRepo.create({
-        ...d,
-        organizationId,
-      }),
-    );
-
-    await segmentRepo.save(definitions);
   }
 
   async findByTaxId(taxId: string): Promise<Organization | null> {

@@ -40,6 +40,17 @@ export interface CreateAccountDto {
 
 export type UpdateAccountDto = Partial<CreateAccountDto>;
 
+export interface AccountSegmentDefinition {
+  id?: string;
+  name: string;
+  length: number;
+  isRequired: boolean;
+  order?: number;
+}
+
+export interface ConfigureAccountSegmentsDto {
+  segments: AccountSegmentDefinition[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class ChartOfAccountsApiService {
@@ -70,7 +81,15 @@ export class ChartOfAccountsApiService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  getSegmentDefinitions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/segment-definitions`);
+  getSegmentDefinitions(): Observable<AccountSegmentDefinition[]> {
+    return this.http.get<AccountSegmentDefinition[]>(`${this.apiUrl}/segment-definitions`);
+  }
+
+  configureSegmentDefinitions(dto: ConfigureAccountSegmentsDto): Observable<AccountSegmentDefinition[]> {
+    return this.http.post<AccountSegmentDefinition[]>(`${this.apiUrl}/segment-definitions`, dto);
+  }
+
+  initializeDefaultSegments(): Observable<AccountSegmentDefinition[]> {
+    return this.http.post<AccountSegmentDefinition[]>(`${this.apiUrl}/segment-definitions/initialize`, {});
   }
 }

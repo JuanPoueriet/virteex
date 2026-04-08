@@ -20,4 +20,12 @@ describe('AccountForm', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should set isConfigMissing if segment definitions are empty', () => {
+    apiService.getSegmentDefinitions.mockReturnValue(of([]));
+
+    component.ngOnInit();
+
+    expect(component.isConfigMissing()).toBe(true);
+  });
 });

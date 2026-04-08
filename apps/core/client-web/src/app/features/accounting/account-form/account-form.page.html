@@ -22,7 +22,25 @@
     @if (isLoading()) {
       <p class="loading-state">Cargando datos de la cuenta...</p>
     } @else {
-      <div class="form-container card">
+      @if (isConfigMissing()) {
+        <div class="config-warning-banner card">
+          <div class="warning-icon">
+            <lucide-icon [img]="AlertIcon" size="24"></lucide-icon>
+          </div>
+          <div class="warning-content">
+            <h3>Estructura de segmentos no configurada</h3>
+            <p>Para crear cuentas contables, primero debes definir la estructura de niveles (segmentos) de tu organización.</p>
+          </div>
+          <div class="warning-actions">
+            <a routerLink="/accounting/chart-of-accounts/segments-configuration" class="primary-button">
+              <lucide-icon [img]="SettingsIcon" size="16"></lucide-icon>
+              <span>Configurar Segmentos</span>
+            </a>
+          </div>
+        </div>
+      }
+
+      <div class="form-container card" [class.disabled-form]="isConfigMissing()">
         <div class="tabs">
           <button type="button" class="tab-link" [class.active]="activeTab() === 'general'" (click)="activeTab.set('general')">General</button>
           <button type="button" class="tab-link" [class.active]="activeTab() === 'mappings'" (click)="activeTab.set('mappings')">Mapeos</button>
