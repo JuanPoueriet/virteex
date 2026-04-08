@@ -85,6 +85,48 @@ export class StripePaymentAdapter implements PaymentGateway {
     return { sessionId: session.id, url: session.url };
   }
 
+  async getDefaultPaymentMethod(customerId: string): Promise<any> {
+    const customer = await this.stripe.customers.retrieve(customerId, {
+      expand: ['invoice_settings.default_payment_method'],
+    }) as Stripe.Customer;
+
+    const defaultPaymentMethod = customer.invoice_settings.default_payment_method as Stripe.PaymentMethod;
+
+    if (!defaultPaymentMethod) {
+      return null;
+    }
+
+    return {
+      type: defaultPaymentMethod.card?.brand || 'Card',
+      last4: defaultPaymentMethod.card?.last4 || '****',
+      expiryDate: `${defaultPaymentMethod.card?.exp_month}/${defaultPaymentMethod.card?.exp_year.toString().slice(-2)}`,
+    };
+  }
+
+  async getInvoices(customerId: string): Promise<any[]> {
+    const invoices = await this.stripe.invoices.list({
+      customer: customerId,
+      limit: 12,
+    });
+
+    return invoices.data.map(invoice => ({
+      id: invoice.id,
+      date: new Date(invoice.created * 1000).toISOString(),
+      description: invoice.lines.data[0]?.description || 'Suscripción',
+      amount: invoice.total / 100,
+      pdfUrl: invoice.invoice_pdf,
+    }));
+  }
+
+  async createPortalSession(customerId: string, returnUrl: string): Promise<{ url: string }> {
+    const session = await this.stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    });
+
+    return { url: session.url };
+  }
+
   async handleWebhook(payload: Buffer, signature: string): Promise<WebhookResult> {
       const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
       let event: Stripe.Event;

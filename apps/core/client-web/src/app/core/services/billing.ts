@@ -35,28 +35,6 @@ export class BillingService {
   // Signals for state
   plans = signal<Plan[]>([]);
 
-  // TODO: Fetch real subscription from Organization details or dedicated endpoint
-  // For now, keeping mock structure but ready to integrate
-  currentSubscription = signal<Subscription>({
-    planName: 'Profesional',
-    planId: 'pro',
-    status: 'Activo',
-    price: 49.00,
-    billingCycle: 'mensual',
-    nextBillingDate: '2025-08-20',
-  });
-
-  paymentMethod = signal<PaymentMethod>({
-    type: 'Visa',
-    last4: '4242',
-    expiryDate: '12/27'
-  });
-
-  paymentHistory = signal<PaymentHistoryItem[]>([
-    { id: 'pay_1', date: '2025-07-20', description: 'Suscripción Mensual - Plan Profesional', amount: 49.00 },
-    { id: 'pay_2', date: '2025-06-20', description: 'Suscripción Mensual - Plan Profesional', amount: 49.00 },
-  ]);
-
   constructor() {
     this.loadPlans();
   }
@@ -81,15 +59,48 @@ export class BillingService {
   }
 
   getSubscription(): Observable<Subscription> {
-    return of(this.currentSubscription());
+    return this.http.get<Subscription>(`${this.apiUrl}/saas/subscription`).pipe(
+      catchError(err => {
+        console.error('Failed to load subscription', err);
+        return of({
+          planName: 'Gratis',
+          planId: 'free',
+          status: 'Activo',
+          price: 0,
+          billingCycle: 'mensual',
+          nextBillingDate: ''
+        } as Subscription);
+      })
+    );
   }
 
-  getPaymentMethod(): Observable<PaymentMethod> {
-    return of(this.paymentMethod());
+  getPaymentMethod(): Observable<PaymentMethod | null> {
+    return this.http.get<PaymentMethod | null>(`${this.apiUrl}/payment/method`).pipe(
+      catchError(err => {
+        console.error('Failed to load payment method', err);
+        return of(null);
+      })
+    );
   }
 
   getPaymentHistory(): Observable<PaymentHistoryItem[]> {
-    return of(this.paymentHistory());
+    return this.http.get<PaymentHistoryItem[]>(`${this.apiUrl}/payment/invoices`).pipe(
+      catchError(err => {
+        console.error('Failed to load payment history', err);
+        return of([]);
+      })
+    );
+  }
+
+  createPortalSession(): Observable<{ url: string } | null> {
+    return this.http.post<{ url: string }>(`${this.apiUrl}/payment/portal-session`, {
+      returnUrl: window.location.href
+    }).pipe(
+      catchError(err => {
+        console.error('Failed to create portal session', err);
+        return of(null);
+      })
+    );
   }
 
   changePlan(newPlanId: string): Observable<boolean> {

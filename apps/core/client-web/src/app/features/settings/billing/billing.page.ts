@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, CreditCard, Download, CheckCircle, Info } from 'lucide-angular';
+import { LucideAngularModule, CreditCard, Download, CheckCircle, Info, ExternalLink, Activity } from 'lucide-angular';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BillingService, Subscription, PaymentMethod, PaymentHistoryItem } from '../../../core/services/billing';
 
@@ -20,6 +20,8 @@ export class BillingPage implements OnInit {
   protected readonly DownloadIcon = Download;
   protected readonly CheckCircleIcon = CheckCircle;
   protected readonly InfoIcon = Info;
+  protected readonly ExternalLinkIcon = ExternalLink;
+  protected readonly ActivityIcon = Activity;
 
   // Convertimos los datos del servicio en señales
   subscription = toSignal(this.billingService.getSubscription());
@@ -29,6 +31,7 @@ export class BillingPage implements OnInit {
   // Estado para la UI
   selectedPlan = signal<string>('pro');
   isSaving = signal(false);
+  isLoadingPortal = signal(false);
   availablePlans = this.billingService.plans;
 
   usageMetrics = toSignal(this.billingService.getUsage(), { initialValue: [] });
@@ -56,6 +59,21 @@ export class BillingPage implements OnInit {
       error: () => {
         console.error('Error al actualizar el plan');
         this.isSaving.set(false);
+      }
+    });
+  }
+
+  openPortal(): void {
+    this.isLoadingPortal.set(true);
+    this.billingService.createPortalSession().subscribe({
+      next: (res) => {
+        if (res?.url) {
+          window.location.href = res.url;
+        }
+        this.isLoadingPortal.set(false);
+      },
+      error: () => {
+        this.isLoadingPortal.set(false);
       }
     });
   }

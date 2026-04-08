@@ -22,4 +22,7 @@ export interface WebhookResult {
 export interface PaymentGateway {
   createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResult>;
   handleWebhook(payload: Buffer, signature: string): Promise<WebhookResult>;
+  getDefaultPaymentMethod(customerId: string): Promise<any>;
+  getInvoices(customerId: string): Promise<any[]>;
+  createPortalSession(customerId: string, returnUrl: string): Promise<{ url: string }>;
 }
