@@ -11,7 +11,7 @@ import {
   UpdateDateColumn,
   VersionColumn
 } from 'typeorm';
-import { BudgetLine } from './budget-line.entity';
+import type { BudgetLine } from './budget-line.entity';
 
 @Entity({ name: 'budgets' })
 export class Budget {
@@ -31,7 +31,7 @@ export class Budget {
   @Column({ comment: 'Periodo del presupuesto en formato YYYY-MM' })
   period: string;
 
-  @OneToMany(() => BudgetLine, (line) => line.budget, { cascade: true, eager: true })
+  @OneToMany('BudgetLine', 'budget', { cascade: true, eager: true })
   lines: BudgetLine[];
 
   @CreateDateColumn({ name: 'created_at' })

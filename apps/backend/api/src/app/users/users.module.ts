@@ -10,6 +10,7 @@ import { MailModule } from '../mail/mail.module';
 import { RolesModule } from '../roles/roles.module';
 import { WebsocketsModule } from '../websockets/websockets.module';
 import { UserSubscriber } from './subscribers/user.subscriber';
+import { UserWebsocketListener } from './listeners/user-websocket.listener';
 import { UserCacheModule } from '../auth/modules/user-cache.module';
 import { StorageModule } from '../storage/storage.module';
 
@@ -24,7 +25,7 @@ import { StorageModule } from '../storage/storage.module';
   ],
 
   controllers: [UsersController],
-  providers: [UsersService, UserSubscriber],
+  providers: [UsersService, UserSubscriber, UserWebsocketListener],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}

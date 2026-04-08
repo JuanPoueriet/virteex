@@ -10,8 +10,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { CustomerAddress } from './customer-address.entity';
-import { CustomerContact } from './customer-contact.entity';
+import type { CustomerAddress } from './customer-address.entity';
+import type { CustomerContact } from './customer-contact.entity';
 import { CustomerGroup } from './customer-group.entity';
 import { User } from '../../users/entities/user.entity/user.entity';
 
@@ -97,10 +97,10 @@ export class Customer {
   @Column({ name: 'account_owner_id', type: 'uuid', nullable: true })
   accountOwnerId?: string;
 
-  @OneToMany(() => CustomerContact, (contact) => contact.customer, { cascade: true, eager: true })
+  @OneToMany('CustomerContact', 'customer', { cascade: true, eager: true })
   contacts: CustomerContact[];
 
-  @OneToMany(() => CustomerAddress, (address) => address.customer, { cascade: true, eager: true })
+  @OneToMany('CustomerAddress', 'customer', { cascade: true, eager: true })
   addresses: CustomerAddress[];
   
   @ManyToOne(() => CustomerGroup, (group) => group.customers, { nullable: true })

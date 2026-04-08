@@ -2,7 +2,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index, OneToMany } from 'typeorm';
 import { Ledger } from './ledger.entity';
 import { Account } from '../../chart-of-accounts/entities/account.entity';
-import { LedgerMappingRuleCondition } from './ledger-mapping-rule-condition.entity';
+import type { LedgerMappingRuleCondition } from './ledger-mapping-rule-condition.entity';
 
 @Entity({ name: 'ledger_mapping_rules' })
 @Index(['sourceLedgerId', 'targetLedgerId', 'sourceAccountId'], { unique: true })
@@ -45,6 +45,6 @@ export class LedgerMappingRule {
   multiplier: number;
 
 
-  @OneToMany(() => LedgerMappingRuleCondition, (condition) => condition.rule, { cascade: true })
+  @OneToMany('LedgerMappingRuleCondition', 'rule', { cascade: true })
   conditions: LedgerMappingRuleCondition[];
 }

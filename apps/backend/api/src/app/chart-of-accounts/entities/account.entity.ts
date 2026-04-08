@@ -21,10 +21,10 @@ import {
   AccountCategory,
   AccountNature,
 } from '../enums/account-enums';
-import { AccountBalance } from './account-balance.entity';
+import type { AccountBalance } from './account-balance.entity';
 import { AccountSegment } from './account-segment.entity';
 
-import { AccountHierarchyVersion } from './account-hierarchy-version.entity';
+import type { AccountHierarchyVersion } from './account-hierarchy-version.entity';
 
 
 export * from '../enums/account-enums';
@@ -86,10 +86,10 @@ export class Account {
   segments: AccountSegment[];
 
 
-  @OneToMany(() => AccountBalance, (balance) => balance.account, { cascade: true })
+  @OneToMany('AccountBalance', 'account', { cascade: true })
   balances: AccountBalance[];
 
-  @OneToMany(() => AccountHierarchyVersion, (version) => version.account, { cascade: true })
+  @OneToMany('AccountHierarchyVersion', 'account', { cascade: true })
   history: AccountHierarchyVersion[];
 
 

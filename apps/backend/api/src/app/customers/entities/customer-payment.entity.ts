@@ -5,7 +5,7 @@ import {
   OneToMany,
   CreateDateColumn,
 } from 'typeorm';
-import { CustomerPaymentLine } from './customer-payment-line.entity';
+import type { CustomerPaymentLine } from './customer-payment-line.entity';
 
 @Entity({ name: 'customer_payments' })
 export class CustomerPayment {
@@ -30,7 +30,7 @@ export class CustomerPayment {
   @Column('decimal', { precision: 12, scale: 2 })
   totalAmount: number;
 
-  @OneToMany(() => CustomerPaymentLine, (line) => line.payment, {
+  @OneToMany('CustomerPaymentLine', 'payment', {
     cascade: true,
   })
   lines: CustomerPaymentLine[];

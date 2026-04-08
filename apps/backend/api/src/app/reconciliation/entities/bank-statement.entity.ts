@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { BankTransaction } from './bank-transaction.entity';
+import type { BankTransaction } from './bank-transaction.entity';
 
 export enum StatementStatus {
   PROCESSING = 'processing',
@@ -55,7 +55,7 @@ export class BankStatement {
   @Column({ type: 'enum', enum: StatementStatus, default: StatementStatus.PROCESSING })
   status: StatementStatus;
 
-  @OneToMany(() => BankTransaction, (transaction) => transaction.statement, { cascade: true })
+  @OneToMany('BankTransaction', 'statement', { cascade: true })
   transactions: BankTransaction[];
   
   @CreateDateColumn({ name: 'created_at' })

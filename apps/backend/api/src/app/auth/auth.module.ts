@@ -59,7 +59,7 @@ import { AuthAuditListener } from './listeners/auth-audit.listener';
     AuditModule,
     OrganizationsModule,
     GeoModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
     UserCacheModule,
     TypeOrmModule.forFeature([RefreshToken, Organization, VerificationCode, User, UserSecurity, Passkey]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -105,7 +105,7 @@ import { AuthAuditListener } from './listeners/auth-audit.listener';
       }),
     }),
     MailModule,
-    LocalizationModule,
+    forwardRef(() => LocalizationModule),
   ],
   controllers: [AuthController],
   providers: [

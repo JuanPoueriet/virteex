@@ -1,7 +1,7 @@
 
 import { Organization } from '../../organizations/entities/organization.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
-import { DimensionValue } from './dimension-value.entity';
+import type { DimensionValue } from './dimension-value.entity';
 
 @Entity({ name: 'dimensions' })
 @Index(['organizationId', 'name'], { unique: true })
@@ -19,6 +19,6 @@ export class Dimension {
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;
 
-  @OneToMany(() => DimensionValue, (value) => value.dimension, { cascade: true })
+  @OneToMany('DimensionValue', 'dimension', { cascade: true })
   values: DimensionValue[];
 }

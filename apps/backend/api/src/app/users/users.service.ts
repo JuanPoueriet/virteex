@@ -10,7 +10,6 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
-import { EventsGateway } from '../websockets/events.gateway';
 import { UserCacheService } from '../auth/modules/user-cache.service';
 import { UserSecurity } from './entities/user-security.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -22,7 +21,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
     private readonly userCacheService: UserCacheService,
@@ -324,7 +322,8 @@ export class UsersService {
     }
     await this.userCacheService.clearUserSession(userId);
 
-    this.eventsGateway.sendToUser(userId, 'force-logout', {
+    this.eventEmitter.emit('user.forced_logout', {
+      userId,
       reason: 'Su sesión ha sido cerrada por un administrador.',
     });
 
@@ -344,9 +343,9 @@ export class UsersService {
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(userId);
 
-    this.eventsGateway.sendToUser(userId, 'force-logout', {
-      reason:
-        'Su cuenta ha sido bloqueada y su sesión ha sido cerrada por un administrador.',
+    this.eventEmitter.emit('user.forced_logout', {
+      userId,
+      reason: 'Su cuenta ha sido bloqueada y su sesión ha sido cerrada por un administrador.',
     });
 
     return { message: 'Se ha bloqueado y cerrado la sesión del usuario.' };
@@ -359,7 +358,7 @@ export class UsersService {
     }
     user.isOnline = isOnline;
     const updatedUser = await this.userRepository.save(user);
-    this.eventsGateway.server.emit('user-status-update', { userId, isOnline });
+    this.eventEmitter.emit('user.status_updated', { userId, isOnline });
     return updatedUser;
   }
 

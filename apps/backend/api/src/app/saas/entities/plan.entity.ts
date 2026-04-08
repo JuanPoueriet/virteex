@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { PlanLimit } from './plan-limit.entity';
-import { PlanFeature } from './plan-feature.entity';
+import type { PlanLimit } from './plan-limit.entity';
+import type { PlanFeature } from './plan-feature.entity';
 
 @Entity('saas_plans')
 export class Plan {
@@ -28,9 +28,9 @@ export class Plan {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @OneToMany(() => PlanLimit, limit => limit.plan, { cascade: true })
+  @OneToMany('PlanLimit', 'plan', { cascade: true })
   limits: PlanLimit[];
 
-  @OneToMany(() => PlanFeature, feature => feature.plan, { cascade: true })
+  @OneToMany('PlanFeature', 'plan', { cascade: true })
   features: PlanFeature[];
 }

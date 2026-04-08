@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { ApprovalPolicyStep } from './approval-policy-step.entity';
+import type { ApprovalPolicyStep } from './approval-policy-step.entity';
 
 export enum DocumentTypeForApproval {
   VENDOR_BILL = 'VENDOR_BILL',
@@ -24,6 +24,6 @@ export class ApprovalPolicy {
   @Column({ type: 'enum', enum: DocumentTypeForApproval })
   documentType: DocumentTypeForApproval;
 
-  @OneToMany(() => ApprovalPolicyStep, (step) => step.policy, { cascade: true })
+  @OneToMany('ApprovalPolicyStep', 'policy', { cascade: true })
   steps: ApprovalPolicyStep[];
 }

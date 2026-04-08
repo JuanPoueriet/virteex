@@ -1,6 +1,6 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, Index, OneToMany, ManyToMany, JoinTable } from 'typeorm';
-import { TaxScheme } from './tax-scheme.entity';
+import type { TaxScheme } from './tax-scheme.entity';
 import { TaxTemplate } from './tax-template.entity';
 import { FiscalDocumentTypeDefinition } from './fiscal-document-type-definition.entity';
 import { CoaTemplate } from './coa-template.entity';
@@ -20,7 +20,7 @@ export class FiscalRegion {
   @Column({ length: 3 })
   baseCurrency: string;
 
-  @OneToMany(() => TaxScheme, scheme => scheme.fiscalRegion)
+  @OneToMany('TaxScheme', 'fiscalRegion')
   taxSchemes: TaxScheme[];
 
   // --- ENTERPRISE SAAS LOCALIZATION FEATURES ---
