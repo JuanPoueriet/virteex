@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -193,7 +193,10 @@ export class SaasService implements OnModuleInit {
     });
 
     if (!org || !org.plan) {
-        throw new ForbiddenException(`Organization ${organizationId} has no plan assigned.`);
+        this.logger.warn(
+          `Organization ${organizationId} has no plan assigned. Skipping SaaS limit enforcement for backward compatibility.`,
+        );
+        return;
     }
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
@@ -349,7 +352,12 @@ export class SaasService implements OnModuleInit {
         relations: ['plan', 'plan.limits']
     });
 
-    if (!org || !org.plan) return false;
+    if (!org || !org.plan) {
+        this.logger.warn(
+          `Organization ${organizationId} has no plan assigned. Allowing operation in checkLimit for backward compatibility.`,
+        );
+        return true;
+    }
 
     const limitDef = org.plan.limits.find(l => l.resource === resource);
     if (!limitDef) return true;
