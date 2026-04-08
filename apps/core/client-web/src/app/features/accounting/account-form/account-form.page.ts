@@ -28,6 +28,8 @@ export class AccountFormPage implements OnInit {
   public accountForm!: FormGroup;
   public isEditing = signal(false);
   public isLoading = signal(true);
+  public segmentDefinitions = signal<any[]>([]);
+  public isConfigMissing = signal(false);
   private accountId: string | null = null;
 
   // --- Propiedades y Métodos Añadidos para Corregir Errores ---
@@ -42,6 +44,7 @@ export class AccountFormPage implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
+    this.loadSegmentDefinitions();
     this.accountId = this.route.snapshot.paramMap.get('id');
 
     if (this.accountId) {
@@ -50,6 +53,21 @@ export class AccountFormPage implements OnInit {
     } else {
       this.isLoading.set(false);
     }
+  }
+
+  private loadSegmentDefinitions(): void {
+    this.apiService.getSegmentDefinitions().pipe(take(1)).subscribe({
+      next: (defs) => {
+        this.segmentDefinitions.set(defs);
+        if (defs.length === 0) {
+          this.isConfigMissing.set(true);
+          this.notificationService.showError('La estructura de segmentos de cuenta no ha sido configurada para esta organización. Por favor, contacte al administrador.');
+        }
+      },
+      error: () => {
+        this.notificationService.showError('Error al cargar la configuración de segmentos.');
+      }
+    });
   }
 
   private initializeForm(): void {
@@ -151,6 +169,11 @@ export class AccountFormPage implements OnInit {
   }
 
   onSave(): void {
+    if (this.isConfigMissing()) {
+      this.notificationService.showError('No se puede guardar la cuenta sin una estructura de segmentos configurada.');
+      return;
+    }
+
     if (this.accountForm.invalid) {
       this.accountForm.markAllAsTouched();
       this.notificationService.showError('Por favor, complete todos los campos requeridos.');
