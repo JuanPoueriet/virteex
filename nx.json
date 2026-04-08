@@ -56,7 +56,10 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/backend/api-e2e/**/*"]
+      "exclude": [
+        "apps/backend/api-e2e/**/*",
+        "apps/backend/identity-service-e2e/**/*"
+      ]
     },
     {
       "plugin": "@nx/cypress/plugin",

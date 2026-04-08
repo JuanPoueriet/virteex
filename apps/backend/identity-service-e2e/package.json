@@ -1,0 +1,27 @@
+{
+  "name": "@virteex/identity-service-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "identity-service-e2e",
+    "implicitDependencies": [
+      "identity-service"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/backend/identity-service-e2e/jest.config.cts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "identity-service:build",
+          "identity-service:serve"
+        ]
+      }
+    }
+  }
+}

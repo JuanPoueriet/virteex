@@ -14,6 +14,12 @@
     },
     {
       "path": "./apps/backend/api"
+    },
+    {
+      "path": "./apps/backend/identity-service-e2e"
+    },
+    {
+      "path": "./apps/backend/identity-service"
     }
   ]
 }
