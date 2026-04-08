@@ -5,14 +5,18 @@ import { environment } from '../../../environments/environment';
 
 export interface InvoiceLineItem {
   id?: string;
+  productId?: string;
   description: string;
   quantity: number;
   price: number;
+  taxRate?: number;
+  taxAmount?: number;
 }
 
 export interface Invoice {
   id: string;
   invoiceNumber: string;
+  ncfNumber?: string;
   customerName: string;
   customerAddress: string;
   issueDate: string;
@@ -20,7 +24,10 @@ export interface Invoice {
   subtotal: number;
   tax: number;
   total: number;
+  balance: number;
+  currencyCode: string;
   status: 'Draft' | 'Pending' | 'Paid' | 'Partially Paid' | 'Void' | 'Credit Note';
+  type: 'INVOICE' | 'CREDIT_NOTE';
   lineItems: InvoiceLineItem[];
   notes?: string;
   originalInvoiceId?: string;
