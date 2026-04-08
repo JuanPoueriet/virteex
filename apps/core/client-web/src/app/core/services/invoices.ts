@@ -32,11 +32,13 @@ export interface CreateInvoiceDto {
     issueDate: string;
     dueDate: string;
     notes?: string;
+    currencyCode?: string;
     lineItems: {
         productId: string;
         quantity: number;
         price: number;
         description: string;
+        taxRate?: number;
     }[];
 }
 

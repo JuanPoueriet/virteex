@@ -153,7 +153,9 @@ export class NewInvoicePage implements OnInit {
         this.router.navigate(['/invoices']);
       },
       error: (err) => {
-        this.notificationService.showError(`Error al crear la factura: ${err.message}`);
+        console.error('Error body:', err.error);
+        const errorMessage = err.error?.message || err.message || 'Error desconocido al crear la factura.';
+        this.notificationService.showError(`Error al crear la factura: ${errorMessage}`);
         this.isSaving.set(false);
       },
     });
