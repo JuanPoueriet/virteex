@@ -3,26 +3,38 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Account, CashFlowCategory, RequiredDimension } from '../models/account.model';
+import {
+  Account,
+  AccountCategory,
+  AccountNature,
+  AccountType,
+  CashFlowCategory,
+  RequiredDimension,
+} from '../models/account.model';
 
-export interface CreateAccountDto extends Omit<Account, 'id' | 'organizationId' | 'createdAt' | 'updatedAt' | 'balance' | 'children' | 'isSystemAccount' | 'level' | 'isExpanded' | 'hasChildren'> {
+export interface CreateAccountDto {
+  segments: string[];
+  name: string;
+  description?: string;
+  parentId?: string | null;
+  type: AccountType;
+  category: AccountCategory;
+  nature: AccountNature;
+  isPostable?: boolean;
+  isActive?: boolean;
+  effectiveFrom?: string;
+  effectiveTo?: string;
   statementMapping?: {
-    balanceSheetCategory: string;
-    incomeStatementCategory: string;
-    cashFlowCategory: CashFlowCategory;
+    balanceSheetCategory?: string;
+    incomeStatementCategory?: string;
+    cashFlowCategory?: CashFlowCategory;
   };
   rules?: {
-    requiresReconciliation: boolean;
-    isCashOrBank: boolean;
-    allowsIntercompany: boolean;
-    isFxRevaluation: boolean;
-    requiredDimensions: RequiredDimension[];
-  };
-  advanced?: {
-    version: number;
-    hierarchyType: string;
-    effectiveFrom: Date;
-    effectiveTo?: Date;
+    requiresReconciliation?: boolean;
+    isCashOrBank?: boolean;
+    allowsIntercompany?: boolean;
+    isFxRevaluation?: boolean;
+    requiredDimensions?: RequiredDimension[];
   };
 }
 

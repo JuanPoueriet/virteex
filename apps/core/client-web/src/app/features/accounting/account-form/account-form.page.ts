@@ -100,9 +100,24 @@ export class AccountFormPage implements OnInit {
     this.isLoading.set(true);
     this.apiService.getAccountById(id).pipe(take(1)).subscribe({
       next: (account) => {
+        const accountWithUiFields = {
+          ...account,
+          code: account.code ?? '',
+          advanced: {
+            version: 1,
+            hierarchyType: 'LEGAL',
+            effectiveFrom: (account as any).effectiveFrom
+              ? new Date((account as any).effectiveFrom).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            effectiveTo: (account as any).effectiveTo
+              ? new Date((account as any).effectiveTo).toISOString().split('T')[0]
+              : null,
+          },
+        };
+
         // Usar patchValue para el formulario principal.
         // TypeORM puede devolver entidades con campos extra que no están en el DTO.
-        this.accountForm.patchValue(account);
+        this.accountForm.patchValue(accountWithUiFields);
   
         // Si la cuenta tiene datos anidados (que deberían venir del backend),
         // los parcheamos explícitamente.
@@ -146,11 +161,30 @@ export class AccountFormPage implements OnInit {
   
     this.isLoading.set(true);
     const formData = this.accountForm.getRawValue();
-  
-    // Construir el payload usando la estructura anidada del formulario
+    const segments = this.parseCodeToSegments(formData.code);
+
+    if (!this.isEditing() && segments.length === 0) {
+      this.notificationService.showError('El código de cuenta debe tener al menos un segmento válido.');
+      this.isLoading.set(false);
+      this.activeTab.set('general');
+      return;
+    }
+
+    const advanced = formData.advanced ?? {};
     const payload: CreateAccountDto | UpdateAccountDto = {
-      ...formData,
-      nature: this.getNatureFromType(formData.type), // Añadir la naturaleza calculada
+      ...(this.isEditing() ? {} : { segments }),
+      name: formData.name,
+      description: formData.description || undefined,
+      parentId: formData.parentId || null,
+      type: formData.type,
+      category: formData.category,
+      nature: this.getNatureFromType(formData.type),
+      isPostable: formData.isPostable,
+      isActive: formData.isActive,
+      statementMapping: formData.statementMapping,
+      rules: formData.rules,
+      effectiveFrom: advanced.effectiveFrom || undefined,
+      effectiveTo: advanced.effectiveTo || undefined,
     };
   
     const saveOperation = this.isEditing()
@@ -164,12 +198,36 @@ export class AccountFormPage implements OnInit {
         this.router.navigate(['/accounting/chart-of-accounts']);
       },
       error: (err) => {
-        // Mejor manejo de errores
-        const message = err?.error?.message ?? 'Error al guardar la cuenta.';
+        const message = this.normalizeErrorMessage(err);
         this.notificationService.showError(message);
         this.isLoading.set(false);
       }
     });
+  }
+
+  private parseCodeToSegments(code: string | null | undefined): string[] {
+    if (!code || typeof code !== 'string') return [];
+    return code
+      .split('-')
+      .map(segment => segment.trim())
+      .filter(segment => segment.length > 0);
+  }
+
+  private normalizeErrorMessage(err: any): string {
+    const rawMessage = err?.error?.message ?? err?.message;
+
+    if (Array.isArray(rawMessage)) {
+      return rawMessage.join(' | ');
+    }
+
+    if (typeof rawMessage === 'object' && rawMessage !== null) {
+      if (Array.isArray(rawMessage.message)) {
+        return rawMessage.message.join(' | ');
+      }
+      return JSON.stringify(rawMessage);
+    }
+
+    return rawMessage || 'Error al guardar la cuenta.';
   }
 
   private getNatureFromType(type: AccountType): AccountNature {
