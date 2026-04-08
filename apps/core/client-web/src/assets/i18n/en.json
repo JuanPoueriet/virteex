@@ -140,6 +140,12 @@
     "ALL_RIGHTS_RESERVED": "All rights reserved."
   },
   "COMMON": {
+      "TOAST": {
+        "SUCCESS": "Success",
+        "ERROR": "Error",
+        "WARNING": "Warning",
+        "INFO": "Information"
+      },
       "CANCEL": "Cancel",
       "CONTINUE": "Continue",
       "CONFIRM": "Confirm",
