@@ -20,7 +20,7 @@ export class PriceListFormPage implements OnInit {
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  // private route = inject(ActivatedRoute);
   private priceListsService = inject(PriceListsService);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
@@ -94,7 +94,7 @@ export class PriceListFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar la lista de precios.');
-        this.router.navigate(['/app/masters/price-lists']);
+        this.router.navigate(['/masters/price-lists']);
       },
     });
   }
@@ -140,7 +140,7 @@ export class PriceListFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Lista de precios ${this.isEditMode() ? 'actualizada' : 'creada'} exitosamente.`);
-        this.router.navigate(['/app/masters/price-lists']);
+        this.router.navigate(['/masters/price-lists']);
       },
       error: (err) => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} la lista de precios.`);

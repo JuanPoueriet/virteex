@@ -45,7 +45,7 @@ export class SearchService {
           id: i.id,
           title: `Factura #${i.invoiceNumber}`,
           description: `Cliente: ${i.customerName}`,
-          link: `/app/invoices/${i.id}`,
+          link: `/invoices/${i.id}`,
         })),
       },
       {
@@ -54,7 +54,7 @@ export class SearchService {
           id: p.id,
           title: p.name,
           description: `SKU: ${p.sku}`,
-          link: `/app/inventory/products/${p.id}/edit`,
+          link: `/inventory/products/${p.id}/edit`,
         })),
       },
       {
@@ -63,7 +63,7 @@ export class SearchService {
           id: c.id,
           title: c.companyName,
           description: `RNC: ${c.taxId}`,
-          link: `/app/masters/customers/${c.id}/edit`,
+          link: `/masters/customers/${c.id}/edit`,
         })),
       },
     ].filter((g) => g.results.length > 0);

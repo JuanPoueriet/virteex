@@ -2,7 +2,7 @@
   <div class="page-header">
     <h1>{{ isEditMode() ? t().editTitle : t().title }}</h1>
     <div class="header-actions">
-      <a routerLink="/app/accounting/journal-entries" class="btn btn-secondary">{{ t().cancel }}</a>
+      <a routerLink="/accounting/journal-entries" class="btn btn-secondary">{{ t().cancel }}</a>
       <button (click)="saveEntry()" class="btn btn-primary" [disabled]="isSaving()">
         <lucide-icon [name]="SaveIcon" [size]="16" class="mr-2"></lucide-icon>
         {{ isSaving() ? t().saving : t().save }}

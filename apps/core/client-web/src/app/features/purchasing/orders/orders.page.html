@@ -6,7 +6,7 @@
                 <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
                 <span>Filters</span>
             </button>
-            <a routerLink="/app/purchasing/orders/new" class="primary-button">
+            <a routerLink="/purchasing/orders/new" class="primary-button">
                 <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
                 <span>{{ 'PURCHASING.ORDERS.NEW_ORDER' | translate }}</span>
             </a>
@@ -27,7 +27,7 @@
             <tbody>
                 @for (order of orders(); track order.id) {
                 <tr>
-                    <td><a routerLink="/app/purchasing/orders/{{order.id}}/edit" class="table-link">{{ order.poNumber
+                    <td><a routerLink="/purchasing/orders/{{order.id}}/edit" class="table-link">{{ order.poNumber
                             }}</a></td>
                     <td>{{ order.supplierName }}</td>
                     <td>{{ order.orderDate }}</td>

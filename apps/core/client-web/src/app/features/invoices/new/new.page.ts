@@ -150,7 +150,7 @@ export class NewInvoicePage implements OnInit {
     this.invoicesService.createInvoice(payload).subscribe({
       next: () => {
         this.notificationService.showSuccess('Factura creada exitosamente.');
-        this.router.navigate(['/app/invoices']);
+        this.router.navigate(['/invoices']);
       },
       error: (err) => {
         this.notificationService.showError(`Error al crear la factura: ${err.message}`);

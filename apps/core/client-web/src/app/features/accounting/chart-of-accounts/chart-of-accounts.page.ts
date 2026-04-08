@@ -65,7 +65,7 @@ export class ChartOfAccountsPage implements OnInit {
   }
   
   goToAccountForm(id?: string): void {
-    const route = id ? ['/app/accounting/account-form', id] : ['/app/accounting/account-form'];
+    const route = id ? ['/accounting/account-form', id] : ['/accounting/account-form'];
     this.router.navigate(route);
   }
   

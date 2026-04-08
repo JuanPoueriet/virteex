@@ -27,7 +27,7 @@ export class MonthEndClosePage {
   closingTasks = signal<ClosingTask[]>([
     { id: 't1', name: 'Close Accounts Payable Subledger', responsible: 'Ana Pérez', status: 'completed' },
     { id: 't2', name: 'Close Accounts Receivable Subledger', responsible: 'Ana Pérez', status: 'completed' },
-    { id: 't3', name: 'Bank Reconciliation', responsible: 'Carlos López', status: 'in-progress', link: '/app/treasury/reconciliation' },
+    { id: 't3', name: 'Bank Reconciliation', responsible: 'Carlos López', status: 'in-progress', link: '/treasury/reconciliation' },
     { id: 't4', name: 'Record Accruals and Deferrals', responsible: 'Carlos López', status: 'pending' },
     { id: 't5', name: 'Fixed Assets Depreciation Run', responsible: 'Sistema', status: 'pending' },
     { id: 't6', name: 'Review and Post All Journal Entries', responsible: 'Admin Principal', status: 'pending' },

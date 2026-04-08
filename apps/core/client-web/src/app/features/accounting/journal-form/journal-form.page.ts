@@ -54,12 +54,12 @@ export class JournalFormPage implements OnInit {
     if (this.isEditMode && this.journalId) {
       this.journalsService.update(this.journalId, journalData).subscribe(() => {
         console.log('Journal updated successfully');
-        this.router.navigate(['/app/accounting/journals']);
+        this.router.navigate(['/accounting/journals']);
       });
     } else {
       this.journalsService.create(journalData).subscribe(() => {
         console.log('Journal created successfully');
-        this.router.navigate(['/app/accounting/journals']);
+        this.router.navigate(['/accounting/journals']);
       });
     }
   }

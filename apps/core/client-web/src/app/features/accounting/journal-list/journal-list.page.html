@@ -4,7 +4,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Journals</h4>
-                    <a [routerLink]="['/app/accounting/journals/new']" class="btn btn-primary">
+                    <a [routerLink]="['/accounting/journals/new']" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create Journal
                     </a>
                 </div>
@@ -25,7 +25,7 @@
                                     <td>{{ journal.code }}</td>
                                     <td>{{ journal.type }}</td>
                                     <td>
-                                        <a [routerLink]="['/app/accounting/journals', journal.id, 'edit']" class="btn btn-sm btn-outline-primary">
+                                        <a [routerLink]="['/accounting/journals', journal.id, 'edit']" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
                                     </td>

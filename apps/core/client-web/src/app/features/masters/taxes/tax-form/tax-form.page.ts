@@ -53,7 +53,7 @@ export class TaxFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el impuesto.');
-        this.router.navigate(['/app/masters/taxes']);
+        this.router.navigate(['/masters/taxes']);
       },
     });
   }
@@ -75,7 +75,7 @@ export class TaxFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Impuesto ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/masters/taxes']);
+        this.router.navigate(['/masters/taxes']);
       },
       error: () => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el impuesto.`);

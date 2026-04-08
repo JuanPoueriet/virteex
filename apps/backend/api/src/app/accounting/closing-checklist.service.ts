@@ -69,7 +69,7 @@ export class ClosingChecklistService {
         'Verificar y procesar todos los asientos contables en borrador o pendientes de aprobación.',
       isCompleted: unpostedEntriesCount === 0,
       details: { pendingCount: unpostedEntriesCount },
-      resolutionLink: `/app/journal-entries?periodId=${periodId}&status=draft,pending_approval`,
+      resolutionLink: `/journal-entries?periodId=${periodId}&status=draft,pending_approval`,
     });
 
     const unapprovedBillsCount = await this.dataSource
@@ -90,7 +90,7 @@ export class ClosingChecklistService {
         'Verificar y procesar todas las facturas de proveedor en borrador o pendientes de aprobación.',
       isCompleted: unapprovedBillsCount === 0,
       details: { pendingCount: unapprovedBillsCount },
-      resolutionLink: `/app/accounts-payable/bills?periodId=${periodId}&status=draft,pending_approval`,
+      resolutionLink: `/accounts-payable/bills?periodId=${periodId}&status=draft,pending_approval`,
     });
 
     const unreconciledTxCount = await this.dataSource
@@ -107,7 +107,7 @@ export class ClosingChecklistService {
       description: 'Conciliar todas las transacciones bancarias del período.',
       isCompleted: unreconciledTxCount === 0,
       details: { unreconciledCount: unreconciledTxCount },
-      resolutionLink: `/app/reconciliation?periodId=${periodId}`,
+      resolutionLink: `/reconciliation?periodId=${periodId}`,
     });
 
     checklist.push({
@@ -119,7 +119,7 @@ export class ClosingChecklistService {
         message:
           'Este es un paso manual. Asegúrese de haber corrido el proceso antes de cerrar.',
       },
-      resolutionLink: `/app/accounting/currency-revaluation`,
+      resolutionLink: `/accounting/currency-revaluation`,
     });
 
     checklist.push({
@@ -131,7 +131,7 @@ export class ClosingChecklistService {
         message:
           'Este es un paso manual. Asegúrese de haber corrido el proceso antes de cerrar.',
       },
-      resolutionLink: `/app/fixed-assets/depreciation`,
+      resolutionLink: `/fixed-assets/depreciation`,
     });
 
     const pendingApprovalsCount = await this.dataSource
@@ -148,7 +148,7 @@ export class ClosingChecklistService {
         'Revisar y procesar todas las solicitudes de aprobación pendientes en el sistema.',
       isCompleted: pendingApprovalsCount === 0,
       details: { pendingCount: pendingApprovalsCount },
-      resolutionLink: `/app/my-work/approvals`,
+      resolutionLink: `/my-work/approvals`,
     });
 
     return checklist;

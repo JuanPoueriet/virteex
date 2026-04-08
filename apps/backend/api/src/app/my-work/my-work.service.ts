@@ -38,7 +38,7 @@ export class MyWorkService {
       description: `Request for ${approval.documentType} is pending approval.`,
       dueDate: approval.approvedAt?.toISOString() || new Date().toISOString(),
       status: 'pending',
-      link: `/app/approvals/${approval.id}`,
+      link: `/approvals/${approval.id}`,
     }));
   }
 }

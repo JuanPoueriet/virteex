@@ -5,13 +5,13 @@
 
   <div *ngIf="error()" class="error-message">
     <p>{{ error() }}</p>
-    <a routerLink="/app/accounts-payable" class="btn-primary">Volver al Listado</a>
+    <a routerLink="/accounts-payable" class="btn-primary">Volver al Listado</a>
   </div>
 
   <ng-container *ngIf="bill() as billData">
     <div class="view-header">
       <div class="header-main">
-        <a routerLink="/app/accounts-payable" class="btn-icon">
+        <a routerLink="/accounts-payable" class="btn-icon">
           <lucide-icon [name]="BackIcon" [size]="24"></lucide-icon>
         </a>
         <div>

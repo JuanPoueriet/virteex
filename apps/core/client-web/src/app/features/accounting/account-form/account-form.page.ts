@@ -130,7 +130,7 @@ export class AccountFormPage implements OnInit {
       error: () => {
         this.notificationService.showError('Error al cargar los datos de la cuenta.');
         this.isLoading.set(false);
-        this.router.navigate(['/app/accounting/chart-of-accounts']);
+        this.router.navigate(['/accounting/chart-of-accounts']);
       }
     });
   }
@@ -161,7 +161,7 @@ export class AccountFormPage implements OnInit {
       next: () => {
         this.notificationService.showSuccess(`Cuenta ${this.isEditing() ? 'actualizada' : 'creada'} con éxito.`);
         this.stateService.refreshAccounts();
-        this.router.navigate(['/app/accounting/chart-of-accounts']);
+        this.router.navigate(['/accounting/chart-of-accounts']);
       },
       error: (err) => {
         // Mejor manejo de errores
@@ -178,7 +178,7 @@ export class AccountFormPage implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/app/accounting/chart-of-accounts']);
+    this.router.navigate(['/accounting/chart-of-accounts']);
   }
 
   get requiredDimensionsFormArray(): FormArray {

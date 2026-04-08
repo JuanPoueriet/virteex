@@ -6,7 +6,7 @@
                 <p>Completa la información detallada de tu producto o servicio.</p>
             </div>
             <div class="header-actions">
-                <a routerLink="/app/inventory/products" class="secondary-button">Cancelar</a>
+                <a routerLink="/inventory/products" class="secondary-button">Cancelar</a>
                 <button type="submit" class="primary-button" [disabled]="isLoading()">
                     <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
                     <span>@if(isLoading()){ Guardando... } @else { Guardar Producto }</span>

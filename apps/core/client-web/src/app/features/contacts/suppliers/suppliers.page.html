@@ -9,7 +9,7 @@
                 <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
                 <span>Filtros</span>
             </button>
-            <a routerLink="/app/contacts/suppliers/new" class="primary-button">
+            <a routerLink="/contacts/suppliers/new" class="primary-button">
                 <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
                 <span>Nuevo Proveedor</span>
             </a>
@@ -38,7 +38,7 @@
                         <tr>
                             <td><input type="checkbox"></td>
                             <td>
-                                <a [routerLink]="['/app/contacts/suppliers', supplier.id, 'edit']" class="table-link">
+                                <a [routerLink]="['/contacts/suppliers', supplier.id, 'edit']" class="table-link">
                                     {{ supplier.companyName }}
                                 </a>
                             </td>
@@ -47,7 +47,7 @@
                             <td>{{ supplier.phone }}</td>
                             <td class="actions-column">
                                 <div class="action-buttons">
-                                    <a [routerLink]="['/app/contacts/suppliers', supplier.id, 'edit']" class="icon-button" title="Editar">
+                                    <a [routerLink]="['/contacts/suppliers', supplier.id, 'edit']" class="icon-button" title="Editar">
                                         <lucide-icon [img]="EditIcon" size="18"></lucide-icon>
                                     </a>
                                     <button class="icon-button delete" (click)="deleteSupplier(supplier.id)" title="Eliminar">

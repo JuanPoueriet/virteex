@@ -47,6 +47,6 @@ export class CustomerReceiptFormPage implements OnInit {
     // this.receiptsService.create(this.form.value).subscribe(...)
     console.log('La creación de recibos aún no está conectada al backend.');
     this.isLoading.set(false);
-    // On success: this.router.navigate(['/app/customer-receipts']);
+    // On success: this.router.navigate(['/customer-receipts']);
   }
 }

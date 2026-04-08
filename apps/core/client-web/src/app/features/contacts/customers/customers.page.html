@@ -9,7 +9,7 @@
                 <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
                 <span>Filtros</span>
             </button>
-            <a routerLink="/app/contacts/customers/new" class="primary-button">
+            <a routerLink="/contacts/customers/new" class="primary-button">
                 <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
                 <span>Añadir Cliente</span>
             </a>
@@ -38,7 +38,7 @@
                         <tr>
                             <td><input type="checkbox"></td>
                             <td>
-                                <a [routerLink]="['/app/contacts/customers', customer.id, 'edit']" class="table-link">
+                                <a [routerLink]="['/contacts/customers', customer.id, 'edit']" class="table-link">
                                     {{ customer.companyName }}
                                 </a>
                             </td>
@@ -47,7 +47,7 @@
                             <td>{{ customer.phone }}</td>
                             <td class="actions-column">
                                 <div class="action-buttons">
-                                    <a [routerLink]="['/app/contacts/customers', customer.id, 'edit']" class="icon-button" title="Editar">
+                                    <a [routerLink]="['/contacts/customers', customer.id, 'edit']" class="icon-button" title="Editar">
                                         <lucide-icon [img]="EditIcon" size="18"></lucide-icon>
                                     </a>
                                     <button class="icon-button delete" (click)="deleteCustomer(customer.id)" title="Eliminar">

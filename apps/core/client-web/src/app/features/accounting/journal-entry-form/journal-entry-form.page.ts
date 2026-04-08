@@ -222,7 +222,7 @@ export class JournalEntryFormPage implements OnInit {
     this.journalEntriesService.create(formData).subscribe({
       next: () => {
         this.notificationService.showSuccess('Asiento contable creado con éxito!');
-        this.router.navigate(['/app/accounting/journal-entries']);
+        this.router.navigate(['/accounting/journal-entries']);
       },
       error: (err) => {
         this.notificationService.showError(err.error?.message || 'Error al crear el asiento contable.');

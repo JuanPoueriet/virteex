@@ -6,7 +6,7 @@
                 <lucide-icon [img]="FilterIcon" size="16"></lucide-icon>
                 <span>Filtros</span>
             </button>
-            <a routerLink="/app/masters/price-lists/new" class="primary-button">
+            <a routerLink="/masters/price-lists/new" class="primary-button">
                 <lucide-icon [img]="PlusCircleIcon" size="16"></lucide-icon>
                 <span>Nueva Lista</span>
             </a>
@@ -34,7 +34,7 @@
                     @for (list of priceLists(); track list.id) {
                         <tr>
                             <td>
-                                <a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="table-link">
+                                <a [routerLink]="['/masters/price-lists', list.id, 'edit']" class="table-link">
                                     {{ list.name }}
                                 </a>
                             </td>
@@ -49,7 +49,7 @@
                             </td>
                             <td class="actions-column">
                                 <div class="action-buttons">
-                                    <a [routerLink]="['/app/masters/price-lists', list.id, 'edit']" class="icon-button" title="Editar">
+                                    <a [routerLink]="['/masters/price-lists', list.id, 'edit']" class="icon-button" title="Editar">
                                         <lucide-icon [img]="EditIcon" size="18"></lucide-icon>
                                     </a>
                                     <button class="icon-button delete" (click)="deletePriceList(list.id)" title="Eliminar">

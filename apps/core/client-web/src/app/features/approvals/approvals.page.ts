@@ -37,10 +37,10 @@ export class ApprovalsPage {
 
   // Datos simulados
   pendingInvoices = signal<ApprovalItem[]>([
-    { id: 'INV-A-01', requester: 'Ana Pérez', date: 'Jul 25, 2025', description: 'Factura de proveedor "OfiSuministros"', amount: 1250.00, status: 'pending', link: '/app/payables/bills/1' },
+    { id: 'INV-A-01', requester: 'Ana Pérez', date: 'Jul 25, 2025', description: 'Factura de proveedor "OfiSuministros"', amount: 1250.00, status: 'pending', link: '/payables/bills/1' },
   ]);
   pendingExpenses = signal<ApprovalItem[]>([
-    { id: 'EXP-A-01', requester: 'Carlos López', date: 'Jul 24, 2025', description: 'Reporte de gastos de viaje a Santiago', amount: 350.75, status: 'pending', link: '/app/expenses/reports/1' },
+    { id: 'EXP-A-01', requester: 'Carlos López', date: 'Jul 24, 2025', description: 'Reporte de gastos de viaje a Santiago', amount: 350.75, status: 'pending', link: '/expenses/reports/1' },
   ]);
   pendingPOs = signal<ApprovalItem[]>([]);
 

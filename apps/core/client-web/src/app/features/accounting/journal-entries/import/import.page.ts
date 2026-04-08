@@ -71,7 +71,7 @@ export class JournalEntryImportPage {
     this.journalEntriesService.confirmImport(batch).subscribe({
       next: () => {
         this.notificationService.showSuccess('Asientos contables importados con éxito.');
-        this.router.navigate(['/app/accounting/journal-entries']);
+        this.router.navigate(['/accounting/journal-entries']);
       },
       error: (err) => {
         this.error.set('Ocurrió un error al confirmar la importación.');

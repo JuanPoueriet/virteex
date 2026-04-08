@@ -18,7 +18,7 @@ export class ProductFormPage implements OnInit {
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  // private route = inject(ActivatedRoute);
   private inventoryService = inject(InventoryService);
   private notificationService = inject(NotificationService);
 

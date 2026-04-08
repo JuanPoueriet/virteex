@@ -53,7 +53,7 @@ export class LedgerFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el libro mayor.');
-        this.router.navigate(['/app/accounting']);
+        this.router.navigate(['/accounting']);
       }
     });
   }
@@ -76,7 +76,7 @@ export class LedgerFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Libro Mayor ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/accounting/general-ledger']);
+        this.router.navigate(['/accounting/general-ledger']);
       },
       error: (err) => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el Libro Mayor.`);

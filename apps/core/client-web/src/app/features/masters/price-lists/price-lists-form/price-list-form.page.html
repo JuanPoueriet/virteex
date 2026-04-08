@@ -6,7 +6,7 @@
         <p>Define precios para un conjunto específico de productos.</p>
       </div>
       <div class="header-actions">
-        <a routerLink="/app/masters/price-lists" class="secondary-button">Cancelar</a>
+        <a routerLink="/masters/price-lists" class="secondary-button">Cancelar</a>
         <button type="submit" class="primary-button" [disabled]="isLoading() || isSaving()">
           <lucide-icon [img]="SaveIcon" size="16"></lucide-icon>
           <span>@if(isSaving()){ Guardando... } @else { Guardar Lista }</span>

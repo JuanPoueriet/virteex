@@ -1,6 +1,6 @@
 <div class="view-container">
   <div class="view-header">
-    <a routerLink="/app/accounts-payable" class="btn-icon">
+    <a routerLink="/accounts-payable" class="btn-icon">
       <lucide-icon [name]="BackIcon" [size]="24"></lucide-icon>
     </a>
     <h1>{{ isEditMode() ? 'Editar' : 'Nueva' }} Factura de Proveedor</h1>
@@ -57,7 +57,7 @@
     </div>
 
     <div class="form-actions">
-        <a routerLink="/app/accounts-payable" class="btn-secondary">Cancelar</a>
+        <a routerLink="/accounts-payable" class="btn-secondary">Cancelar</a>
         <button (click)="save()" class="btn-primary" [disabled]="form.invalid || isLoading()">
             {{ isLoading() ? 'Guardando...' : 'Guardar Factura' }}
         </button>

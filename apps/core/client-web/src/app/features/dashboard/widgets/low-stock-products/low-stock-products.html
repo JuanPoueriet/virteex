@@ -7,7 +7,7 @@
         @for(product of lowStockProducts(); track product.id) {
         <li class="product-item">
             <div class="product-details">
-                <a routerLink="/app/inventory/products/{{product.id}}/edit" class="product-name">{{ product.name }}</a>
+                <a routerLink="/inventory/products/{{product.id}}/edit" class="product-name">{{ product.name }}</a>
             </div>
             <div class="stock-level" [ngClass]="getStockSeverityClass(product.stock)">
                 @if (product.stock === 0) {

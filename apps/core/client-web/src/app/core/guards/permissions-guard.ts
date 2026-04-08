@@ -25,7 +25,7 @@ export const permissionsGuard: CanActivateFn = (route, state) => {
     //     state.url
     //   }. Permisos requeridos: ${requiredPermissions.join(', ')}`
     // );
-    return router.createUrlTree(['/app/unauthorized'], {
+    return router.createUrlTree(['/unauthorized'], {
       queryParams: { url: state.url },
     });
   }

@@ -1,6 +1,6 @@
 <div class="view-container">
   <div class="view-header">
-    <a routerLink="/app/customer-receipts" class="btn-icon">
+    <a routerLink="/customer-receipts" class="btn-icon">
       <lucide-icon [name]="BackIcon" [size]="24"></lucide-icon>
     </a>
     <h1>Nuevo Recibo de Cliente</h1>
@@ -38,7 +38,7 @@
     </div>
     
     <div class="form-actions">
-        <a routerLink="/app/customer-receipts" class="btn-secondary">Cancelar</a>
+        <a routerLink="/customer-receipts" class="btn-secondary">Cancelar</a>
         <button (click)="save()" class="btn-primary" [disabled]="form.invalid || isLoading()">
             {{ isLoading() ? 'Guardando...' : 'Guardar Recibo' }}
         </button>

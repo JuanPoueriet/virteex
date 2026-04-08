@@ -105,7 +105,7 @@ export class VendorBillFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Factura ${this.isEditMode() ? 'actualizada' : 'creada'} con éxito.`);
-        this.router.navigate(['/app/accounts-payable']);
+        this.router.navigate(['/accounts-payable']);
       },
       error: (err) => {
         this.notificationService.showError('Error al guardar la factura.');

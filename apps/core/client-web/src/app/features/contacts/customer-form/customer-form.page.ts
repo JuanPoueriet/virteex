@@ -63,7 +63,7 @@ export class CustomerFormPage implements OnInit {
       },
       error: () => {
         this.notificationService.showError('No se pudo cargar el cliente.');
-        this.router.navigate(['/app/contacts/customers']);
+        this.router.navigate(['/contacts/customers']);
       },
     });
   }
@@ -86,7 +86,7 @@ export class CustomerFormPage implements OnInit {
     operation.subscribe({
       next: () => {
         this.notificationService.showSuccess(`Cliente ${this.isEditMode() ? 'actualizado' : 'creado'} exitosamente.`);
-        this.router.navigate(['/app/contacts/customers']);
+        this.router.navigate(['/contacts/customers']);
       },
       error: () => {
         this.notificationService.showError(`Error al ${this.isEditMode() ? 'actualizar' : 'crear'} el cliente.`);

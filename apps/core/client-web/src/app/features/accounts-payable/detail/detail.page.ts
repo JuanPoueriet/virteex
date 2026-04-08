@@ -63,7 +63,7 @@ export class VendorBillDetailPage implements OnInit {
       next: () => {
         this.notificationService.showSuccess('Factura anulada con éxito.');
         // Optionally, refresh data or navigate away
-        this.router.navigate(['/app/accounts-payable']);
+        this.router.navigate(['/accounts-payable']);
       },
       error: (err) => {
         this.handleError('Error al anular la factura.');
@@ -78,7 +78,7 @@ export class VendorBillDetailPage implements OnInit {
   }
 
   private handleNotFound(): void {
-    this.router.navigate(['/app/accounts-payable']);
+    this.router.navigate(['/accounts-payable']);
     this.notificationService.showError('Factura no encontrada.');
   }
 }
