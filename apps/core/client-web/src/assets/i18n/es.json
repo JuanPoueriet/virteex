@@ -246,6 +246,12 @@
     "VIEW_ALL": "Ver todas"
   },
   "COMMON": {
+      "TOAST": {
+        "SUCCESS": "Éxito",
+        "ERROR": "Error",
+        "WARNING": "Advertencia",
+        "INFO": "Información"
+      },
       "CANCEL": "Cancelar",
       "CONTINUE": "Continuar",
       "CONFIRM": "Confirmar",

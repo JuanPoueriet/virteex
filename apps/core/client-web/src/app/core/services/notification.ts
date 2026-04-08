@@ -1,20 +1,25 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private notifications: string[] = [];
+  private toastService = inject(ToastService);
 
   showSuccess(message: string): void {
-    console.log(`SUCCESS: ${message}`);
-    // En una implementación real mostraría un toast/alert
-    alert(`✅ ${message}`);
+    this.toastService.success(message);
   }
 
   showError(message: string): void {
-    console.error(`ERROR: ${message}`);
-    // En una implementación real mostraría un toast/alert
-    alert(`❌ ${message}`);
+    this.toastService.error(message);
+  }
+
+  showInfo(message: string): void {
+    this.toastService.info(message);
+  }
+
+  showWarning(message: string): void {
+    this.toastService.warning(message);
   }
 }

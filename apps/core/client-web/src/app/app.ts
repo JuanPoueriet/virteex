@@ -10,10 +10,11 @@ import { CommonModule } from '@angular/common';
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { GeoMismatchModalComponent } from './shared/components/geo-mismatch-modal/geo-mismatch-modal.component';
 import { IdleService } from './core/services/idle.service';
+import { ToastContainerComponent } from './shared/components/ui/toast/toast-container.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ModalComponent, CommonModule, LoaderComponent, GeoMismatchModalComponent],
+  imports: [RouterOutlet, ModalComponent, CommonModule, LoaderComponent, GeoMismatchModalComponent, ToastContainerComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
