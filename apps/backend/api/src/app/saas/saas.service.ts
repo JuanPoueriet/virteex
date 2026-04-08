@@ -107,7 +107,7 @@ export class SaasService implements OnModuleInit {
     return this.planRepository.findOne({ where: { slug }, relations: ['limits', 'features'] });
   }
 
-  async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
+  async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason = "upgrade"): Promise<void> {
       await this.dataSource.transaction(async (manager) => {
           const org = await manager.findOne(Organization, { where: { id: organizationId }, relations: ['plan'] });
           if (!org) {
@@ -186,7 +186,7 @@ export class SaasService implements OnModuleInit {
       await this.cacheManager.set(cacheKey, value, 24 * 3600 * 1000);
   }
 
-  async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
+  async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment = 1): Promise<void> {
     const org = await manager.findOne(Organization, {
         where: { id: organizationId },
         relations: ['plan', 'plan.limits']
@@ -340,7 +340,7 @@ export class SaasService implements OnModuleInit {
     return usageData;
   }
 
-  async checkLimit(organizationId: string, resource: SaasResource, increment: number = 1): Promise<boolean> {
+  async checkLimit(organizationId: string, resource: SaasResource, increment = 1): Promise<boolean> {
     const cacheKey = await this.getCacheKey(organizationId, resource);
     const cached = await this.cacheManager.get<boolean>(cacheKey);
     if (cached !== undefined) {

@@ -251,9 +251,6 @@ export class UsersService {
     }
   }
 
-  async getActivityLog(userId: string): Promise<any[]> {
-    return [];
-  }
 
   async inviteUser(
     inviteUserDto: InviteUserDto,

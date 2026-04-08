@@ -57,7 +57,7 @@ import { RecurringEntriesProcessor } from './recurring-entries.processor';
     forwardRef(() => AuthModule),
     forwardRef(() => ChartOfAccountsModule),
     StorageModule,
-    WebsocketsModule,
+    forwardRef(() => WebsocketsModule),
     forwardRef(() => AccountingModule),
     forwardRef(() => WorkflowsModule),
   ],
