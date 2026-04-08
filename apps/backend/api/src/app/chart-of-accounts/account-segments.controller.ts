@@ -20,4 +20,9 @@ export class AccountSegmentsController {
   configureSegments(@Body() dto: ConfigureAccountSegmentsDto, @CurrentUser() user: User) {
     return this.segmentsService.configure(dto, user.organizationId);
   }
+
+  @Post('initialize')
+  initialize(@CurrentUser() user: User) {
+    return this.segmentsService.initializeDefault(user.organizationId);
+  }
 }

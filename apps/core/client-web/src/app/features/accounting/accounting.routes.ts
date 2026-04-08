@@ -15,6 +15,14 @@ export const ACCOUNTING_ROUTES: Routes = [
           ),
       },
       {
+        path: 'chart-of-accounts/segments-configuration',
+        title: 'Configuración de Segmentos',
+        loadComponent: () =>
+          import('./chart-of-accounts/segment-configuration/segment-configuration.page').then(
+            (m) => m.SegmentConfigurationPage
+          ),
+      },
+      {
         path: 'ledgers',
         loadComponent: () =>
           import('./ledger-list/ledger-list.page').then(
