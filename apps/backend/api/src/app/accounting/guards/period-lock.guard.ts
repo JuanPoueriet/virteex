@@ -49,8 +49,15 @@ export class PeriodLockGuard implements CanActivate {
       },
     });
 
-
     if (!period) {
+      const periodsCount = await this.periodRepo.count({
+        where: { organizationId },
+      });
+
+      if (periodsCount === 0) {
+        return true;
+      }
+
       throw new ForbiddenException(
         `La fecha de la transacción ${transactionDate.toISOString().split('T')[0]} no pertenece a ningún período contable definido.`,
       );
