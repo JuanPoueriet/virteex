@@ -6,7 +6,7 @@ import { ChartOfAccountsApiService, CreateAccountDto, UpdateAccountDto } from '.
 import { ChartOfAccountsStateService } from '../../../core/state/chart-of-accounts.state';
 import { take } from 'rxjs/operators';
 import { AccountType, AccountCategory, AccountNature, CashFlowCategory, RequiredDimension } from '../../../core/models/account.model';
-import { LucideAngularModule, Save } from 'lucide-angular';
+import { LucideAngularModule, Save, AlertTriangle, Settings } from 'lucide-angular';
 import { NotificationService } from '../../../core/services/notification';
 
 @Component({
@@ -35,6 +35,8 @@ export class AccountFormPage implements OnInit {
   // --- Propiedades y Métodos Añadidos para Corregir Errores ---
   public activeTab = signal<'general' | 'mappings' | 'rules' | 'advanced'>('general');
   public readonly SaveIcon = Save;
+  public readonly AlertIcon = AlertTriangle;
+  public readonly SettingsIcon = Settings;
   public readonly accountTypes = Object.values(AccountType);
   public readonly accountCategories = Object.values(AccountCategory);
   public readonly accountNatures = Object.values(AccountNature);
@@ -61,7 +63,6 @@ export class AccountFormPage implements OnInit {
         this.segmentDefinitions.set(defs);
         if (defs.length === 0) {
           this.isConfigMissing.set(true);
-          this.notificationService.showError('La estructura de segmentos de cuenta no ha sido configurada para esta organización. Por favor, contacte al administrador.');
         }
       },
       error: () => {
