@@ -11,10 +11,10 @@ import {
   JoinTable,
   OneToOne,
 } from 'typeorm';
-import { Organization } from '../../../organizations/entities/organization.entity';
-import { Role } from '../../../roles/entities/role.entity';
-import { Passkey } from '../passkey.entity';
-import { UserSecurity } from '../user-security.entity';
+import type { Organization } from '../../../organizations/entities/organization.entity';
+import type { Role } from '../../../roles/entities/role.entity';
+import type { Passkey } from '../passkey.entity';
+import type { UserSecurity } from '../user-security.entity';
 
 export enum UserStatus {
   PENDING = 'PENDING',
@@ -70,11 +70,11 @@ export class User {
   @Column({ name: 'organization_id' })
   organizationId: string;
 
-  @ManyToOne(() => Organization, (org) => org.users)
+  @ManyToOne('Organization', 'users')
   @JoinColumn({ name: 'organization_id' })
   organization: Organization;
 
-  @ManyToMany(() => Organization, (org) => org.users)
+  @ManyToMany('Organization', 'users')
   @JoinTable({
     name: 'user_organizations',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },
@@ -82,7 +82,7 @@ export class User {
   })
   organizations: Organization[];
 
-  @ManyToMany(() => Role, { eager: false })
+  @ManyToMany('Role', { eager: false })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },
@@ -108,7 +108,7 @@ export class User {
   @Column({ name: 'is_email_verified', default: false })
   isEmailVerified: boolean;
 
-  @OneToOne(() => UserSecurity, (security) => security.user, {
+  @OneToOne('UserSecurity', 'user', {
     cascade: true,
     eager: false,
   })
@@ -126,6 +126,6 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => Passkey, (passkey) => passkey.user, { cascade: true })
+  @OneToMany('Passkey', 'user', { cascade: true })
   passkeys: Passkey[];
 }

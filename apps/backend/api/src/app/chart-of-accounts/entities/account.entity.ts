@@ -22,7 +22,7 @@ import {
   AccountNature,
 } from '../enums/account-enums';
 import type { AccountBalance } from './account-balance.entity';
-import { AccountSegment } from './account-segment.entity';
+import type { AccountSegment } from './account-segment.entity';
 
 import type { AccountHierarchyVersion } from './account-hierarchy-version.entity';
 
@@ -82,7 +82,7 @@ export class Account {
   @TreeChildren()
   children: Account[];
 
-  @OneToMany(() => AccountSegment, (segment) => segment.account, { cascade: true, eager: true })
+  @OneToMany('AccountSegment', 'account', { cascade: true, eager: true })
   segments: AccountSegment[];
 
 

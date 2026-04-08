@@ -61,7 +61,7 @@ export class SaasService implements OnModuleInit {
             ['slug']
         );
 
-        let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
+        const plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
 
         if (!plan) continue;
 
@@ -340,7 +340,7 @@ export class SaasService implements OnModuleInit {
     return usageData;
   }
 
-  async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
+  async checkLimit(organizationId: string, resource: SaasResource, increment: number = 1): Promise<boolean> {
     const cacheKey = await this.getCacheKey(organizationId, resource);
     const cached = await this.cacheManager.get<boolean>(cacheKey);
     if (cached !== undefined) {

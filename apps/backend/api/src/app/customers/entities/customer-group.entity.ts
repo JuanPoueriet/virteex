@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
-import { Customer } from './customer.entity';
+import type { Customer } from './customer.entity';
 
 @Entity({ name: 'customer_groups' })
 export class CustomerGroup {
@@ -16,6 +16,6 @@ export class CustomerGroup {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @OneToMany(() => Customer, (customer) => customer.group)
+  @OneToMany('Customer', 'group')
   customers: Customer[];
 }
