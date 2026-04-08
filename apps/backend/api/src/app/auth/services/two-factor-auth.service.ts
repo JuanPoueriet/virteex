@@ -36,7 +36,7 @@ export class TwoFactorAuthService {
     // Encrypt secret before saving
     const encryptedSecret = this.cryptoUtil.encrypt(secret);
 
-    let security = await this.ensureSecurityEntity(user);
+    const security = await this.ensureSecurityEntity(user);
 
     security.twoFactorSecret = encryptedSecret;
     await this.userSecurityRepository.save(security);
@@ -179,7 +179,7 @@ export class TwoFactorAuthService {
   }
 
   private async ensureSecurityEntity(user: User): Promise<UserSecurity> {
-      let security = user.security;
+      const security = user.security;
 
       if (!security) {
           const freshUser = await this.userRepository.findOne({ where: { id: user.id }, relations: ['security'] });
