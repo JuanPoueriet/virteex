@@ -167,6 +167,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roles: user.roles,
       permissions,
       organization: user.organization,
+      organizationId: user.organization?.id || user.organizationId,
       isTwoFactorEnabled: user.security?.isTwoFactorEnabled || false,
       isImpersonating: payload.isImpersonating,
       originalUserId: payload.originalUserId
