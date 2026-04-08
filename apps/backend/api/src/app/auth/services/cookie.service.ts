@@ -12,7 +12,7 @@ export class CookieService {
     res: Response,
     accessToken: string,
     refreshToken: string | null,
-    rememberMe: boolean = false
+    rememberMe = false
   ): void {
     const isProduction = this.configService.get('NODE_ENV') === 'production';
 

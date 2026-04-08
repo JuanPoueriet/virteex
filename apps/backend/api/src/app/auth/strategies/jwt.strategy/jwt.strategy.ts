@@ -6,10 +6,10 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import CircuitBreaker = require('opossum');
+import CircuitBreaker from 'opossum';
 
 import { JwtPayload } from '../../../auth/interfaces/jwt-payload.interface';
-import { User, UserStatus } from '../../../users/entities/user.entity/user.entity';
+import { UserStatus } from '../../../users/entities/user.entity/user.entity';
 import { AuthConfig } from '../../auth.config';
 import { UsersService } from '../../../users/users.service';
 import { AuthenticatedUser } from '../../interfaces/authenticated-user.interface';
@@ -168,6 +168,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roles: user.roles,
       permissions,
       organization: user.organization,
+      organizationId: user.organization?.id || user.organizationId,
       isTwoFactorEnabled: user.security?.isTwoFactorEnabled || false,
       isImpersonating: payload.isImpersonating,
       originalUserId: payload.originalUserId

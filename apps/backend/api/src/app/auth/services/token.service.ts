@@ -102,7 +102,7 @@ export class TokenService {
     extraPayload: Partial<JwtPayload> = {},
     ipAddress?: string,
     userAgent?: string,
-    rememberMe: boolean = false
+    rememberMe = false
   ) {
     const payload = this.buildPayload(user, extraPayload);
     const safeUser = this.buildSafeUser(user);

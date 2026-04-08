@@ -9,6 +9,7 @@ export interface SafeUser extends Partial<Omit<User, 'password' | 'twoFactorSecr
   roles: any[]; // Or strict Role type
   permissions: string[];
   organization?: any;
+  organizationId: string;
   isTwoFactorEnabled?: boolean;
 }
 

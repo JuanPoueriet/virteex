@@ -429,7 +429,7 @@ export class SessionService implements OnModuleInit {
         const ipv4 = addr as ipaddr.IPv4;
         return `${ipv4.octets[0]}.${ipv4.octets[1]}.*.*`;
       } else if (addr.kind() === 'ipv6') {
-        let ipv6 = addr as ipaddr.IPv6;
+        const ipv6 = addr as ipaddr.IPv6;
 
         // Handle IPv4-mapped IPv6 addresses (::ffff:127.0.0.1)
         if (ipv6.isIPv4MappedAddress()) {
