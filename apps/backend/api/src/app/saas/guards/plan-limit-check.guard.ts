@@ -47,9 +47,13 @@ export class PlanLimitCheckGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user || !user.organization) {
-       // Defensively check for organization context.
+    if (!user) {
        throw new ForbiddenException('Organization context required for limit check');
+    }
+
+    const organizationId = user.organization?.id ?? user.organizationId;
+    if (!organizationId) {
+      throw new ForbiddenException('Organization context required for limit check');
     }
 
     // Use Factory for consistent keys
@@ -57,9 +61,9 @@ export class PlanLimitCheckGuard implements CanActivate {
     // checking the simple key might be enough?
     // Actually SaasService uses versioning. We should probably read the version here too to ensure we don't read stale cache after a plan upgrade.
 
-    const versionKey = SaasCacheKeyFactory.limitVersion(user.organization.id);
+    const versionKey = SaasCacheKeyFactory.limitVersion(organizationId);
     const version = await this.cacheManager.get<number>(versionKey) || 0;
-    const cacheKey = SaasCacheKeyFactory.limitCheck(user.organization.id, version, limitMetadata.resource);
+    const cacheKey = SaasCacheKeyFactory.limitCheck(organizationId, version, limitMetadata.resource);
 
     // 1. Try Cache first (Fail-Fast)
     const cachedResult = await this.cacheManager.get<boolean>(cacheKey);
@@ -72,7 +76,7 @@ export class PlanLimitCheckGuard implements CanActivate {
 
     // 2. Check Limit (Read-Only)
     const canProceed = await this.saasService.checkLimit(
-      user.organization.id,
+      organizationId,
       limitMetadata.resource,
       limitMetadata.increment
     );
