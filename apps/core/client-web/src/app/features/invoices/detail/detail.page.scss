@@ -8,23 +8,32 @@
 }
 
 .status-badge {
-    // Estilos ya definidos en list.page.scss, pero los ajustamos para el header
     margin-left: 1rem;
     vertical-align: middle;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: capitalize;
 
-    &.pagada {
+    &.paid {
         background-color: rgba(74, 222, 128, 0.1);
         color: #4ade80;
     }
 
-    &.pendiente {
+    &.pending {
         background-color: rgba(251, 146, 60, 0.1);
         color: #fb923c;
     }
 
-    &.vencida {
+    &.void, &.credit-note {
         background-color: rgba(248, 113, 113, 0.1);
         color: #f87171;
+    }
+
+    &.partially-paid {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
     }
 }
 
@@ -118,21 +127,30 @@
     }
 
     .summary-totals {
-        width: 250px;
+        width: 300px;
 
         .summary-row,
         .summary-total {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .summary-total {
             font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            border-top: 2px solid var(--text-primary);
+            font-weight: 700;
+            color: var(--color-primary, #4a6cf7);
+            border-top: 1px solid var(--color-border);
             padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .balance-row {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(248, 113, 113, 0.05);
+            border-radius: 4px;
+            color: #f87171;
         }
     }
 }

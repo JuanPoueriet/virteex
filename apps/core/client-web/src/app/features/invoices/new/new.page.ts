@@ -10,6 +10,7 @@ import { Router, RouterLink } from '@angular/router';
 import { InvoicesService, CreateInvoiceDto } from '../../../core/services/invoices';
 import { CustomersService } from '../../../core/api/customers.service';
 import { InventoryService } from '../../../core/api/inventory.service';
+import { CurrenciesService, Currency } from '../../../core/api/currencies.service';
 import { Customer } from '../../../core/models/customer.model';
 import { Product } from '../../../core/models/product.model';
 import { NotificationService } from '../../../core/services/notification';
@@ -28,11 +29,13 @@ export class NewInvoicePage implements OnInit {
   private invoicesService = inject(InvoicesService);
   private customersService = inject(CustomersService);
   private inventoryService = inject(InventoryService);
+  private currenciesService = inject(CurrenciesService);
   private notificationService = inject(NotificationService);
 
   invoiceForm: FormGroup;
   customers = signal<Customer[]>([]);
   products = signal<Product[]>([]);
+  currencies = signal<Currency[]>([]);
   isSaving = signal(false);
 
   constructor() {
@@ -40,6 +43,7 @@ export class NewInvoicePage implements OnInit {
       customerId: ['', Validators.required],
       issueDate: [new Date().toISOString().split('T')[0], Validators.required],
       dueDate: ['', Validators.required],
+      currencyCode: ['USD', Validators.required],
       notes: [''],
       lineItems: this.fb.array([this.createLineItem()]),
     });
@@ -52,6 +56,7 @@ export class NewInvoicePage implements OnInit {
   loadInitialData(): void {
     this.customersService.getCustomers().subscribe((data) => this.customers.set(data));
     this.inventoryService.getProducts().subscribe((data) => this.products.set(data));
+    this.currenciesService.getCurrencies().subscribe((data) => this.currencies.set(data));
   }
 
   get lineItems(): FormArray {
@@ -137,6 +142,7 @@ export class NewInvoicePage implements OnInit {
       customerId: formValue.customerId,
       issueDate: formValue.issueDate,
       dueDate: formValue.dueDate,
+      currencyCode: formValue.currencyCode,
       notes: formValue.notes,
       lineItems: formValue.lineItems.map((item: any) => ({
         productId: item.productId,
