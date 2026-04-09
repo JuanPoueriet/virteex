@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface InvoiceLineItem {
@@ -73,5 +73,20 @@ export class InvoicesService {
 
   downloadInvoicePdf(id: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/pdf`, { responseType: 'blob' });
+  }
+
+  getInvoiceNavigation(currentId: string): Observable<{ first: string, prev: string, next: string, last: string }> {
+    return this.getInvoices().pipe(
+      map(invoices => {
+        const sorted = [...invoices].sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime());
+        const index = sorted.findIndex(inv => inv.id === currentId);
+        return {
+          first: sorted[0]?.id,
+          prev: sorted[index - 1]?.id || sorted[0]?.id,
+          next: sorted[index + 1]?.id || sorted[sorted.length - 1]?.id,
+          last: sorted[sorted.length - 1]?.id
+        };
+      })
+    );
   }
 }
