@@ -3,37 +3,30 @@
   <div class="view-header">
     <div class="header-content">
       <h1>
-        Factura <span class="invoice-id">#{{ inv.invoiceNumber }}</span>
+        {{ inv.type === 'CREDIT_NOTE' ? 'Nota de Crédito' : 'Factura de Venta' }} <span class="invoice-id">#{{ inv.invoiceNumber }}</span>
       </h1>
-      <div
-        class="status-badge"
-        [ngClass]="inv.status.toLowerCase().replace(' ', '-')"
-      >
-        {{ inv.status }}
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="secondary-button" (click)="printInvoice()">
-        <lucide-icon [img]="PrinterIcon" size="16"></lucide-icon
-        ><span>Imprimir</span>
-      </button>
-      <button class="secondary-button" (click)="downloadPdf()">
-        <lucide-icon [img]="DownloadIcon" size="16"></lucide-icon
-        ><span>Descargar PDF</span>
-      </button>
-      <button class="primary-button">
-        <lucide-icon [img]="MailIcon" size="16"></lucide-icon
-        ><span>Enviar por Correo</span>
-      </button>
-      @if(inv.status !== 'Void' && inv.status !== 'Credit Note') {
-      <button class="danger-button" (click)="createCreditNote(inv.id)">
-        Anular con Nota de Crédito
-      </button>
-      }
     </div>
   </div>
 
-  <div class="invoice-document card">
+  <app-invoice-toolbar
+    (navigate)="handleNavigate($event)"
+    (print)="printInvoice()"
+    (email)="notificationService.showInfo('Enviando correo...')"
+    (export)="handleExport($event)"
+    (copyFrom)="handleCopyFrom()"
+    (copyTo)="handleCopyTo()"
+    (back)="goBack()"
+    (forward)="goForward()"
+  ></app-invoice-toolbar>
+
+  <!-- Document Tabs -->
+  <div class="sap-tabs">
+    <button [class.active]="activeTab() === 'content'" (click)="activeTab.set('content')">Contenido</button>
+    <button [class.active]="activeTab() === 'logistics'" (click)="activeTab.set('logistics')">Logística</button>
+    <button [class.active]="activeTab() === 'finance'" (click)="activeTab.set('finance')">Finanzas</button>
+  </div>
+
+  <div class="invoice-document card" [class.hidden]="activeTab() !== 'content'">
     <div class="card-body">
       <!-- Invoice Header -->
       <div class="invoice-header">
@@ -74,6 +67,9 @@
       </div>
 
       <!-- Line Items Table -->
+      <div class="line-items-toolbar">
+          <input type="text" placeholder="Buscar en líneas..." [ngModel]="lineItemSearch()" (ngModelChange)="lineItemSearch.set($event)">
+      </div>
       <table class="line-items-table">
         <thead>
           <tr>
@@ -85,7 +81,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of inv.lineItems; track item.id) {
+          @for (item of filteredLineItems(); track item.id) {
           <tr>
             <td class="text-left">{{ item.description }}</td>
             <td class="text-center">{{ item.quantity }}</td>
@@ -128,6 +124,52 @@
           }
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="invoice-document card" *ngIf="activeTab() === 'logistics'">
+    <div class="card-body">
+        <h3>Logística y Entrega</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Dirección de Envío:</label>
+                <p>{{ inv.customerAddress }}</p>
+            </div>
+            <div class="detail-item">
+                <label>Método de Envío:</label>
+                <p>Transporte Terrestre</p>
+            </div>
+            <div class="detail-item">
+                <label>Persona de Contacto:</label>
+                <p>{{ inv.customerName }}</p>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="invoice-document card" *ngIf="activeTab() === 'finance'">
+    <div class="card-body">
+        <h3>Información Financiera</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Condición de Pago:</label>
+                <p>30 Días</p>
+            </div>
+            <div class="detail-item">
+                <label>Proyecto:</label>
+                <p>General</p>
+            </div>
+            <div class="detail-item">
+                <label>Indicador de Impuestos:</label>
+                <p>ITBIS (18%)</p>
+            </div>
+            <div class="detail-item">
+                <label>Estado de Cobro:</label>
+                <span class="status-badge" [ngClass]="inv.status.toLowerCase().replace(' ', '-')">
+                    {{ inv.status }}
+                </span>
+            </div>
+        </div>
     </div>
   </div>
   } @else {

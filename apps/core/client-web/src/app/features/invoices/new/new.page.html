@@ -6,7 +6,7 @@
         <span class="divider">/</span>
         <span>Nueva Factura</span>
       </div>
-      <h1>Crear Nueva Factura</h1>
+      <h1>Crear Nueva Factura de Venta</h1>
     </div>
     <div class="page-header-actions">
       <button class="btn btn-secondary" [routerLink]="['/invoices']">
@@ -24,8 +24,22 @@
     </div>
   </div>
 
+  <app-invoice-toolbar
+    [canNavigate]="false"
+    [isNew]="true"
+    (copyFrom)="handleCopyFrom()"
+    (back)="router.navigate(['/invoices'])"
+  ></app-invoice-toolbar>
+
+  <!-- Document Tabs -->
+  <div class="sap-tabs">
+    <button [class.active]="activeTab() === 'content'" (click)="activeTab.set('content')">Contenido</button>
+    <button [class.active]="activeTab() === 'logistics'" (click)="activeTab.set('logistics')">Logística</button>
+    <button [class.active]="activeTab() === 'finance'" (click)="activeTab.set('finance')">Finanzas</button>
+  </div>
+
   <form [formGroup]="invoiceForm">
-    <div class="grid-layout">
+    <div class="grid-layout" [class.hidden]="activeTab() !== 'content'">
       <!-- Main Invoice Content -->
       <div class="main-content">
         <div class="card invoice-card">
@@ -212,5 +226,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Logistics Tab Content -->
+    <div class="invoice-document card" *ngIf="activeTab() === 'logistics'">
+        <div class="card-body">
+            <h3 class="section-title">Logística y Entrega</h3>
+            <div class="grid-2-col">
+                <div class="form-group">
+                    <label class="form-label">Dirección de Envío</label>
+                    <textarea class="form-control" rows="3" placeholder="Dirección completa del cliente..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Método de Envío</label>
+                    <select class="form-control">
+                        <option>Transporte Propio</option>
+                        <option>Courier Externo</option>
+                        <option>Retiro en Almacén</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finance Tab Content -->
+    <div class="invoice-document card" *ngIf="activeTab() === 'finance'">
+        <div class="card-body">
+            <h3 class="section-title">Información Financiera</h3>
+            <div class="grid-2-col">
+                <div class="form-group">
+                    <label class="form-label">Condiciones de Pago</label>
+                    <select class="form-control">
+                        <option>Contado</option>
+                        <option>15 Días</option>
+                        <option selected>30 Días</option>
+                        <option>60 Días</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lista de Precios</label>
+                    <select class="form-control">
+                        <option>Precio Base</option>
+                        <option>Mayorista</option>
+                        <option>Distribuidor</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
   </form>
+
+  <app-invoice-selection-dialog #selectionDialog></app-invoice-selection-dialog>
 </div>

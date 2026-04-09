@@ -6,7 +6,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { InvoicesService, CreateInvoiceDto } from '../../../core/services/invoices';
 import { CustomersService } from '../../../core/api/customers.service';
 import { InventoryService } from '../../../core/api/inventory.service';
@@ -14,18 +14,23 @@ import { CurrenciesService, Currency } from '../../../core/api/currencies.servic
 import { Customer } from '../../../core/models/customer.model';
 import { Product } from '../../../core/models/product.model';
 import { NotificationService } from '../../../core/services/notification';
-import { DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
+import { InvoiceToolbarComponent } from '../components/invoice-toolbar/invoice-toolbar.component';
+import { InvoiceSelectionDialogComponent } from '../components/invoice-selection-dialog/invoice-selection-dialog.component';
+import { ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-new-invoice-page',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, DecimalPipe, InvoiceToolbarComponent, InvoiceSelectionDialogComponent],
   templateUrl: './new.page.html',
   styleUrls: ['./new.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewInvoicePage implements OnInit {
   private fb = inject(FormBuilder);
-  private router = inject(Router);
+  protected router = inject(Router);
+  private route = inject(ActivatedRoute);
   private invoicesService = inject(InvoicesService);
   private customersService = inject(CustomersService);
   private inventoryService = inject(InventoryService);
@@ -37,6 +42,9 @@ export class NewInvoicePage implements OnInit {
   products = signal<Product[]>([]);
   currencies = signal<Currency[]>([]);
   isSaving = signal(false);
+  activeTab = signal<'content' | 'logistics' | 'finance'>('content');
+
+  @ViewChild('selectionDialog') selectionDialog!: InvoiceSelectionDialogComponent;
 
   constructor() {
     this.invoiceForm = this.fb.group({
@@ -51,6 +59,35 @@ export class NewInvoicePage implements OnInit {
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.checkCopyFrom();
+  }
+
+  private checkCopyFrom(): void {
+    const copyFromId = this.route.snapshot.queryParamMap.get('copyFrom');
+    if (copyFromId) {
+      this.invoicesService.getInvoiceById(copyFromId).subscribe(invoice => {
+        this.invoiceForm.patchValue({
+          customerId: (invoice as any).customerId || (invoice as any).customer?.id,
+          currencyCode: invoice.currencyCode,
+          notes: `Copiado de la factura ${invoice.invoiceNumber}. ${invoice.notes || ''}`
+        });
+
+        this.lineItems.clear();
+        invoice.lineItems.forEach(item => {
+          const group = this.createLineItem();
+          group.patchValue({
+            productId: item.productId,
+            description: item.description,
+            quantity: item.quantity,
+            price: item.price,
+            taxRate: item.taxRate
+          });
+          this.lineItems.push(group);
+        });
+
+        this.notificationService.showInfo(`Datos cargados desde la factura ${invoice.invoiceNumber}`);
+      });
+    }
   }
 
   loadInitialData(): void {
@@ -127,6 +164,35 @@ export class NewInvoicePage implements OnInit {
       return false;
     }
     return true;
+  }
+
+  handleCopyFrom(): void {
+    this.selectionDialog.open((invoice) => {
+      this.populateFromInvoice(invoice);
+    });
+  }
+
+  private populateFromInvoice(invoice: any): void {
+    this.invoiceForm.patchValue({
+      customerId: invoice.customerId || (invoice as any).customerId || (invoice as any).customer?.id,
+      currencyCode: invoice.currencyCode,
+      notes: `Copiado de la factura ${invoice.invoiceNumber}. ${invoice.notes || ''}`
+    });
+
+    this.lineItems.clear();
+    invoice.lineItems.forEach((item: any) => {
+      const group = this.createLineItem();
+      group.patchValue({
+        productId: item.productId,
+        description: item.description,
+        quantity: item.quantity,
+        price: item.price,
+        taxRate: item.taxRate
+      });
+      this.lineItems.push(group);
+    });
+
+    this.notificationService.showSuccess(`Datos cargados desde la factura ${invoice.invoiceNumber}`);
   }
 
   onSubmit(): void {
