@@ -356,9 +356,9 @@
 </header>
 
 <main class="main-content">
-  <dockview-angular
+  <dv-dockview
     class="workspace-dock dockview-theme-abyss"
     [components]="dockviewComponents"
-    (onReady)="onDockviewReady($event)"
-  ></dockview-angular>
+    (ready)="onDockviewReady($event)"
+  ></dv-dockview>
 </main>
