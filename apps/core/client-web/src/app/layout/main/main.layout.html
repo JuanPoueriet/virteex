@@ -356,5 +356,9 @@
 </header>
 
 <main class="main-content">
-  <router-outlet></router-outlet>
+  <dockview-angular
+    class="workspace-dock dockview-theme-abyss"
+    [components]="dockviewComponents"
+    (onReady)="onDockviewReady($event)"
+  ></dockview-angular>
 </main>
