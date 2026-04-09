@@ -9,7 +9,7 @@ import { NotificationCenterService } from '../../core/services/notification-cent
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { SearchService, SearchResultGroup } from '../../core/services/search.service';
 import { Subject, of } from 'rxjs';
-import { DockviewAngularModule } from 'dockview-angular';
+import { DockviewComponent } from 'dockview-angular';
 import { DockviewApi, DockviewReadyEvent } from 'dockview-core';
 import { debounceTime, switchMap, catchError, distinctUntilChanged, tap } from 'rxjs/operators';
 import {
@@ -44,7 +44,7 @@ import { ClickOutsideDirective } from '../../shared/directives/click-outside.dir
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective, DockviewAngularModule], // ✅ Directiva añadida a los imports
+  imports: [CommonModule, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective, DockviewComponent],
   templateUrl: './main.layout.html',
   styleUrls: ['./main.layout.scss'],
 })
