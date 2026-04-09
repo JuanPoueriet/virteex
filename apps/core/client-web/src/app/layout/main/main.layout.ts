@@ -1,14 +1,16 @@
 // ../app/layout/main/main.layout.ts
 
-import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, ViewChild, computed } from '@angular/core';
+import { Component, inject, signal, HostListener, ElementRef, HostBinding, OnInit, WritableSignal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
 import { BrandingService } from '../../core/services/branding';
 import { NotificationCenterService } from '../../core/services/notification-center.service';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { SearchService, SearchResultGroup } from '../../core/services/search.service';
 import { Subject, of } from 'rxjs';
+import { DockviewAngularModule } from 'dockview-angular';
+import { DockviewApi, DockviewReadyEvent } from 'dockview-core';
 import { debounceTime, switchMap, catchError, distinctUntilChanged, tap } from 'rxjs/operators';
 import {
   LucideAngularModule, Search, PlusCircle, Bell, User, Settings, LogOut, ChevronDown,
@@ -35,12 +37,14 @@ import {
 } from 'lucide-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { Sidebar } from '../sidebar/sidebar';
+import { WorkspaceRoutePanelComponent } from './workspace-panels/workspace-route-panel.component';
+import { WorkspaceWelcomePanelComponent } from './workspace-panels/workspace-welcome-panel.component';
 import { ClickOutsideDirective } from '../../shared/directives/click-outside.directive'; // ✅ Directiva añadida
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective], // ✅ Directiva añadida a los imports
+  imports: [CommonModule, RouterLink, RouterLinkActive, ThemeToggle, LucideAngularModule, TranslateModule, Sidebar, ClickOutsideDirective, DockviewAngularModule], // ✅ Directiva añadida a los imports
   templateUrl: './main.layout.html',
   styleUrls: ['./main.layout.scss'],
 })
@@ -124,12 +128,68 @@ export class MainLayout implements OnInit {
     );
   });
 
+  protected onDockviewReady(event: DockviewReadyEvent): void {
+    this.dockviewApi = event.api;
+
+    const title = this.resolveRouteTitle(this.router.url);
+
+    this.dockviewApi.addPanel({
+      id: 'workspace-route',
+      component: 'workspaceRoute',
+      title,
+      minimumWidth: 420,
+    });
+
+    this.dockviewApi.addPanel({
+      id: 'workspace-welcome',
+      component: 'workspaceWelcome',
+      title: 'Inicio rápido',
+    });
+
+    this.router.events.subscribe((routerEvent) => {
+      if (!(routerEvent instanceof NavigationEnd) || !this.dockviewApi) {
+        return;
+      }
+
+      const mainPanel = this.dockviewApi.getPanel('workspace-route');
+      mainPanel?.api.setTitle(this.resolveRouteTitle(routerEvent.urlAfterRedirects));
+    });
+  }
+
+  private resolveRouteTitle(url: string): string {
+    const normalizedUrl = url.split('?')[0].replace(/^\/+/, '');
+    const [section] = normalizedUrl.split('/');
+
+    const labelMap: Record<string, string> = {
+      dashboard: 'Dashboard',
+      sales: 'Ventas',
+      invoices: 'Facturas',
+      inventory: 'Inventario',
+      contacts: 'Contactos',
+      accounting: 'Contabilidad',
+      reports: 'Reportes',
+      settings: 'Configuración',
+    };
+
+    if (!section) {
+      return 'Inicio';
+    }
+
+    return labelMap[section] ?? section.charAt(0).toUpperCase() + section.slice(1);
+  }
+
   isUserMenuOpen = signal(false);
   isNotificationMenuOpen = signal(false);
   isSearchOpen = signal(false);
   searchResults = signal<SearchResultGroup[]>([]);
   isSearchLoading = signal(false);
   private searchQuery$ = new Subject<string>();
+  private dockviewApi: DockviewApi | null = null;
+
+  protected readonly dockviewComponents = {
+    workspaceRoute: WorkspaceRoutePanelComponent,
+    workspaceWelcome: WorkspaceWelcomePanelComponent,
+  };
 
   @HostBinding('class')
   get layoutClass() {

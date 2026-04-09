@@ -378,11 +378,33 @@
 
 .main-content {
   overflow: hidden;
+  padding: 0.75rem;
+  min-height: 0;
 
-  > :first-child {
-    max-width: var(--content-max-width, 1280px);
-    margin-left: auto;
-    margin-right: auto;
+  .workspace-dock {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 18%, var(--border-color));
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+
+    :is(.dv-groupview, .dv-groupview-header) {
+      background-color: var(--bg-layer-1);
+    }
+
+    .dv-tabs-and-actions-container {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .dv-tab {
+      color: var(--text-secondary);
+      transition: color 120ms ease;
+    }
+
+    .dv-tab.dv-active-tab {
+      color: var(--text-primary);
+    }
   }
 }
 
