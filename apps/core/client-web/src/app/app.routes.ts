@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
-import { MainLayout } from './layout/main/main.layout';
 import { RouteRedirectorComponent } from './core/components/route-redirector/route-redirector';
 import { languageInitGuard } from './core/guards/language-init.guard';
 import { languageRedirectGuard } from './core/guards/language-redirect.guard';
@@ -18,7 +17,8 @@ export const APP_ROUTES: Routes = [
   // 2. Authenticated Routes (Clean URLs) - e.g. /dashboard
   {
     path: '',
-    component: MainLayout,
+    loadComponent: () =>
+      import('./layout/main/main.layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
     children: [
       {
