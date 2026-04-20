@@ -1,43 +1,56 @@
-<div class="modal-container" [@modalContainer] *ngIf="isOpen">
-  <!-- Backdrop -->
-  <div class="modal-backdrop" [@modalBackdrop] (click)="onBackdropClick()"></div>
+@if (isOpen()) {
+  <div class="modal-container" [@modalContainer]>
+    <!-- Backdrop -->
+    <div class="modal-backdrop" [@modalBackdrop] (click)="onBackdropClick()"></div>
 
-  <!-- Modal Panel -->
-  <div class="modal-panel-wrapper">
-    <div
-      class="modal-panel"
-      [ngClass]="'size-' + size"
-      [@modalPanel]
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-label]="title">
+    <!-- Modal Panel -->
+    <div class="modal-panel-wrapper">
+      <div
+        class="modal-panel"
+        [class]="'size-' + size()"
+        [@modalPanel]
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="title()">
 
-      <!-- Header -->
-      <div class="modal-header" *ngIf="title || !hideCloseButton">
-        <h2 class="modal-title" *ngIf="title">{{ title }}</h2>
-        <div class="modal-actions">
-          <button
-            *ngIf="!hideCloseButton"
-            class="close-button"
-            (click)="closeModal()"
-            type="button"
-            aria-label="Close">
-            <lucide-icon [img]="XIcon" class="icon"></lucide-icon>
-          </button>
+        <!-- Header -->
+        @if (title() || !hideCloseButton()) {
+          <div class="modal-header">
+            @if (title()) {
+              <h2 class="modal-title">{{ title() }}</h2>
+            }
+            <div class="modal-actions">
+              @if (!hideCloseButton()) {
+                <button
+                  class="close-button"
+                  (click)="closeModal()"
+                  type="button"
+                  aria-label="Close">
+                  <lucide-icon [img]="XIcon" class="icon"></lucide-icon>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Content -->
+        <div class="modal-content">
+          <ng-content></ng-content>
         </div>
-      </div>
 
-      <!-- Content -->
-      <div class="modal-content">
-        <ng-content></ng-content>
-      </div>
+        <!-- Footer (Optional) -->
+        <!-- We use the hidden div trick to detect content, but strictly controlling visibility via class or structure -->
+        <div class="modal-footer" [style.display]="hasFooter() ? 'block' : 'none'">
+           <ng-content select="[footer]"></ng-content>
+        </div>
 
-      <!-- Footer (Optional) -->
-      <div class="modal-footer" *ngIf="footerContent.childNodes.length > 0">
-        <ng-content select="[footer]"></ng-content>
+        <!-- Hidden ref to check if footer exists.
+             Note: content detection with ng-content is tricky in Angular.
+             Ideally we would use contentChild if the user passed a directive.
+             For raw HTML projection, checking the DOM is the fallback.
+        -->
+        <div #footerContent style="display: none"><ng-content select="[footer]"></ng-content></div>
       </div>
-      <!-- Hidden ref to check if footer exists -->
-      <div #footerContent style="display: none"><ng-content select="[footer]"></ng-content></div>
     </div>
   </div>
-</div>
+}

@@ -88,6 +88,8 @@
   border: none;
   background: transparent;
   color: #6b7280; /* Neutral gray */
+  /* Or use vars if available */
+  color: var(--text-secondary, #6b7280);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 6px;
@@ -95,7 +97,9 @@
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-hover, rgba(0,0,0,0.05));
     color: #111827;
+    color: var(--text-primary, #111827);
   }
 
   /* Dark mode adjust via parent var or simple media query if vars aren't sufficient */
@@ -105,13 +109,6 @@
       background-color: rgba(255, 255, 255, 0.1);
       color: #f3f4f6;
     }
-  }
-
-  /* Or use vars if available */
-  color: var(--text-secondary, #6b7280);
-  &:hover {
-    background-color: var(--bg-hover, rgba(0,0,0,0.05));
-    color: var(--text-primary, #111827);
   }
 
   .icon {

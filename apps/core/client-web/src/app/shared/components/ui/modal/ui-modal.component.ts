@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, viewChild, ElementRef, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, style, animate, transition, query, animateChild, group } from '@angular/animations';
 import { LucideAngularModule, X } from 'lucide-angular';
@@ -9,6 +9,10 @@ import { LucideAngularModule, X } from 'lucide-angular';
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './ui-modal.component.html',
   styleUrls: ['./ui-modal.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'onEscape()'
+  },
   animations: [
     trigger('modalContainer', [
       transition(':enter', [
@@ -47,38 +51,40 @@ import { LucideAngularModule, X } from 'lucide-angular';
 export class UiModalComponent {
   /**
    * Controls the visibility of the modal.
-   * Note: The parent component should conditionally render this component or bind to this input.
-   * If using @if(isOpen) in parent, this input is less relevant for animation entry,
-   * but useful for internal logic or if not using @if.
-   * However, for the animations to trigger on :enter/:leave, the *ngIf or @if in the parent is key.
-   * This component structure assumes it is always present in DOM when 'isOpen' is true,
-   * or the parent handles the DOM insertion/removal.
    */
-  @Input() isOpen = false;
+  readonly isOpen = input(false);
 
   /** Title of the modal displayed in the header */
-  @Input() title: string = '';
+  readonly title = input('');
 
   /** Size of the modal: 'sm' | 'md' | 'lg' | 'xl' | 'full' */
-  @Input() size: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
+  readonly size = input<'sm' | 'md' | 'lg' | 'xl' | 'full'>('md');
 
   /** Whether to show the close button in the header */
-  @Input() hideCloseButton = false;
+  readonly hideCloseButton = input(false);
 
   /** Whether clicking the backdrop closes the modal */
-  @Input() closeOnBackdropClick = true;
+  readonly closeOnBackdropClick = input(true);
 
-  @Output() close = new EventEmitter<void>();
+  readonly close = output<void>();
 
   readonly XIcon = X;
 
-  @HostListener('document:keydown.escape')
+  // Access the hidden footer content wrapper to check for projected content
+  readonly footerContent = viewChild<ElementRef>('footerContent');
+
+  // Computed signal to check if footer has content
+  readonly hasFooter = computed(() => {
+    const el = this.footerContent()?.nativeElement;
+    return el && el.childNodes.length > 0;
+  });
+
   onEscape() {
     this.closeModal();
   }
 
   onBackdropClick() {
-    if (this.closeOnBackdropClick) {
+    if (this.closeOnBackdropClick()) {
       this.closeModal();
     }
   }

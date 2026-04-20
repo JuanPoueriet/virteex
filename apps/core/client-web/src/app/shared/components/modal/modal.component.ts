@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input } from '@angular/core';
+import { Component, output, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalOptions } from '../../service/modal.service';
 import { UiModalComponent } from '../ui/modal';
@@ -8,13 +8,14 @@ import { UiModalComponent } from '../ui/modal';
   standalone: true,
   imports: [CommonModule, UiModalComponent],
   templateUrl: './modal.component.html',
-  styleUrls: ['./modal.component.scss']
+  styleUrls: ['./modal.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ModalComponent {
-  @Input() options!: ModalOptions;
-  @Output() onConfirm = new EventEmitter<void>();
-  @Output() onCancel = new EventEmitter<void>();
-  @Output() onCloseModal = new EventEmitter<void>();
+  readonly options = input.required<ModalOptions>();
+  readonly onConfirm = output<void>();
+  readonly onCancel = output<void>();
+  readonly onCloseModal = output<void>();
 
   confirm() {
     this.onConfirm.emit();
