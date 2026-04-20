@@ -7,8 +7,7 @@ import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { PasswordRecoveryService } from './services/password-recovery.service';
 import { WebAuthnService } from './services/webauthn.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { RequestWithUser } from './interfaces/request-with-user.interface';
-import { SocialUser } from './interfaces/social-user.interface';
+import type { SocialUser } from './interfaces/social-user.interface';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt/jwt.guard';
@@ -26,7 +25,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from './auth.config';
 import { TypeOrmExceptionFilter } from '../common/filters/typeorm-exception.filter';
 import { CookieService } from './services/cookie.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { LoginResponseDto } from './dto/responses/login-response.dto';
@@ -56,7 +55,9 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req: Request) {}
+  async googleAuth() {
+    // Initiates Google OAuth2 flow
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -66,7 +67,9 @@ export class AuthController {
 
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuth(@Req() req: Request) {}
+  async microsoftAuth() {
+    // Initiates Microsoft OAuth2 flow
+  }
 
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
@@ -76,7 +79,9 @@ export class AuthController {
 
   @Get('okta')
   @UseGuards(AuthGuard('okta'))
-  async oktaAuth(@Req() req: Request) {}
+  async oktaAuth() {
+    // Initiates Okta OAuth2 flow
+  }
 
   @Get('okta/callback')
   @UseGuards(AuthGuard('okta'))
@@ -288,6 +293,7 @@ export class AuthController {
   @Throttle({ default: { limit: AuthConfig.THROTTLE_LIMIT, ttl: AuthConfig.THROTTLE_TTL } })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     const user = await this.passwordRecoveryService.resetPassword(resetPasswordDto);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userResult } = user;
     return userResult;
   }
@@ -493,7 +499,9 @@ export class AuthController {
              if (payload && payload.jti) {
                  currentRefreshTokenId = payload.jti;
              }
-          } catch(e) {}
+          } catch {
+            // Ignore invalid token decoding
+          }
       }
       return this.authService.getUserSessions(user.id, currentRefreshTokenId);
   }
