@@ -41,6 +41,27 @@ export class CustomersService {
     return customer;
   }
 
+  async findOrCreateByEmail(
+    email: string,
+    organizationId: string,
+    data: Partial<Customer>,
+  ): Promise<Customer> {
+    const customer = await this.customerRepository.findOne({
+      where: { email, organizationId },
+    });
+
+    if (customer) {
+      return customer;
+    }
+
+    const newCustomer = this.customerRepository.create({
+      ...data,
+      email,
+      organizationId,
+    });
+    return this.customerRepository.save(newCustomer);
+  }
+
   async update(
     id: string,
     updateCustomerDto: UpdateCustomerDto,
