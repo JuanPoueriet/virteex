@@ -6,9 +6,19 @@ module.exports = {
   output: {
     path: join(__dirname, '../../../dist/apps/backend/api'),
     clean: true,
+    module: true,
+    library: {
+      type: 'module',
+    },
+    environment: {
+      module: true,
+    },
     ...(process.env.NODE_ENV !== 'production' && {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
+  },
+  experiments: {
+    outputModule: true,
   },
   resolve: {
     plugins: [
@@ -20,7 +30,7 @@ module.exports = {
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
-      compiler: 'tsc',
+      compiler: 'swc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
       assets: [
