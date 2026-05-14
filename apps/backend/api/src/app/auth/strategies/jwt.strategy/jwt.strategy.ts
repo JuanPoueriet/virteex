@@ -29,7 +29,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req: Request | undefined) => req?.cookies?.access_token ?? null,
+        (req: Request | undefined) => {
+            if (req?.cookies?.access_token) {
+                return req.cookies.access_token;
+            }
+            return null;
+        },
       ]),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
@@ -60,20 +65,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     let user: CachedUser | null = null;
     try {
         // Fire the circuit breaker
-        // Note: The circuit breaker wraps the cacheManager.get call
         user = await this.circuitBreaker.fire(cacheKey) as CachedUser | null;
     } catch (e) {
         this.logger.error(`Circuit Breaker Execution Error: ${(e as Error).message}`);
-        // Fallback is handled by configuration, but if fire throws, we ensure user is null
         user = null;
     }
 
-    // Check if cached user is stale (token version mismatch)
+    // Check if cached user is stale or corrupted
     if (user) {
       const cachedTokenVersion = user.security?.tokenVersion || 0;
       if (cachedTokenVersion !== tokenVersion) {
         this.logger.debug(`Cached user stale (Version ${cachedTokenVersion} vs Token ${tokenVersion}). Invalidating cache locally.`);
         user = null; // Force DB lookup
+      } else if (!user.organization) {
+         // Critical integrity check: Cache might have serialized incorrectly or lost the relation
+         this.logger.warn(`Cached user ${id} is missing Organization relation. Corrupted cache detected. Invalidating.`);
+         user = null;
       }
     }
 
@@ -83,10 +90,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
         if (dbUser) {
              // 3. Store in cache (TTL 15 mins or matching token expiration)
-             // We only attempt to set cache if the circuit breaker is closed or half-open (i.e. we think it might work)
-             // Opossum doesn't expose "can I write" easily for a different operation (set vs get),
-             // but generally if GET is failing, SET likely will too.
-             // We can check `this.circuitBreaker.opened`.
              if (!this.circuitBreaker.opened) {
                  try {
                     // Pre-calculate permissions and attach to user object in cache to avoid re-calc
@@ -107,6 +110,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     if (!user) {
+      this.logger.warn(`User ${id} not found in DB`);
       throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
     }
 
@@ -114,6 +118,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const currentTokenVersion = user.security?.tokenVersion || 0;
 
     if (currentTokenVersion !== tokenVersion) {
+      this.logger.warn(`Session expired for user ${id}: DB Version ${currentTokenVersion} !== Token Version ${tokenVersion}`);
       throw new UnauthorizedException(AuthError.SESSION_EXPIRED);
     }
 
@@ -124,21 +129,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const permissions = user._cachedPermissions || this.getPermissionsFromRoles(user.roles ?? []);
 
     // 10/10 SECURITY: Organization Context Validation
-    // Enforce strict multi-tenancy context. User MUST belong to an organization.
-    // In a future Multi-Tenancy (ManyToMany) setup, we would validate payload.orgId against user.organizations.
-    // For now (1:1), the existence of user.organization is mandatory.
     if (!user.organization) {
          this.logger.error(`User ${user.id} authenticated but has no linked Organization. Access Denied.`);
-         throw new UnauthorizedException(AuthError.USER_NOT_FOUND); // Or a specific error code like ORG_NOT_FOUND
+         throw new UnauthorizedException(AuthError.USER_NOT_FOUND);
     }
 
     // Strict validation: The token's organization context must match one of the user's organizations
-    // If organizationId is present in the token (context-aware token), we verify access.
     if (organizationId) {
-        // First check active context
         const isCurrentOrg = user.organization?.id === organizationId;
-
-        // Then check full list if not current
         const hasAccess = isCurrentOrg || (user.organizations && user.organizations.some(o => o.id === organizationId));
 
         if (!hasAccess) {
@@ -146,9 +144,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
         }
 
-        // If organization context switched, we might want to update the returned user object's active organization
-        // to match the token context, so controllers don't need to look it up again.
-        // However, we must ensure strict type safety.
         if (!isCurrentOrg && hasAccess) {
              const switchedOrg = user.organizations.find(o => o.id === organizationId);
              if (switchedOrg) {
@@ -158,7 +153,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Return SafeUser / AuthenticatedUser
-    // We construct it explicitly to avoid 'as any' and ensure type safety
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
       email: user.email,
