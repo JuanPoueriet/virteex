@@ -7,10 +7,8 @@ import { UserStatus } from './entities/user.entity/user.entity';
 import { InviteUserDto } from './entities/user.entity/invite-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { MailService } from '../mail/mail.service';
 import { RolesService } from '../roles/roles.service';
 import * as crypto from 'crypto';
-import { EventsGateway } from '../websockets/events.gateway';
 import { UserCacheService } from '../auth/modules/user-cache.service';
 import { UserSecurity } from './entities/user-security.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -22,9 +20,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly eventsGateway: EventsGateway,
     private readonly rolesService: RolesService,
-    private readonly mailService: MailService,
     private readonly userCacheService: UserCacheService,
     private readonly eventEmitter: EventEmitter2,
     private readonly saasService: SaasService,
@@ -235,22 +231,11 @@ export class UsersService {
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(id);
 
-    try {
-      await this.mailService.sendPasswordResetEmail(user, resetToken, '1h');
-    } catch (error) {
-      console.error(
-        `Failed to send password reset email to ${user.email}`,
-        error,
-      );
-
-      user.security.passwordResetToken = null;
-      user.security.passwordResetExpires = null;
-      await this.userRepository.save(user);
-
-      throw new Error(
-        'Could not send password reset email. Please try again later.',
-      );
-    }
+    this.eventEmitter.emit('user.password_reset', {
+      user,
+      resetToken,
+      expiry: '1h',
+    });
   }
 
   async getActivityLog(userId: string): Promise<any[]> {
@@ -303,7 +288,10 @@ export class UsersService {
         // TypeORM's manager.save(entity) handles this.
         await manager.save(newUser);
 
-        await this.mailService.sendUserInvitation(newUser, invitationToken);
+        this.eventEmitter.emit('user.invited', {
+          user: newUser,
+          invitationToken,
+        });
 
         delete newUser.invitationToken;
         delete newUser.invitationTokenExpires;
@@ -324,7 +312,8 @@ export class UsersService {
     }
     await this.userCacheService.clearUserSession(userId);
 
-    this.eventsGateway.sendToUser(userId, 'force-logout', {
+    this.eventEmitter.emit('user.forced_logout', {
+      userId,
       reason: 'Su sesión ha sido cerrada por un administrador.',
     });
 
@@ -332,19 +321,23 @@ export class UsersService {
   }
 
   async blockAndLogout(userId: string): Promise<{ message: string }> {
-    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['security'] });
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['security'],
+    });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
     user.status = UserStatus.BLOCKED;
     if (user.security) {
-        user.security.tokenVersion += 1;
+      user.security.tokenVersion += 1;
     }
     await this.userRepository.save(user);
     await this.userCacheService.clearUserSession(userId);
 
-    this.eventsGateway.sendToUser(userId, 'force-logout', {
+    this.eventEmitter.emit('user.forced_logout', {
+      userId,
       reason:
         'Su cuenta ha sido bloqueada y su sesión ha sido cerrada por un administrador.',
     });
@@ -359,7 +352,7 @@ export class UsersService {
     }
     user.isOnline = isOnline;
     const updatedUser = await this.userRepository.save(user);
-    this.eventsGateway.server.emit('user-status-update', { userId, isOnline });
+    this.eventEmitter.emit('user.status_changed', { userId, isOnline });
     return updatedUser;
   }
 

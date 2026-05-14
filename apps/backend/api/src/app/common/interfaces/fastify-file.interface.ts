@@ -1,5 +1,5 @@
 
-export interface FastifyFile {
+export class FastifyFile {
   fieldname: string;
   originalname: string;
   encoding: string;

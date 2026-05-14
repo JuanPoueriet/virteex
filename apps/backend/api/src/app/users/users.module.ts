@@ -12,6 +12,7 @@ import { WebsocketsModule } from '../websockets/websockets.module';
 import { UserSubscriber } from './subscribers/user.subscriber';
 import { UserCacheModule } from '../auth/modules/user-cache.module';
 import { StorageModule } from '../storage/storage.module';
+import { UserLifecycleListener } from './listeners/user-lifecycle.listener';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { StorageModule } from '../storage/storage.module';
   ],
 
   controllers: [UsersController],
-  providers: [UsersService, UserSubscriber],
+  providers: [UsersService, UserSubscriber, UserLifecycleListener],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}
