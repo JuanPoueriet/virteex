@@ -250,6 +250,10 @@ export class SessionService implements OnModuleInit {
           )
       );
 
+      // Invalidate user cache to ensure the next request (with new token) fetches fresh data from DB.
+      // This prevents race conditions or stale cache issues where JwtStrategy might reject the new token.
+      await this.userCacheService.clearUserSession(user.id);
+
       return {
         user: authResponse.user,
         accessToken: authResponse.accessToken,
