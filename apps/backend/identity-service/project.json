@@ -1,0 +1,22 @@
+{
+  "name": "identity-service",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/identity-service/src",
+  "projectType": "application",
+  "tags": ["scope:backend", "type:service"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/identity-service",
+        "main": "apps/backend/identity-service/src/main.ts",
+        "tsConfig": "apps/backend/identity-service/tsconfig.app.json",
+        "assets": ["apps/backend/identity-service/src/assets"],
+        "webpackConfig": "apps/backend/identity-service/webpack.config.js"
+      }
+    }
+  }
+}
