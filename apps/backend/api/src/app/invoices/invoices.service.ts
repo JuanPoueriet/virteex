@@ -1,5 +1,3 @@
-
-
 import {
   Injectable,
   NotFoundException,
@@ -18,26 +16,22 @@ import { CustomersService } from '../customers/customers.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { Product } from '../inventory/entities/product.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
-import * as puppeteer from 'puppeteer';
-import * as fs from 'fs';
 import * as path from 'path';
-import * as handlebars from 'handlebars';
 import { Organization } from '../organizations/entities/organization.entity';
 import { OrganizationSettings } from '../organizations/entities/organization-settings.entity';
-import { JournalEntriesService } from '../journal-entries/journal-entries.service';
-import { NcfType } from '../compliance/entities/ncf-sequence.entity';
-import { ComplianceService } from '../compliance/compliance.service';
-import { FiscalAdapterFactory } from './adapters/fiscal-adapter.factory';
 import { DocumentSequencesService } from '../shared/document-sequences/document-sequences.service';
 import { DocumentType } from '../shared/document-sequences/entities/document-sequence.entity';
 import { ExchangeRate } from '../currencies/entities/exchange-rate.entity';
 import { Buffer } from 'buffer';
 import { SaasService } from '../saas/saas.service';
 import { SaasResource } from '../saas/enums/saas-resource.enum';
+import { ComplianceService } from '../compliance/compliance.service';
+import { FiscalAdapterFactory } from './adapters/fiscal-adapter.factory';
+import { TemplateService } from '../shared/template/template.service';
+import { PdfService } from '../shared/pdf/pdf.service';
 
 @Injectable()
 export class InvoicesService {
-  private invoiceTemplate: HandlebarsTemplateDelegate;
   private readonly logger = new Logger(InvoicesService.name);
 
   constructor(
@@ -56,10 +50,10 @@ export class InvoicesService {
     private readonly complianceService: ComplianceService,
     private readonly documentSequencesService: DocumentSequencesService,
     private readonly fiscalAdapterFactory: FiscalAdapterFactory,
-    private readonly saasService: SaasService
-  ) {
-    this.compileTemplate();
-  }
+    private readonly saasService: SaasService,
+    private readonly templateService: TemplateService,
+    private readonly pdfService: PdfService
+  ) {}
 
 
   findOverdueInvoices(): Promise<Invoice[]> {
@@ -71,24 +65,6 @@ export class InvoicesService {
       },
       relations: ['customer'],
     });
-  }
-
-
-  private async compileTemplate() {
-    try {
-        const templatePath = path.join(__dirname, 'templates', 'invoice.hbs');
-        const templateHtml = fs.readFileSync(templatePath, 'utf8');
-        
-        handlebars.registerHelper('formatNumber', (value) => {
-            if (typeof value !== 'number') return value;
-            return new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-        });
-        handlebars.registerHelper('multiply', (a, b) => (a * b));
-
-        this.invoiceTemplate = handlebars.compile(templateHtml);
-    } catch (error) {
-        this.logger.error('Error al compilar la plantilla de factura Handlebars', error);
-    }
   }
 
   async create(
@@ -105,8 +81,6 @@ export class InvoicesService {
       );
 
       const settings = await this.getOrgAccountingConfig(organizationId);
-      // Remove hardcoded defaultTaxRate here. If not provided in DTO, it should be 0 or validated elsewhere.
-      // Ideally, the frontend sends the correct tax rate. If missing, we assume 0 or handle it via a tax engine in the future.
 
       let subtotal = 0;
       let totalTax = 0;
@@ -127,7 +101,6 @@ export class InvoicesService {
         const lineTotal = linePrice * itemDto.quantity;
         
         // Calculate tax per line
-        // If taxRate is undefined, we default to 0 instead of 0.18 to avoid unexpected taxes.
         const lineTaxRate = itemDto.taxRate !== undefined ? itemDto.taxRate : 0;
         const lineTaxAmount = lineTotal * lineTaxRate;
 
@@ -182,7 +155,6 @@ export class InvoicesService {
         ...createInvoiceDto,
         organizationId,
         invoiceNumber,
-        // ncfNumber will be set by the fiscal adapter if applicable
         customer,
         customerName: customer.companyName,
         customerAddress: customer.address,
@@ -241,9 +213,6 @@ export class InvoicesService {
     if (!organization) {
         throw new NotFoundException('No se encontró la información de la organización.');
     }
-    if (!this.invoiceTemplate) {
-        throw new InternalServerErrorException('La plantilla para generar PDF no está disponible.');
-    }
 
     const data = {
         ...invoice,
@@ -252,23 +221,10 @@ export class InvoicesService {
         dueDate: new Date(invoice.dueDate).toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' }),
     };
 
-    const htmlContent = this.invoiceTemplate(data);
+    const templatePath = path.join(__dirname, 'templates', 'invoice.hbs');
+    const htmlContent = this.templateService.compile(templatePath, data);
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-
-    const pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
-    const pdfBuffer = Buffer.from(pdfUint8Array);
-
-
-    await browser.close();
-    return pdfBuffer;
+    return this.pdfService.generatePdf(htmlContent);
   }
 
   async createCreditNote(
@@ -291,10 +247,6 @@ export class InvoicesService {
             throw new BadRequestException('La factura ya ha sido anulada.');
         }
         
-        // If items are provided, this is a partial credit note. 
-        // We need to validate items against the original invoice.
-        // If no items are provided, we assume a full refund (Void).
-
         let itemsToReturn = [];
         let isFullRefund = false;
 
@@ -335,7 +287,7 @@ export class InvoicesService {
             
             // Recalculate tax based on original tax rate
             const lineTotal = price * quantity;
-            const lineTax = lineTotal * (originalLine.taxRate || 0); // Use 0 if taxRate is missing (backward compatibility)
+            const lineTax = lineTotal * (originalLine.taxRate || 0);
 
             cnSubtotal += lineTotal;
             cnTax += lineTax;
@@ -402,21 +354,10 @@ export class InvoicesService {
             );
         }
 
-        // If full refund, mark original as VOID. Otherwise, update its status or just leave it.
-        // Usually, for partial refunds, the original invoice remains processed, but the balance might be adjusted if it wasn't paid.
-        // But here we are just creating a Credit Note document.
-        // If it was a full refund, we explicitly set to VOID as per previous logic.
         if (isFullRefund) {
              originalInvoice.status = InvoiceStatus.VOID;
              originalInvoice.balance = 0;
              await manager.save(originalInvoice);
-        } else {
-             // For partial, we might want to ensure the invoice reflects that a CN exists?
-             // Since we have a 'CREDIT_NOTE' status in the enum, maybe we should use that only for the CN document itself (which we are doing).
-             // The original invoice status might not need to change if it was already PAID or PENDING.
-             // However, strictly speaking, if we return goods, we might want to update the balance of the customer. 
-             // But the invoice balance usually reflects payment.
-             // Let's keep it simple: Only update original status if full refund.
         }
 
 
