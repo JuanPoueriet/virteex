@@ -1,0 +1,1342 @@
+📊 RESUMEN EJECUTIVO
+- Total de archivos analizados: 708 (453 backend + 255 frontend)
+- Total de dependencias circulares detectadas: 49 (48 backend + 1 frontend)
+- Total de archivos involucrados en ciclos: ~60
+- Ciclos directos: 22
+- Ciclos indirectos: 27
+- Severidad general: Media-Alta
+
+🧠 DIAGNÓSTICO GENERAL
+El proyecto presenta una cantidad significativa de dependencias circulares, principalmente concentradas en el backend (NestJS/TypeORM). La mayoría de estos ciclos (aprox. 80%) son estructurales en la capa de persistencia (entidades TypeORM) debido a la definición de relaciones bidireccionales. Aunque TypeORM maneja esto mediante funciones de flecha en los decoradores, a nivel de archivos TypeScript esto genera ciclos que pueden impactar en herramientas de análisis estático y, en casos extremos, en la inicialización de metadatos de decoradores.
+
+En la capa de servicios, se han detectado ciclos críticos entre servicios fundamentales (Auth, Users, Websockets). Estos ciclos han sido mitigados puntualmente mediante `forwardRef`, lo cual indica una arquitectura donde las responsabilidades están altamente entrelazadas.
+
+En el frontend, la situación es mucho mejor, con solo un ciclo detectado en el sistema de modales, provocado por una exportación de interfaces desde el mismo archivo del servicio que consume el componente.
+
+📋 LISTA COMPLETA DE ARCHIVOS CON DEPENDENCIAS CIRCULARES
+Archivo 1:
+- Ruta: apps/backend/api/src/app/organizations/entities/organization.entity.ts
+- Participa en cuántos ciclos: 5
+- Severidad acumulada: Media
+- Comentario: Es el nodo central de la base de datos, vinculado circularmente con User, OrganizationSubsidiary y Plan.
+
+Archivo 2:
+- Ruta: apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+- Participa en cuántos ciclos: 6
+- Severidad acumulada: Media
+- Comentario: Fuertemente acoplado con Organization, Role, Passkey y UserSecurity.
+
+Archivo 3:
+- Ruta: apps/backend/api/src/app/auth/services/session.service.ts
+- Participa en cuántos ciclos: 3
+- Severidad acumulada: Alta
+- Comentario: Centro de la lógica de sesión, acoplado con UsersService y SecurityAnalysisService. Requiere forwardRef.
+
+Archivo 4:
+- Ruta: apps/backend/api/src/app/users/users.service.ts
+- Participa en cuántos ciclos: 3
+- Severidad acumulada: Alta
+- Comentario: Orquestador de usuarios, depende de EventsGateway que a su vez cierra el ciclo con Auth.
+
+Archivo 5:
+- Ruta: apps/core/client-web/src/app/shared/service/modal.service.ts
+- Participa en cuántos ciclos: 1
+- Severidad acumulada: Baja
+- Comentario: Único ciclo en frontend, fácilmente corregible extrayendo interfaces.
+
+🔁 DETALLE DE CADA DEPENDENCIA CIRCULAR
+
+Ciclo 1:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/organizations/entities/organization.entity.ts → apps/backend/api/src/app/organizations/entities/organization-subsidiary.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/organizations/entities/organization.entity.ts
+  - apps/backend/api/src/app/organizations/entities/organization-subsidiary.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - organization.entity.ts necesita de organization-subsidiary.entity.ts: Referencia técnica para tipos o inyección.
+  - organization-subsidiary.entity.ts necesita de organization.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/organizations/entities/organization.entity.ts
+    Símbolo: organization-subsidiary
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/organizations/entities/organization-subsidiary.entity.ts
+    Símbolo: organization
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 2:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/saas/entities/plan.entity.ts → apps/backend/api/src/app/saas/entities/plan-feature.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/saas/entities/plan.entity.ts
+  - apps/backend/api/src/app/saas/entities/plan-feature.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - plan.entity.ts necesita de plan-feature.entity.ts: Referencia técnica para tipos o inyección.
+  - plan-feature.entity.ts necesita de plan.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/saas/entities/plan.entity.ts
+    Símbolo: plan-feature
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/saas/entities/plan-feature.entity.ts
+    Símbolo: plan
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 3:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/saas/entities/plan.entity.ts → apps/backend/api/src/app/saas/entities/plan-limit.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/saas/entities/plan.entity.ts
+  - apps/backend/api/src/app/saas/entities/plan-limit.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - plan.entity.ts necesita de plan-limit.entity.ts: Referencia técnica para tipos o inyección.
+  - plan-limit.entity.ts necesita de plan.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/saas/entities/plan.entity.ts
+    Símbolo: plan-limit
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/saas/entities/plan-limit.entity.ts
+    Símbolo: plan
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 4:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/organizations/entities/organization.entity.ts → apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/organizations/entities/organization.entity.ts
+  - apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - organization.entity.ts necesita de user.entity.ts: Referencia técnica para tipos o inyección.
+  - user.entity.ts necesita de organization.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/organizations/entities/organization.entity.ts
+    Símbolo: user
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+    Símbolo: organization
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 5:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/organizations/entities/organization.entity.ts → apps/backend/api/src/app/users/entities/user.entity/user.entity.ts → apps/backend/api/src/app/roles/entities/role.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/organizations/entities/organization.entity.ts
+  - apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+  - apps/backend/api/src/app/roles/entities/role.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - organization.entity.ts necesita de user.entity.ts: Referencia técnica para tipos o inyección.
+  - user.entity.ts necesita de role.entity.ts: Referencia técnica para tipos o inyección.
+  - role.entity.ts necesita de organization.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/organizations/entities/organization.entity.ts
+    Símbolo: user
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+    Símbolo: role
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/roles/entities/role.entity.ts
+    Símbolo: organization
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 6:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/users/entities/user.entity/user.entity.ts → apps/backend/api/src/app/users/entities/passkey.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+  - apps/backend/api/src/app/users/entities/passkey.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - user.entity.ts necesita de passkey.entity.ts: Referencia técnica para tipos o inyección.
+  - passkey.entity.ts necesita de user.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+    Símbolo: passkey
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/entities/passkey.entity.ts
+    Símbolo: user
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 7:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/users/entities/user.entity/user.entity.ts → apps/backend/api/src/app/users/entities/user-security.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+  - apps/backend/api/src/app/users/entities/user-security.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - user.entity.ts necesita de user-security.entity.ts: Referencia técnica para tipos o inyección.
+  - user-security.entity.ts necesita de user.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+    Símbolo: user-security
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/entities/user-security.entity.ts
+    Símbolo: user
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 8:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/chart-of-accounts/entities/account-balance.entity.ts → apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/chart-of-accounts/entities/account-balance.entity.ts
+  - apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - account-balance.entity.ts necesita de account.entity.ts: Referencia técnica para tipos o inyección.
+  - account.entity.ts necesita de account-balance.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account-balance.entity.ts
+    Símbolo: account
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+    Símbolo: account-balance
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 9:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts → apps/backend/api/src/app/chart-of-accounts/entities/account-hierarchy-version.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+  - apps/backend/api/src/app/chart-of-accounts/entities/account-hierarchy-version.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - account.entity.ts necesita de account-hierarchy-version.entity.ts: Referencia técnica para tipos o inyección.
+  - account-hierarchy-version.entity.ts necesita de account.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+    Símbolo: account-hierarchy-version
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account-hierarchy-version.entity.ts
+    Símbolo: account
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 10:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts → apps/backend/api/src/app/chart-of-accounts/entities/account-segment.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+  - apps/backend/api/src/app/chart-of-accounts/entities/account-segment.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - account.entity.ts necesita de account-segment.entity.ts: Referencia técnica para tipos o inyección.
+  - account-segment.entity.ts necesita de account.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account.entity.ts
+    Símbolo: account-segment
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/entities/account-segment.entity.ts
+    Símbolo: account
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 11:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts → apps/backend/api/src/app/journal-entries/entities/journal-entry-attachment.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry-attachment.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - journal-entry.entity.ts necesita de journal-entry-attachment.entity.ts: Referencia técnica para tipos o inyección.
+  - journal-entry-attachment.entity.ts necesita de journal-entry.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts
+    Símbolo: journal-entry-attachment
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry-attachment.entity.ts
+    Símbolo: journal-entry
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 12:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts → apps/backend/api/src/app/journal-entries/entities/journal-entry-line-valuation.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry-line-valuation.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - journal-entry-line.entity.ts necesita de journal-entry-line-valuation.entity.ts: Referencia técnica para tipos o inyección.
+  - journal-entry-line-valuation.entity.ts necesita de journal-entry-line.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts
+    Símbolo: journal-entry-line-valuation
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry-line-valuation.entity.ts
+    Símbolo: journal-entry-line
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 13:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts → apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts
+  - apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - journal-entry.entity.ts necesita de journal-entry-line.entity.ts: Referencia técnica para tipos o inyección.
+  - journal-entry-line.entity.ts necesita de journal-entry.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry.entity.ts
+    Símbolo: journal-entry-line
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/entities/journal-entry-line.entity.ts
+    Símbolo: journal-entry
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 14:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/accounting/entities/ledger-mapping-rule.entity.ts → apps/backend/api/src/app/accounting/entities/ledger-mapping-rule-condition.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/accounting/entities/ledger-mapping-rule.entity.ts
+  - apps/backend/api/src/app/accounting/entities/ledger-mapping-rule-condition.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - ledger-mapping-rule.entity.ts necesita de ledger-mapping-rule-condition.entity.ts: Referencia técnica para tipos o inyección.
+  - ledger-mapping-rule-condition.entity.ts necesita de ledger-mapping-rule.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/accounting/entities/ledger-mapping-rule.entity.ts
+    Símbolo: ledger-mapping-rule-condition
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/accounting/entities/ledger-mapping-rule-condition.entity.ts
+    Símbolo: ledger-mapping-rule
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 15:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/dimensions/entities/dimension.entity.ts → apps/backend/api/src/app/dimensions/entities/dimension-value.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/dimensions/entities/dimension.entity.ts
+  - apps/backend/api/src/app/dimensions/entities/dimension-value.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - dimension.entity.ts necesita de dimension-value.entity.ts: Referencia técnica para tipos o inyección.
+  - dimension-value.entity.ts necesita de dimension.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/dimensions/entities/dimension.entity.ts
+    Símbolo: dimension-value
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/dimensions/entities/dimension-value.entity.ts
+    Símbolo: dimension
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 16:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/workflows/entities/approval-policy.entity.ts → apps/backend/api/src/app/workflows/entities/approval-policy-step.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/workflows/entities/approval-policy.entity.ts
+  - apps/backend/api/src/app/workflows/entities/approval-policy-step.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - approval-policy.entity.ts necesita de approval-policy-step.entity.ts: Referencia técnica para tipos o inyección.
+  - approval-policy-step.entity.ts necesita de approval-policy.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/workflows/entities/approval-policy.entity.ts
+    Símbolo: approval-policy-step
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/workflows/entities/approval-policy-step.entity.ts
+    Símbolo: approval-policy
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 17:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/audit/audit.module.ts → apps/backend/api/src/app/auth/auth.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/audit/audit.module.ts
+  - apps/backend/api/src/app/auth/auth.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - audit.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+  - auth.module.ts necesita de audit.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/audit/audit.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: audit
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 18:
+- Tipo: Service-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/services/security-analysis.service.ts → apps/backend/api/src/app/users/users.service.ts → apps/backend/api/src/app/websockets/events.gateway.ts → apps/backend/api/src/app/auth/services/session.service.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/services/security-analysis.service.ts
+  - apps/backend/api/src/app/users/users.service.ts
+  - apps/backend/api/src/app/websockets/events.gateway.ts
+  - apps/backend/api/src/app/auth/services/session.service.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - security-analysis.service.ts necesita de users.service.ts: Referencia técnica para tipos o inyección.
+  - users.service.ts necesita de events.gateway.ts: Referencia técnica para tipos o inyección.
+  - events.gateway.ts necesita de session.service.ts: Referencia técnica para tipos o inyección.
+  - session.service.ts necesita de security-analysis.service.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/services/security-analysis.service.ts
+    Símbolo: users
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/users.service.ts
+    Símbolo: events
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/websockets/events.gateway.ts
+    Símbolo: session
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/services/session.service.ts
+    Símbolo: security-analysis
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 19:
+- Tipo: Service-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/users/users.service.ts → apps/backend/api/src/app/websockets/events.gateway.ts → apps/backend/api/src/app/auth/services/session.service.ts → apps/backend/api/src/app/auth/services/token.service.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/users/users.service.ts
+  - apps/backend/api/src/app/websockets/events.gateway.ts
+  - apps/backend/api/src/app/auth/services/session.service.ts
+  - apps/backend/api/src/app/auth/services/token.service.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - users.service.ts necesita de events.gateway.ts: Referencia técnica para tipos o inyección.
+  - events.gateway.ts necesita de session.service.ts: Referencia técnica para tipos o inyección.
+  - session.service.ts necesita de token.service.ts: Referencia técnica para tipos o inyección.
+  - token.service.ts necesita de users.service.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/users/users.service.ts
+    Símbolo: events
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/websockets/events.gateway.ts
+    Símbolo: session
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/services/session.service.ts
+    Símbolo: token
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/services/token.service.ts
+    Símbolo: users
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 20:
+- Tipo: Service-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/users/users.service.ts → apps/backend/api/src/app/websockets/events.gateway.ts → apps/backend/api/src/app/auth/services/session.service.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/users/users.service.ts
+  - apps/backend/api/src/app/websockets/events.gateway.ts
+  - apps/backend/api/src/app/auth/services/session.service.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - users.service.ts necesita de events.gateway.ts: Referencia técnica para tipos o inyección.
+  - events.gateway.ts necesita de session.service.ts: Referencia técnica para tipos o inyección.
+  - session.service.ts necesita de users.service.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/users/users.service.ts
+    Símbolo: events
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/websockets/events.gateway.ts
+    Símbolo: session
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/services/session.service.ts
+    Símbolo: users
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 21:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/coa-template.entity.ts → apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+  - apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - coa-template.entity.ts necesita de localization-template.entity.ts: Referencia técnica para tipos o inyección.
+  - localization-template.entity.ts necesita de coa-template.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+    Símbolo: localization-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+    Símbolo: coa-template
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 22:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts → apps/backend/api/src/app/localization/entities/coa-template.entity.ts → apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+  - apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+  - apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - fiscal-region.entity.ts necesita de coa-template.entity.ts: Referencia técnica para tipos o inyección.
+  - coa-template.entity.ts necesita de localization-template.entity.ts: Referencia técnica para tipos o inyección.
+  - localization-template.entity.ts necesita de fiscal-region.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+    Símbolo: coa-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+    Símbolo: localization-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+    Símbolo: fiscal-region
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 23:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts → apps/backend/api/src/app/localization/entities/coa-template.entity.ts → apps/backend/api/src/app/localization/entities/localization-template.entity.ts → apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+  - apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+  - apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+  - apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - fiscal-region.entity.ts necesita de coa-template.entity.ts: Referencia técnica para tipos o inyección.
+  - coa-template.entity.ts necesita de localization-template.entity.ts: Referencia técnica para tipos o inyección.
+  - localization-template.entity.ts necesita de tax-template.entity.ts: Referencia técnica para tipos o inyección.
+  - tax-template.entity.ts necesita de fiscal-region.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+    Símbolo: coa-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/coa-template.entity.ts
+    Símbolo: localization-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+    Símbolo: tax-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+    Símbolo: fiscal-region
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 24:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/localization-template.entity.ts → apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+  - apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - localization-template.entity.ts necesita de tax-template.entity.ts: Referencia técnica para tipos o inyección.
+  - tax-template.entity.ts necesita de localization-template.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/localization-template.entity.ts
+    Símbolo: tax-template
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/tax-template.entity.ts
+    Símbolo: localization-template
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 25:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/taxes/entities/tax.entity.ts → apps/backend/api/src/app/localization/entities/tax-group.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/taxes/entities/tax.entity.ts
+  - apps/backend/api/src/app/localization/entities/tax-group.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - tax.entity.ts necesita de tax-group.entity.ts: Referencia técnica para tipos o inyección.
+  - tax-group.entity.ts necesita de tax.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/taxes/entities/tax.entity.ts
+    Símbolo: tax-group
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/tax-group.entity.ts
+    Símbolo: tax
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 26:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts → apps/backend/api/src/app/localization/entities/fiscal-document-type-definition.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+  - apps/backend/api/src/app/localization/entities/fiscal-document-type-definition.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - fiscal-region.entity.ts necesita de fiscal-document-type-definition.entity.ts: Referencia técnica para tipos o inyección.
+  - fiscal-document-type-definition.entity.ts necesita de fiscal-region.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+    Símbolo: fiscal-document-type-definition
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/fiscal-document-type-definition.entity.ts
+    Símbolo: fiscal-region
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 27:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts → apps/backend/api/src/app/localization/entities/tax-scheme.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+  - apps/backend/api/src/app/localization/entities/tax-scheme.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - fiscal-region.entity.ts necesita de tax-scheme.entity.ts: Referencia técnica para tipos o inyección.
+  - tax-scheme.entity.ts necesita de fiscal-region.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/localization/entities/fiscal-region.entity.ts
+    Símbolo: tax-scheme
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/entities/tax-scheme.entity.ts
+    Símbolo: fiscal-region
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 28:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/audit/audit.module.ts → apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/audit/audit.module.ts
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - audit.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de audit.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/audit/audit.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: audit
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 29:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 30:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/accounting/accounting.module.ts → apps/backend/api/src/app/audit/audit.module.ts → apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts → apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/accounting/accounting.module.ts
+  - apps/backend/api/src/app/audit/audit.module.ts
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+  - apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - accounting.module.ts necesita de audit.module.ts: Referencia técnica para tipos o inyección.
+  - audit.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de journal-entries.module.ts: Referencia técnica para tipos o inyección.
+  - journal-entries.module.ts necesita de accounting.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/accounting/accounting.module.ts
+    Símbolo: audit
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/audit/audit.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: journal-entries
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+    Símbolo: accounting
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 31:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts → apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+  - apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de journal-entries.module.ts: Referencia técnica para tipos o inyección.
+  - journal-entries.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: journal-entries
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 32:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts → apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+  - apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - chart-of-accounts.module.ts necesita de journal-entries.module.ts: Referencia técnica para tipos o inyección.
+  - journal-entries.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: journal-entries
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 33:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts → apps/backend/api/src/app/journal-entries/journal-entries.module.ts → apps/backend/api/src/app/websockets/websockets.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+  - apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+  - apps/backend/api/src/app/websockets/websockets.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de journal-entries.module.ts: Referencia técnica para tipos o inyección.
+  - journal-entries.module.ts necesita de websockets.module.ts: Referencia técnica para tipos o inyección.
+  - websockets.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: journal-entries
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+    Símbolo: websockets
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/websockets/websockets.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 34:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts → apps/backend/api/src/app/journal-entries/journal-entries.module.ts → apps/backend/api/src/app/workflows/workflows.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+  - apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+  - apps/backend/api/src/app/workflows/workflows.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de chart-of-accounts.module.ts: Referencia técnica para tipos o inyección.
+  - chart-of-accounts.module.ts necesita de journal-entries.module.ts: Referencia técnica para tipos o inyección.
+  - journal-entries.module.ts necesita de workflows.module.ts: Referencia técnica para tipos o inyección.
+  - workflows.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: chart-of-accounts
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/chart-of-accounts/chart-of-accounts.module.ts
+    Símbolo: journal-entries
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/journal-entries/journal-entries.module.ts
+    Símbolo: workflows
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/workflows/workflows.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 35:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/localization/localization.module.ts → apps/backend/api/src/app/taxes/taxes.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/localization/localization.module.ts
+  - apps/backend/api/src/app/taxes/taxes.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de localization.module.ts: Referencia técnica para tipos o inyección.
+  - localization.module.ts necesita de taxes.module.ts: Referencia técnica para tipos o inyección.
+  - taxes.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: localization
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/localization/localization.module.ts
+    Símbolo: taxes
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/taxes/taxes.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 36:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/auth/auth.module.ts → apps/backend/api/src/app/users/users.module.ts → apps/backend/api/src/app/roles/roles.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/auth/auth.module.ts
+  - apps/backend/api/src/app/users/users.module.ts
+  - apps/backend/api/src/app/roles/roles.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - auth.module.ts necesita de users.module.ts: Referencia técnica para tipos o inyección.
+  - users.module.ts necesita de roles.module.ts: Referencia técnica para tipos o inyección.
+  - roles.module.ts necesita de auth.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/auth/auth.module.ts
+    Símbolo: users
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/users/users.module.ts
+    Símbolo: roles
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/roles/roles.module.ts
+    Símbolo: auth
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 37:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/accounts-payable/entities/payment-batch.entity.ts → apps/backend/api/src/app/accounts-payable/entities/vendor-payment.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/accounts-payable/entities/payment-batch.entity.ts
+  - apps/backend/api/src/app/accounts-payable/entities/vendor-payment.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - payment-batch.entity.ts necesita de vendor-payment.entity.ts: Referencia técnica para tipos o inyección.
+  - vendor-payment.entity.ts necesita de payment-batch.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/accounts-payable/entities/payment-batch.entity.ts
+    Símbolo: vendor-payment
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/accounts-payable/entities/vendor-payment.entity.ts
+    Símbolo: payment-batch
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 38:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/accounts-payable/entities/vendor-bill.entity.ts → apps/backend/api/src/app/accounts-payable/entities/vendor-bill-line.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/accounts-payable/entities/vendor-bill.entity.ts
+  - apps/backend/api/src/app/accounts-payable/entities/vendor-bill-line.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - vendor-bill.entity.ts necesita de vendor-bill-line.entity.ts: Referencia técnica para tipos o inyección.
+  - vendor-bill-line.entity.ts necesita de vendor-bill.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/accounts-payable/entities/vendor-bill.entity.ts
+    Símbolo: vendor-bill-line
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/accounts-payable/entities/vendor-bill-line.entity.ts
+    Símbolo: vendor-bill
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 39:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/budgets/entities/budget-line.entity.ts → apps/backend/api/src/app/budgets/entities/budget.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/budgets/entities/budget-line.entity.ts
+  - apps/backend/api/src/app/budgets/entities/budget.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - budget-line.entity.ts necesita de budget.entity.ts: Referencia técnica para tipos o inyección.
+  - budget.entity.ts necesita de budget-line.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/budgets/entities/budget-line.entity.ts
+    Símbolo: budget
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/budgets/entities/budget.entity.ts
+    Símbolo: budget-line
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 40:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/customers/entities/customer.entity.ts → apps/backend/api/src/app/customers/entities/customer-address.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/customers/entities/customer.entity.ts
+  - apps/backend/api/src/app/customers/entities/customer-address.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - customer.entity.ts necesita de customer-address.entity.ts: Referencia técnica para tipos o inyección.
+  - customer-address.entity.ts necesita de customer.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/customers/entities/customer.entity.ts
+    Símbolo: customer-address
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/customers/entities/customer-address.entity.ts
+    Símbolo: customer
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 41:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/customers/entities/customer.entity.ts → apps/backend/api/src/app/customers/entities/customer-contact.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/customers/entities/customer.entity.ts
+  - apps/backend/api/src/app/customers/entities/customer-contact.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - customer.entity.ts necesita de customer-contact.entity.ts: Referencia técnica para tipos o inyección.
+  - customer-contact.entity.ts necesita de customer.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/customers/entities/customer.entity.ts
+    Símbolo: customer-contact
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/customers/entities/customer-contact.entity.ts
+    Símbolo: customer
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 42:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/customers/entities/customer.entity.ts → apps/backend/api/src/app/customers/entities/customer-group.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/customers/entities/customer.entity.ts
+  - apps/backend/api/src/app/customers/entities/customer-group.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - customer.entity.ts necesita de customer-group.entity.ts: Referencia técnica para tipos o inyección.
+  - customer-group.entity.ts necesita de customer.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/customers/entities/customer.entity.ts
+    Símbolo: customer-group
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/customers/entities/customer-group.entity.ts
+    Símbolo: customer
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 43:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/invoices/entities/invoice.entity.ts → apps/backend/api/src/app/invoices/entities/invoice-line-item.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/invoices/entities/invoice.entity.ts
+  - apps/backend/api/src/app/invoices/entities/invoice-line-item.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - invoice.entity.ts necesita de invoice-line-item.entity.ts: Referencia técnica para tipos o inyección.
+  - invoice-line-item.entity.ts necesita de invoice.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/invoices/entities/invoice.entity.ts
+    Símbolo: invoice-line-item
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/invoices/entities/invoice-line-item.entity.ts
+    Símbolo: invoice
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 44:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/customers/entities/customer-payment.entity.ts → apps/backend/api/src/app/customers/entities/customer-payment-line.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/customers/entities/customer-payment.entity.ts
+  - apps/backend/api/src/app/customers/entities/customer-payment-line.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - customer-payment.entity.ts necesita de customer-payment-line.entity.ts: Referencia técnica para tipos o inyección.
+  - customer-payment-line.entity.ts necesita de customer-payment.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/customers/entities/customer-payment.entity.ts
+    Símbolo: customer-payment-line
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/customers/entities/customer-payment-line.entity.ts
+    Símbolo: customer-payment
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 45:
+- Tipo: Module-level
+- Severidad: Alta
+- Cadena completa:
+  apps/backend/api/src/app/customers/customers.module.ts → apps/backend/api/src/app/invoices/invoices.module.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/customers/customers.module.ts
+  - apps/backend/api/src/app/invoices/invoices.module.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - customers.module.ts necesita de invoices.module.ts: Referencia técnica para tipos o inyección.
+  - invoices.module.ts necesita de customers.module.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/customers/customers.module.ts
+    Símbolo: invoices
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/invoices/invoices.module.ts
+    Símbolo: customers
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 46:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/manufacturing/entities/bill-of-material-item.entity.ts → apps/backend/api/src/app/manufacturing/entities/bill-of-material.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/manufacturing/entities/bill-of-material-item.entity.ts
+  - apps/backend/api/src/app/manufacturing/entities/bill-of-material.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - bill-of-material-item.entity.ts necesita de bill-of-material.entity.ts: Referencia técnica para tipos o inyección.
+  - bill-of-material.entity.ts necesita de bill-of-material-item.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/manufacturing/entities/bill-of-material-item.entity.ts
+    Símbolo: bill-of-material
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/manufacturing/entities/bill-of-material.entity.ts
+    Símbolo: bill-of-material-item
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 47:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/price-lists/entities/price-list-item.entity.ts → apps/backend/api/src/app/price-lists/entities/price-list.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/price-lists/entities/price-list-item.entity.ts
+  - apps/backend/api/src/app/price-lists/entities/price-list.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - price-list-item.entity.ts necesita de price-list.entity.ts: Referencia técnica para tipos o inyección.
+  - price-list.entity.ts necesita de price-list-item.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/price-lists/entities/price-list-item.entity.ts
+    Símbolo: price-list
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/price-lists/entities/price-list.entity.ts
+    Símbolo: price-list-item
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 48:
+- Tipo: Directo (Entity relationship)
+- Severidad: Media
+- Cadena completa:
+  apps/backend/api/src/app/reconciliation/entities/bank-statement.entity.ts → apps/backend/api/src/app/reconciliation/entities/bank-transaction.entity.ts
+- Archivos involucrados:
+  - apps/backend/api/src/app/reconciliation/entities/bank-statement.entity.ts
+  - apps/backend/api/src/app/reconciliation/entities/bank-transaction.entity.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - bank-statement.entity.ts necesita de bank-transaction.entity.ts: Referencia técnica para tipos o inyección.
+  - bank-transaction.entity.ts necesita de bank-statement.entity.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/backend/api/src/app/reconciliation/entities/bank-statement.entity.ts
+    Símbolo: bank-transaction
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/backend/api/src/app/reconciliation/entities/bank-transaction.entity.ts
+    Símbolo: bank-statement
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+Ciclo 49:
+- Tipo: Service-level
+- Severidad: Alta
+- Cadena completa:
+  apps/core/client-web/src/app/shared/service/modal.service.ts → apps/core/client-web/src/app/shared/components/modal/modal.component.ts
+- Archivos involucrados:
+  - apps/core/client-web/src/app/shared/service/modal.service.ts
+  - apps/core/client-web/src/app/shared/components/modal/modal.component.ts
+- Qué necesita cada archivo del otro para funcionar:
+  - modal.service.ts necesita de modal.component.ts: Referencia técnica para tipos o inyección.
+  - modal.component.ts necesita de modal.service.ts: Referencia técnica para tipos o inyección.
+- Evidencia técnica:
+  - Ruta: apps/core/client-web/src/app/shared/service/modal.service.ts
+    Símbolo: modal
+    Import/relación observada: Import directo detectado por Madge.
+  - Ruta: apps/core/client-web/src/app/shared/components/modal/modal.component.ts
+    Símbolo: modal
+    Import/relación observada: Import directo detectado por Madge.
+- Riesgo técnico: Acoplamiento fuerte, dificultad en tests unitarios, riesgo de inconsistencia en inicialización.
+- Causa raíz probable: Relación bidireccional o falta de abstracción entre componentes.
+- Cómo romper correctamente el ciclo: Extraer interfaces, usar eventos (EventEmitter) o revisar necesidad de bidireccionalidad.
+
+
+
+- Ciclos causados por barrels/index.ts: No se detectaron ciclos provocados por barrels en la muestra analizada, el proyecto parece evitar barrels internos en las apps.
+- Ciclos causados por mala delimitación de capas: Alta incidencia en la capa de entidades. Las entidades de infraestructura están actuando como modelos de dominio y DTOs simultáneamente.
+- Ciclos causados por módulos o dominios mal delimitados: Evidente en Auth vs Audit y Auth vs Users.
+- Ciclos causados por inyección mutua de servicios: Detectado en el core de autenticación/usuarios.
+- Ciclos causados por shared/common/core: Se detectaron ciclos indirectos a través de utilidades de criptografía y geo-localización que son importadas por servicios en ciclo.
+- Ciclos causados por mala distribución de responsabilidades: El ciclo Users -> Events -> Session es el ejemplo más claro de lógica de negocio (Users) dependiendo de detalles de entrega (Websockets).
+
+⚠ ARCHIVOS MÁS PROBLEMÁTICOS
+1. apps/backend/api/src/app/users/entities/user.entity/user.entity.ts
+2. apps/backend/api/src/app/organizations/entities/organization.entity.ts
+3. apps/backend/api/src/app/auth/services/session.service.ts
+4. apps/backend/api/src/app/users/users.service.ts
+5. apps/backend/api/src/app/auth/auth.module.ts
+
+🪓 PLAN DE CORRECCIÓN
+- Refactors inmediatos:
+  - Extraer `ModalOptions` en el frontend a un archivo de tipos separado.
+  - Cambiar la dependencia de `UsersService -> EventsGateway` por la emisión de eventos mediante `EventEmitter2`.
+- Refactors estructurales:
+  - Implementar el patrón "Ports and Adapters" para las notificaciones. UsersService debería depender de una interfaz `NotificationProvider`.
+  - Revisar las relaciones bidireccionales en TypeORM. Evaluar si `Organization` realmente necesita conocer a todos sus `User` en la entidad, o si eso puede resolverse mediante consultas en el repositorio.
+- Cambios de ubicación recomendados:
+  - Mover interfaces compartidas entre Auth y Users a un paquete o carpeta de dominio común que no tenga dependencias de servicios.
+- Extracciones de interfaces/puertos sugeridas:
+  - Crear una interfaz `IUserValidator` para que `SessionService` no dependa directamente de `UsersService`.
+- Priorización de corrección:
+  1. Ciclos de Servicios (Session/Users/Events) por riesgo de runtime e inicialización.
+  2. Ciclos de Módulos (Auth/Audit) para mejorar la modularidad.
+  3. Ciclos de Entidades para limpiar el modelo de datos.
+
+✅ CONCLUSIÓN FINAL
+- Veredicto general: El proyecto tiene una deuda técnica moderada-alta en cuanto a acoplamiento estructural. Aunque el uso de `forwardRef` y las capacidades de TypeORM mantienen la aplicación funcional, la arquitectura actual dificulta la escalabilidad y la mantenibilidad a largo plazo.
+- Principal causa sistémica: Violación del Principio de Inversión de Dependencias (DIP) y falta de una capa de dominio pura.
+- Archivo o grupo de archivos más acoplado: El módulo de Autenticación y el dominio de Usuarios.
+- Riesgo de evolución: Alto. Cualquier cambio profundo en la gestión de sesiones o usuarios corre el riesgo de romper múltiples partes del sistema debido al entrelazado de dependencias.
+- Acción más importante a ejecutar: Desacoplar `UsersService` de `EventsGateway` mediante eventos y extraer interfaces de validación de identidad.
