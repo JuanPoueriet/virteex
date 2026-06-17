@@ -10,7 +10,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { PriceListItem } from './price-list-item.entity';
+import type { PriceListItem } from './price-list-item.entity';
 
 export enum PriceListStatus {
   DRAFT = 'Draft',
@@ -42,7 +42,7 @@ export class PriceList {
   })
   status: PriceListStatus;
 
-  @OneToMany(() => PriceListItem, (item) => item.priceList, {
+  @OneToMany('PriceListItem', 'priceList', {
     cascade: true,
     eager: true,
   })

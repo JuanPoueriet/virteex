@@ -1,8 +1,8 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { FiscalRegion } from './fiscal-region.entity';
-import { CoaTemplate } from './coa-template.entity';
-import { TaxTemplate } from './tax-template.entity';
+import type { FiscalRegion } from './fiscal-region.entity';
+import type { CoaTemplate } from './coa-template.entity';
+import type { TaxTemplate } from './tax-template.entity';
 
 @Entity({ name: 'localization_templates' })
 export class LocalizationTemplate {
@@ -22,9 +22,9 @@ export class LocalizationTemplate {
   @Column({ default: true })
   isActive: boolean;
 
-  @OneToMany(() => CoaTemplate, (coa) => coa.template, { cascade: true })
+  @OneToMany('CoaTemplate', 'template', { cascade: true })
   coaTemplate: CoaTemplate[];
 
-  @OneToMany(() => TaxTemplate, (tax) => tax.template, { cascade: true })
+  @OneToMany('TaxTemplate', 'template', { cascade: true })
   taxTemplates: TaxTemplate[];
 }

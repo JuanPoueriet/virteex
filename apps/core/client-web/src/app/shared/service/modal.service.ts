@@ -1,13 +1,7 @@
 import { Injectable, ApplicationRef, createComponent, EnvironmentInjector, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ModalComponent } from '../components/modal/modal.component';
-
-export interface ModalOptions {
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-}
+import { ModalOptions } from '../interfaces/modal.interface';
 
 @Injectable({
   providedIn: 'root'

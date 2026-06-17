@@ -13,7 +13,7 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { ProposedAdjustmentEvidence } from './proposed-adjustment-evidence.entity';
+import type { ProposedAdjustmentEvidence } from './proposed-adjustment-evidence.entity';
 
 export enum AdjustmentStatus {
   PENDING_APPROVAL = 'PENDING_APPROVAL',
@@ -88,7 +88,7 @@ export class ProposedAdjustment {
   @Column({ name: 'journal_entry_id', type: 'uuid', nullable: true })
   journalEntryId?: string;
 
-  @OneToMany(() => ProposedAdjustmentEvidence, (evidence) => evidence.proposedAdjustment, {
+  @OneToMany('ProposedAdjustmentEvidence', 'proposedAdjustment', {
     cascade: true,
   })
   evidence: ProposedAdjustmentEvidence[];

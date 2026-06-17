@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
-import { InvoiceLineItem } from './invoice-line-item.entity';
+import type { InvoiceLineItem } from './invoice-line-item.entity';
 import { Customer } from '../../customers/entities/customer.entity';
 import { Currency } from '../../currencies/entities/currency.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
@@ -92,7 +92,7 @@ export class Invoice {
   })
   type: InvoiceType;
 
-  @OneToMany(() => InvoiceLineItem, (line) => line.invoice, { cascade: true, eager: true })
+  @OneToMany('InvoiceLineItem', 'invoice', { cascade: true, eager: true })
   lineItems: InvoiceLineItem[];
 
   @Column({ type: 'text', nullable: true })

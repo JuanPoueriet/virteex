@@ -10,7 +10,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { VendorBillLine } from './vendor-bill-line.entity';
+import type { VendorBillLine } from './vendor-bill-line.entity';
 import { Supplier } from '../../suppliers/entities/supplier.entity';
 import { Currency } from '../../currencies/entities/currency.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
@@ -53,7 +53,7 @@ export class VendorBill {
   @Column()
   dueDate: Date;
 
-  @OneToMany(() => VendorBillLine, (line) => line.vendorBill, { cascade: true })
+  @OneToMany('VendorBillLine', 'vendorBill', { cascade: true })
   lines: VendorBillLine[];
 
   @Column('decimal', { precision: 12, scale: 2 })

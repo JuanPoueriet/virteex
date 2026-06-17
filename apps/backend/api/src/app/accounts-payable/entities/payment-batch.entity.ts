@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { VendorPayment } from './vendor-payment.entity';
+import type { VendorPayment } from './vendor-payment.entity';
 
 export enum PaymentBatchStatus {
   PENDING = 'PENDING',
@@ -24,6 +24,6 @@ export class PaymentBatch {
   @Column({ type: 'enum', enum: PaymentBatchStatus, default: PaymentBatchStatus.PENDING })
   status: PaymentBatchStatus;
   
-  @OneToMany(() => VendorPayment, payment => payment.paymentBatch)
+  @OneToMany('VendorPayment', 'paymentBatch')
   payments: VendorPayment[];
 }

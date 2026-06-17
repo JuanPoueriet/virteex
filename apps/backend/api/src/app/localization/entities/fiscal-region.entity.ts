@@ -1,9 +1,9 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, Index, OneToMany, ManyToMany, JoinTable } from 'typeorm';
-import { TaxScheme } from './tax-scheme.entity';
-import { TaxTemplate } from './tax-template.entity';
-import { FiscalDocumentTypeDefinition } from './fiscal-document-type-definition.entity';
-import { CoaTemplate } from './coa-template.entity';
+import type { TaxScheme } from './tax-scheme.entity';
+import type { TaxTemplate } from './tax-template.entity';
+import type { FiscalDocumentTypeDefinition } from './fiscal-document-type-definition.entity';
+import type { CoaTemplate } from './coa-template.entity';
 
 @Entity({ name: 'fiscal_regions' })
 export class FiscalRegion {
@@ -20,13 +20,13 @@ export class FiscalRegion {
   @Column({ length: 3 })
   baseCurrency: string;
 
-  @OneToMany(() => TaxScheme, scheme => scheme.fiscalRegion)
+  @OneToMany('TaxScheme', 'fiscalRegion')
   taxSchemes: TaxScheme[];
 
   // --- ENTERPRISE SAAS LOCALIZATION FEATURES ---
 
   // 1. Relación con Impuestos Predeterminados (Catálogo Maestro)
-  @ManyToMany(() => TaxTemplate, template => template.fiscalRegions)
+  @ManyToMany('TaxTemplate', 'fiscalRegions')
   @JoinTable({ name: 'fiscal_region_tax_templates' })
   defaultTaxes: TaxTemplate[];
 
@@ -57,7 +57,7 @@ export class FiscalRegion {
   requiresDigitalSignature: boolean;
 
   // 4. Tipos de Documentos Fiscales
-  @OneToMany(() => FiscalDocumentTypeDefinition, def => def.fiscalRegion)
+  @OneToMany('FiscalDocumentTypeDefinition', 'fiscalRegion')
   documentDefinitions: FiscalDocumentTypeDefinition[];
 
   // 5. Validación de Terceros (JSONB for flexibility)
@@ -79,6 +79,6 @@ export class FiscalRegion {
   requiredFiscalReports: string[];
 
   // 8. Relación con Plan de Cuentas (Existing idea, linking explicitly if needed, usually via CoaTemplate)
-  @OneToMany(() => CoaTemplate, template => template.fiscalRegion)
+  @OneToMany('CoaTemplate', 'fiscalRegion')
   coaTemplates: CoaTemplate[];
 }

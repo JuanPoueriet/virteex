@@ -33,9 +33,9 @@ import { CustomerGroupsService } from './customer-groups.service';
       CustomerAddress,
       CustomerGroup,
     ]),
-    AuthModule,
+    forwardRef(() => AuthModule),
     forwardRef(() => InvoicesModule),
-    JournalEntriesModule,
+    forwardRef(() => JournalEntriesModule),
   ],
   controllers: [
     CustomersController,

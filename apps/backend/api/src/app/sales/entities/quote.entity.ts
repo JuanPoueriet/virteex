@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 import { Customer } from '../customers/entities/customer.entity';
 import { User } from '../users/entities/user.entity/user.entity';
 import { Opportunity } from './opportunity.entity';
-import { QuoteLine } from './quote-line.entity';
+import type { QuoteLine } from './quote-line.entity';
 import { Currency } from '../currencies/entities/currency.entity';
 
 export enum QuoteStatus {
@@ -33,7 +33,7 @@ export class Quote {
   @JoinColumn({ name: 'opportunity_id' })
   opportunity?: Opportunity;
 
-  @OneToMany(() => QuoteLine, (line) => line.quote, { cascade: true, eager: true })
+  @OneToMany('QuoteLine', 'quote', { cascade: true, eager: true })
   lines: QuoteLine[];
 
   @Column({ type: 'date' })

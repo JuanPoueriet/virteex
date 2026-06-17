@@ -1,7 +1,7 @@
 
 import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
-import { BillOfMaterialItem } from './bill-of-material-item.entity';
+import type { BillOfMaterialItem } from './bill-of-material-item.entity';
 
 @Entity('bill_of_materials')
 export class BillOfMaterial extends BaseEntity {
@@ -17,6 +17,6 @@ export class BillOfMaterial extends BaseEntity {
   @Column({ default: true })
   isActive: boolean;
 
-  @OneToMany(() => BillOfMaterialItem, (item) => item.billOfMaterial, { cascade: true })
+  @OneToMany('BillOfMaterialItem', 'billOfMaterial', { cascade: true })
   items: BillOfMaterialItem[];
 }

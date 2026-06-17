@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToMany, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { OrganizationSubsidiary } from './organization-subsidiary.entity';
-import { User } from '../../users/entities/user.entity/user.entity';
+import type { OrganizationSubsidiary } from './organization-subsidiary.entity';
+import type { User } from '../../users/entities/user.entity/user.entity';
 import { Plan } from '../../saas/entities/plan.entity';
 
 @Entity('organizations')
@@ -64,13 +64,13 @@ export class Organization {
   @JoinColumn({ name: 'plan_id' })
   plan: Plan;
 
-  @OneToMany(() => OrganizationSubsidiary, sub => sub.parent)
+  @OneToMany('OrganizationSubsidiary', 'parent')
   subsidiaries: OrganizationSubsidiary[];
 
-  @OneToMany(() => User, user => user.organization)
+  @OneToMany('User', 'organization')
   users: User[];
 
-  @ManyToMany(() => User, (user) => user.organizations)
+  @ManyToMany('User', 'organizations')
   allUsers: User[];
 
   @CreateDateColumn({ name: 'created_at' })

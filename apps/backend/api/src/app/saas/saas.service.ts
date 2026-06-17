@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -61,7 +61,7 @@ export class SaasService implements OnModuleInit {
             ['slug']
         );
 
-        let plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
+        const plan = await this.planRepository.findOne({ where: { slug: pConfig.slug }, relations: ['limits'] });
 
         if (!plan) continue;
 
@@ -107,7 +107,7 @@ export class SaasService implements OnModuleInit {
     return this.planRepository.findOne({ where: { slug }, relations: ['limits', 'features'] });
   }
 
-  async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
+  async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason = "upgrade"): Promise<void> {
       await this.dataSource.transaction(async (manager) => {
           const org = await manager.findOne(Organization, { where: { id: organizationId }, relations: ['plan'] });
           if (!org) {
@@ -186,7 +186,7 @@ export class SaasService implements OnModuleInit {
       await this.cacheManager.set(cacheKey, value, 24 * 3600 * 1000);
   }
 
-  async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment: number = 1): Promise<void> {
+  async enforceLimit(manager: EntityManager, organizationId: string, resource: SaasResource, increment = 1): Promise<void> {
     const org = await manager.findOne(Organization, {
         where: { id: organizationId },
         relations: ['plan', 'plan.limits']
@@ -340,7 +340,7 @@ export class SaasService implements OnModuleInit {
     return usageData;
   }
 
-  async checkLimit(organizationId: string, resource: SaasResource, increment: number): Promise<boolean> {
+  async checkLimit(organizationId: string, resource: SaasResource, increment = 1): Promise<boolean> {
     const cacheKey = await this.getCacheKey(organizationId, resource);
     const cached = await this.cacheManager.get<boolean>(cacheKey);
     if (cached !== undefined) {

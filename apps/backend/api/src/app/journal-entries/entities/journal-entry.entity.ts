@@ -11,8 +11,8 @@ import {
   OneToOne,
 } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
-import { JournalEntryLine } from './journal-entry-line.entity';
-import { JournalEntryAttachment } from './journal-entry-attachment.entity';
+import type { JournalEntryLine } from './journal-entry-line.entity';
+import type { JournalEntryAttachment } from './journal-entry-attachment.entity';
 import { Journal } from './journal.entity';
 import { Ledger } from '../../accounting/entities/ledger.entity';
 
@@ -84,7 +84,7 @@ export class JournalEntry {
   @Column({ name: 'affects_opening_balance', default: false })
   affectsOpeningBalance: boolean;
 
-  @OneToMany(() => JournalEntryLine, (line) => line.journalEntry, {
+  @OneToMany('JournalEntryLine', 'journalEntry', {
     cascade: true,
     eager: true,
   })
@@ -93,31 +93,31 @@ export class JournalEntry {
   @Column({ name: 'reverses_entry_id', type: 'uuid', nullable: true })
   reversesEntryId: string | null;
 
-  @OneToOne(() => JournalEntry)
+  @OneToOne('JournalEntry')
   @JoinColumn({ name: 'reverses_entry_id' })
   reversesEntry?: JournalEntry;
 
-  @OneToOne(() => JournalEntry, (entry) => entry.reversesEntry)
+  @OneToOne('JournalEntry', 'reversesEntry')
   reversedByEntry?: JournalEntry;
 
   @Column({ name: 'modified_to_entry_id', type: 'uuid', nullable: true })
   modifiedToEntryId: string | null;
 
-  @OneToOne(() => JournalEntry, { nullable: true })
+  @OneToOne('JournalEntry', { nullable: true })
   @JoinColumn({ name: 'modified_to_entry_id' })
   modifiedToEntry?: JournalEntry;
   
   @Column({ name: 'modified_from_entry_id', type: 'uuid', nullable: true })
   modifiedFromEntryId: string | null;
 
-  @OneToOne(() => JournalEntry, { nullable: true })
+  @OneToOne('JournalEntry', { nullable: true })
   @JoinColumn({ name: 'modified_from_entry_id' })
   modifiedFromEntry?: JournalEntry;
 
   @Column({ name: 'modification_reason', type: 'text', nullable: true })
   modificationReason: string | null;
 
-  @OneToMany(() => JournalEntryAttachment, (attachment) => attachment.journalEntry, { cascade: true })
+  @OneToMany('JournalEntryAttachment', 'journalEntry', { cascade: true })
   attachments: JournalEntryAttachment[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
