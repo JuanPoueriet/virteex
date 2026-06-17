@@ -1,7 +1,7 @@
 
 import { Controller, Post, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Body, UseGuards, Get, Param, Query } from '@nestjs/common';
 import { FastifyFileInterceptor } from '../common/interceptors/fastify-file.interceptor';
-import { FastifyFile } from '../common/interfaces/fastify-file.interface';
+import type { FastifyFile } from '../common/interfaces/fastify-file.interface';
 import { ReconciliationService } from './reconciliation.service';
 import { UploadStatementDto } from './dto/upload-statement.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
