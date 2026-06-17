@@ -11,6 +11,8 @@ import { DocumentSequence } from './document-sequences/entities/document-sequenc
 import { DocumentSequencesService } from './document-sequences/document-sequences.service';
 import { OrganizationSubscriber } from './subscribers/organization.subscriber';
 import { CryptoUtil } from './utils/crypto.util';
+import { TemplateService } from './template/template.service';
+import { PdfService } from './pdf/pdf.service';
 
 @Global()
 @Module({
@@ -20,12 +22,16 @@ import { CryptoUtil } from './utils/crypto.util';
   providers: [
     DocumentSequencesService,
     OrganizationSubscriber,
-    CryptoUtil
+    CryptoUtil,
+    TemplateService,
+    PdfService
   ],
   exports: [
     DocumentSequencesService,
     OrganizationSubscriber,
-    CryptoUtil
+    CryptoUtil,
+    TemplateService,
+    PdfService
   ],
 })
 export class SharedModule {}
