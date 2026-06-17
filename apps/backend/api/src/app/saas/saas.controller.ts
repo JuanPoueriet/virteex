@@ -22,4 +22,14 @@ export class SaasController {
     }
     return this.saasService.getUsage(user.organization.id);
   }
+
+  @Get('subscription')
+  @UseGuards(AuthGuard('jwt'))
+  async getSubscription(@Req() req: Request) {
+    const user = req.user as AuthenticatedUser;
+    if (!user.organization) {
+        return null;
+    }
+    return this.saasService.getSubscription(user.organization.id);
+  }
 }

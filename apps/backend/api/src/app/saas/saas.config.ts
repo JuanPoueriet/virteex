@@ -10,6 +10,7 @@ export interface PlanLimitConfig {
 export interface PlanConfig {
   slug: string;
   name: string;
+  description: string;
   monthlyPriceIdVar: string; // Name of ENV var
   limits: PlanLimitConfig[];
 }
@@ -22,6 +23,7 @@ export const SAAS_PLANS: PlanConfig[] = [
   {
     slug: 'starter',
     name: 'Starter',
+    description: 'Ideal para autónomos y pequeñas empresas que comienzan.',
     monthlyPriceIdVar: 'STRIPE_PRICE_STARTER',
     limits: [
       { resource: SaasResource.INVOICES, limit: 10, period: 'monthly', allowOverage: false },
@@ -31,6 +33,7 @@ export const SAAS_PLANS: PlanConfig[] = [
   {
     slug: 'pro',
     name: 'Professional',
+    description: 'Para empresas en crecimiento que necesitan más potencia.',
     monthlyPriceIdVar: 'STRIPE_PRICE_PRO',
     limits: [
       { resource: SaasResource.INVOICES, limit: 100, period: 'monthly', allowOverage: true },
@@ -40,6 +43,7 @@ export const SAAS_PLANS: PlanConfig[] = [
   {
     slug: 'enterprise',
     name: 'Enterprise',
+    description: 'Solución completa sin límites para grandes organizaciones.',
     monthlyPriceIdVar: 'STRIPE_PRICE_ENTERPRISE',
     limits: [
       { resource: SaasResource.INVOICES, limit: -1, period: 'monthly', allowOverage: true },

@@ -8,35 +8,48 @@
             @if (subscription(); as sub) {
             <div class="card">
                 <div class="card-header">
-                    <h3>Tu Plan Actual</h3>
+                    <div class="header-with-icon">
+                        <lucide-icon [img]="ActivityIcon" size="20"></lucide-icon>
+                        <h3>Tu Plan Actual</h3>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="plan-name">{{ sub.planName }}</div>
                     <div class="plan-price">${{ sub.price | number:'1.2-2' }} <span class="price-period">/ {{
                             sub.billingCycle }}</span></div>
                     <p class="plan-status" [ngClass]="sub.status.toLowerCase()">
-                        {{ sub.status === 'Activo' ? 'Tu plan se renueva el ' + (sub.nextBillingDate | date:'longDate')
-                        : 'Tu prueba termina el ' + (sub.trialEndsDate | date:'longDate') }}
+                        {{ sub.status === 'active' || sub.status === 'Activo'
+                            ? (sub.nextBillingDate ? 'Tu plan se renueva el ' + (sub.nextBillingDate | date:'longDate') : 'Plan activo')
+                            : 'Estado: ' + sub.status }}
                     </p>
                 </div>
             </div>
             }
 
-            @if (paymentMethod(); as pm) {
             <div class="card">
                 <div class="card-header">
-                    <h3>Método de Pago</h3>
+                    <div class="header-with-icon">
+                        <lucide-icon [img]="CreditCardIcon" size="20"></lucide-icon>
+                        <h3>Método de Pago</h3>
+                    </div>
                 </div>
                 <div class="card-body payment-method">
-                    <lucide-icon [img]="CreditCardIcon" size="24"></lucide-icon>
-                    <div class="pm-details">
-                        <span>{{ pm.type }} terminada en {{ pm.last4 }}</span>
-                        <span class="expiry">Vence {{ pm.expiryDate }}</span>
-                    </div>
-                    <button class="secondary-button">Actualizar</button>
+                    @if (paymentMethod(); as pm) {
+                        <div class="pm-info">
+                            <div class="pm-details">
+                                <span>{{ pm.type }} terminada en {{ pm.last4 }}</span>
+                                <span class="expiry">Vence {{ pm.expiryDate }}</span>
+                            </div>
+                        </div>
+                    } @else {
+                        <p class="empty-text">No hay método de pago registrado.</p>
+                    }
+                    <button class="secondary-button" (click)="openPortal()" [disabled]="isLoadingPortal()">
+                        <lucide-icon [img]="ExternalLinkIcon" size="14"></lucide-icon>
+                        <span>Gestionar en Stripe</span>
+                    </button>
                 </div>
             </div>
-            }
         </div>
 
         <div class="billing-history-column card" style="display: block;">
@@ -124,22 +137,38 @@
         <h3 class="section-title">Cambiar de Plan</h3>
         <div class="plans-container">
             @for (plan of availablePlans(); track plan.id) {
-            <div class="plan-card" [class.selected]="selectedPlan() === plan.slug" (click)="selectPlan(plan.slug)">
-                <h4>{{ plan.name }}</h4>
-                <!-- TODO: Show price properly from limits or meta -->
-                <p class="plan-desc">{{ plan.description }}</p>
+            <div class="plan-card" [class.selected]="selectedPlan() === plan.slug"
+                 [class.current]="subscription()?.planId === plan.slug"
+                 (click)="selectPlan(plan.slug)">
                 @if (subscription()?.planId === plan.slug) { <div class="current-plan-chip">Plan Actual</div> }
+                <h4>{{ plan.name }}</h4>
+                <p class="plan-desc">{{ plan.description }}</p>
+
+                <ul class="plan-features-list">
+                    @for (limit of plan.limits; track limit.id) {
+                        <li>
+                            <lucide-icon [img]="CheckCircleIcon" size="14"></lucide-icon>
+                            <span>{{ limit.limit === -1 ? 'Ilimitado' : limit.limit }} {{ limit.resource }}</span>
+                        </li>
+                    }
+                </ul>
+
+                <div class="plan-card-footer">
+                    <span class="select-text">@if(selectedPlan() === plan.slug) { Seleccionado } @else { Seleccionar }</span>
+                </div>
             </div>
             }
         </div>
-        @if (selectedPlan() !== subscription()?.planId) {
+        @if (selectedPlan() && selectedPlan() !== subscription()?.planId) {
         <div class="update-plan-action">
             <p><lucide-icon [img]="InfoIcon" size="16"></lucide-icon>Estás a punto de cambiar tu plan a <strong>{{
                     selectedPlan() }}</strong>.</p>
-            <button class="primary-button" (click)="updatePlan()" [disabled]="isSaving()">
-                @if(isSaving()){ <span class="spinner"></span> }
-                <span>Confirmar Cambio</span>
-            </button>
+            <div class="actions">
+                <button class="primary-button" (click)="updatePlan()" [disabled]="isSaving()">
+                    @if(isSaving()){ <span class="spinner"></span> }
+                    <span>Confirmar Cambio</span>
+                </button>
+            </div>
         </div>
         }
     </div>

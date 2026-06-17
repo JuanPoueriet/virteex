@@ -32,6 +32,36 @@ export class PaymentController {
     );
   }
 
+  @Get('method')
+  @UseGuards(JwtAuthGuard)
+  async getDefaultPaymentMethod(@CurrentUser() user: User) {
+    if (!user.organization) {
+      return null;
+    }
+    return this.paymentService.getDefaultPaymentMethod(user.organization.id);
+  }
+
+  @Get('invoices')
+  @UseGuards(JwtAuthGuard)
+  async getInvoices(@CurrentUser() user: User) {
+    if (!user.organization) {
+      return [];
+    }
+    return this.paymentService.getInvoices(user.organization.id);
+  }
+
+  @Post('portal-session')
+  @UseGuards(JwtAuthGuard)
+  async createPortalSession(
+    @CurrentUser() user: User,
+    @Body() body: { returnUrl: string }
+  ) {
+    if (!user.organization) {
+      throw new BadRequestException('User does not belong to an organization');
+    }
+    return this.paymentService.createPortalSession(user.organization.id, body.returnUrl);
+  }
+
   @Get('config')
   async getConfig() {
     const plans = await this.saasService.getPlans();

@@ -35,6 +35,30 @@ export class PaymentService {
     });
   }
 
+  async getDefaultPaymentMethod(organizationId: string) {
+    const org = await this.organizationRepository.findOne({ where: { id: organizationId } });
+    if (!org || !org.externalCustomerId) {
+      return null;
+    }
+    return this.paymentGateway.getDefaultPaymentMethod(org.externalCustomerId);
+  }
+
+  async getInvoices(organizationId: string) {
+    const org = await this.organizationRepository.findOne({ where: { id: organizationId } });
+    if (!org || !org.externalCustomerId) {
+      return [];
+    }
+    return this.paymentGateway.getInvoices(org.externalCustomerId);
+  }
+
+  async createPortalSession(organizationId: string, returnUrl: string) {
+    const org = await this.organizationRepository.findOne({ where: { id: organizationId } });
+    if (!org || !org.externalCustomerId) {
+      throw new BadRequestException('Organization does not have a customer in payment gateway');
+    }
+    return this.paymentGateway.createPortalSession(org.externalCustomerId, returnUrl);
+  }
+
   async handleWebhook(signature: string, payload: Buffer) {
     // Ahora está completamente abstraído. La implementación del Gateway maneja la lógica específica.
     return this.paymentGateway.handleWebhook(payload, signature);

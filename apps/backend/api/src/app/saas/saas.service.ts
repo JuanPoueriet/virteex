@@ -56,6 +56,7 @@ export class SaasService implements OnModuleInit {
             {
                 slug: pConfig.slug,
                 name: pConfig.name,
+                description: pConfig.description,
                 monthlyPriceId: monthlyPriceId,
             },
             ['slug']
@@ -105,6 +106,28 @@ export class SaasService implements OnModuleInit {
 
   async getPlanBySlug(slug: string) {
     return this.planRepository.findOne({ where: { slug }, relations: ['limits', 'features'] });
+  }
+
+  async getSubscription(organizationId: string) {
+    const org = await this.orgRepository.findOne({
+        where: { id: organizationId },
+        relations: ['plan']
+    });
+
+    if (!org) {
+        throw new Error('Organization not found');
+    }
+
+    return {
+        planName: org.plan?.name || 'Gratis',
+        planId: org.plan?.slug || 'free',
+        status: org.subscriptionStatus || 'active',
+        nextBillingDate: org.subscriptionPeriodEnd,
+        trialEndsDate: org.gracePeriodEnd,
+        // Mocked for now as we don't have price in Plan entity yet, but we'll use a fixed value or fetch from Stripe
+        price: org.plan?.slug === 'pro' ? 49.00 : (org.plan?.slug === 'enterprise' ? 199.00 : 0),
+        billingCycle: 'mensual'
+    };
   }
 
   async changePlan(organizationId: string, newPlanSlug: string, userId?: string, reason: string = 'upgrade'): Promise<void> {
